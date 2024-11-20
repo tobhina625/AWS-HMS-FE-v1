@@ -9,21 +9,22 @@ const props = defineProps(['subtitle', 'title', 'customClasses'])
   >
     <div class="flex flex-wrap items-center">
       <div class="hidden w-full xl:block xl:w-1/2">
-        <div class="py-17.5 px-26 text-center">
-          <router-link class="mb-5.5 inline-block" to="/">
-            <img class="hidden dark:block" src="@/assets/images/logo/logo.svg" alt="Logo" />
-            <img class="dark:hidden" src="@/assets/images/logo/logo-dark.svg" alt="Logo" />
-          </router-link>
+        <div class="py-17.5 px-26 text-center"> 
 
           <p class="font-medium 2xl:px-20">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit suspendisse.
+            HMS
           </p>
 
           <span class="mt-15 inline-block">
             <img src="@/assets/images/illustration/illustration-03.svg" alt="illustration" />
           </span>
+
+          <p class="font-medium 2xl:px-20">
+            Copyright @{{new Date().getFullYear()}}. All rights reserved.
+          </p>
         </div>
       </div>
+      
       <div class="w-full border-stroke dark:border-strokedark xl:w-1/2 xl:border-l-2">
         <div class="w-full p-4 sm:p-12.5 xl:p-17.5">
           <span class="mb-1.5 block font-medium">{{ props.subtitle }}</span>
