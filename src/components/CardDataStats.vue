@@ -94,7 +94,7 @@ const cardItems = ref([
               fill=""
             />
           </svg>`,
-    title: 'Total Users',
+    title: 'Total ',
     total: '3.456',
     growthRate: -0.95
   }
@@ -116,7 +116,7 @@ const cardItems = ref([
     <div class="mt-4 flex items-end justify-between">
       <div>
         <h4 class="text-title-md font-bold text-black dark:text-white">{{ item.total }}</h4>
-        <span class="text-sm font-medium">{{ item.title }}</span>
+        <span class="text-sm font-medium">{{ item.title }} 123</span>
       </div>
 
       <span
