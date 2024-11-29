@@ -12,8 +12,17 @@ import ProfileView from '@/views/ProfileView.vue'
 import TablesView from '@/views/TablesView.vue'
 import AlertsView from '@/views/UiElements/AlertsView.vue'
 import ButtonsView from '@/views/UiElements/ButtonsView.vue'
+import DepartmentsUiView from '@/views/DepartmentsUiView.vue'
 
 const routes = [
+  {
+    path: '/departments',
+    name: 'departments',
+    component: DepartmentsUiView,
+    meta: {
+      title: 'Departments'
+    }
+  },
   {
     path: '/',
     name: 'eCommerce',
