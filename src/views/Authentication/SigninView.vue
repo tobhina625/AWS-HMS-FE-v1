@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import DefaultAuthCard from '@/components/Auths/DefaultAuthCard.vue'
-import InputGroup from '@/components/Auths/InputGroup.vue'
-import FullScreenLayout from '@/layouts/FullScreenLayout.vue'
+import DefaultAuthCard from '../../components/Auths/DefaultAuthCard.vue'
+import InputGroup from '../../components/Auths/InputGroup.vue'
+import FullScreenLayout from '../../layouts/FullScreenLayout.vue'
 
 import { ref } from 'vue'
 
@@ -11,39 +11,52 @@ const credentials = ref({
   password: '',
 })
 
+const errors = ref({
+  email: '',
+  password: '',
+})
+
 const login = () => {
-  const isValid = validateCredentials();
-  if(isValid === 1){
-    console.log("Valid Credentials, Valid Email Format");
-    console.log(credentials.value);
-  }else if(isValid === 0){
-    console.log("Invalid Credentials, Invalid Email Format");
-  }else{
-    console.log("Invalid Credentials, Fields Required!");
+  validateCredentials();
+  if (!errors.value.email && !errors.value.password) {
+    console.log('Valid Credentials:', credentials.value);
+  } else {
+    console.log('Invalid Credentials');
   }
 }
 
 const validateCredentials = () => {
-  if (credentials.value.email && credentials.value.password) {
+  errors.value.email = '';
+  errors.value.password = '';
+
+  if (!credentials.value.email) {
+    errors.value.email = 'Email is required.';
+  } else {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (emailRegex.test(credentials.value.email)) {
-    return 1;
-    }else{
-    return 0;
+    if (!emailRegex.test(credentials.value.email)) {
+      errors.value.email = 'Invalid email format.';
     }
-  }else{
-    return -1;
-  }
   }
 
+  if (!credentials.value.password) {
+    errors.value.password = 'Password is required.';
+  } else if (credentials.value.password.length < 6) {
+    errors.value.password = 'Password must be at least 6 characters.';
+  }
+}
 </script>
 
 <template>
   <FullScreenLayout>
-    <DefaultAuthCard title="Sign In">
-      <form>
+    <DefaultAuthCard :pageTitle="pageTitle">
+      <form @submit.prevent="login">
 
-        <InputGroup label="Email" type="email" placeholder="Enter your email" v-model="credentials.email">
+        <InputGroup 
+        label="Email" 
+        type="email" 
+        placeholder="Enter your email" 
+        v-model="credentials.email"
+        >
           <svg class="fill-current" width="22" height="22" viewBox="0 0 22 22" fill="none"
             xmlns="http://www.w3.org/2000/svg">
             <g opacity="0.5">
@@ -53,8 +66,9 @@ const validateCredentials = () => {
             </g>
           </svg>
         </InputGroup>
+        <p v-if="errors.email" class="text-red text-sm mt-1 mb-1">{{ errors.email }}</p>
 
-        <InputGroup label="Password" type="password" placeholder="6+ Characters, 1 Capital letter"
+        <InputGroup label="Password" type="password" placeholder="6+ Characters"
           v-model="credentials.password">
           <svg class="fill-current" width="22" height="22" viewBox="0 0 22 22" fill="none"
             xmlns="http://www.w3.org/2000/svg">
@@ -68,6 +82,7 @@ const validateCredentials = () => {
             </g>
           </svg>
         </InputGroup>
+        <p v-if="errors.password" class="text-red text-sm mt-1 mb-1">{{ errors.password }}</p>
 
         <div class="flex justify-between items-center">
           <p class="font-medium">

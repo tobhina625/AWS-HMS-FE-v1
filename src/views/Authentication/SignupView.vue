@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import DefaultAuthCard from '@/components/Auths/DefaultAuthCard.vue'
-import InputGroup from '@/components/Auths/InputGroup.vue'
-import BreadcrumbDefault from '@/components/Breadcrumbs/BreadcrumbDefault.vue'
-import FullScreenLayout from '@/layouts/FullScreenLayout.vue'
+import DefaultAuthCard from '../../components/Auths/DefaultAuthCard.vue'
+import InputGroup from '../../components/Auths/InputGroup.vue'
+import FullScreenLayout from '../../layouts/FullScreenLayout.vue'
 
 import { ref } from 'vue'
 import GenderSelectionGroup from '../../components/Forms/GenderSelectionGroup.vue'
@@ -49,7 +48,7 @@ const validateRequiredFields = () => {
 
 <template>
   <FullScreenLayout>
-    <DefaultAuthCard title="Sign Up" >
+    <DefaultAuthCard :pageTitle="pageTitle" >
       <form>
         <div class="flex justify-between items-center">
           <p class="font-medium">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import errors from "../../views/Authentication/SigninView.vue"
 const props = defineProps({
   label: String,
   type: String,
