@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import DefaultAuthCard from '@/components/Auths/DefaultAuthCard.vue'
 import InputGroup from '@/components/Auths/InputGroup.vue'
-import BreadcrumbDefault from '@/components/Breadcrumbs/BreadcrumbDefault.vue'
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import FullScreenLayout from '@/layouts/FullScreenLayout.vue'
 
 import { ref } from 'vue'
 
@@ -10,11 +9,7 @@ const pageTitle = ref('Sign Up')
 </script>
 
 <template>
-  <DefaultLayout>
-    <!-- Breadcrumb Start -->
-    <BreadcrumbDefault :pageTitle="pageTitle" />
-    <!-- Breadcrumb End -->
-
+  <FullScreenLayout>
     <DefaultAuthCard subtitle="Start for free" title="Sign Up to HMS">
       <form>
         <InputGroup label="Name" type="text" placeholder="Enter your full name">
@@ -156,5 +151,5 @@ const pageTitle = ref('Sign Up')
         </div>
       </form>
     </DefaultAuthCard>
-  </DefaultLayout>
+  </FullScreenLayout>
 </template>
