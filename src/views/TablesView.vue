@@ -5,6 +5,8 @@ import TableOne from '@/components/Tables/TableOne.vue'
 import TableTwo from '@/components/Tables/TableTwo.vue'
 import TableThree from '@/components/Tables/TableThree.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import Search from '../components/Doctor/Search.vue'
+import Add from '../components/Doctor/Add.vue'
 
 const pageTitle = ref('Tables')
 </script>
@@ -16,7 +18,8 @@ const pageTitle = ref('Tables')
     <!-- Breadcrumb End -->
 
     <div class="flex flex-col gap-10">
-      <TableOne />
+      <Add/>
+      <Search/>
       <TableTwo />
       <TableThree />
     </div>
