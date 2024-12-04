@@ -17,8 +17,9 @@ const errors = ref({
 })
 
 const login = () => {
-  validateCredentials();
+  console.log("In Login Function")
   if (!errors.value.email && !errors.value.password) {
+    validateCredentials();
     console.log('Valid Credentials:', credentials.value);
   } else {
     console.log('Invalid Credentials');
@@ -26,6 +27,8 @@ const login = () => {
 }
 
 const validateCredentials = () => {
+  console.log("In validateCredentials Function")
+
   errors.value.email = '';
   errors.value.password = '';
 
