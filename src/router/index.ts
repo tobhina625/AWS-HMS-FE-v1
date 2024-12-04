@@ -110,14 +110,6 @@ const routes = [
     meta: {
       title: 'Signin'
     }
-  },
-  {
-    path: '/auth/signup',
-    name: 'signup',
-    component: SignupView,
-    meta: {
-      title: 'Signup'
-    }
   }
 ]
 

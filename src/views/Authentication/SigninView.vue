@@ -51,12 +51,7 @@ const validateCredentials = () => {
     <DefaultAuthCard :pageTitle="pageTitle">
       <form @submit.prevent="login">
 
-        <InputGroup 
-        label="Email" 
-        type="email" 
-        placeholder="Enter your email" 
-        v-model="credentials.email"
-        >
+        <InputGroup label="Email" type="email" placeholder="Enter your email" v-model="credentials.email">
           <svg class="fill-current" width="22" height="22" viewBox="0 0 22 22" fill="none"
             xmlns="http://www.w3.org/2000/svg">
             <g opacity="0.5">
@@ -68,8 +63,7 @@ const validateCredentials = () => {
         </InputGroup>
         <p v-if="errors.email" class="text-red text-sm mt-1 mb-1">{{ errors.email }}</p>
 
-        <InputGroup label="Password" type="password" placeholder="6+ Characters"
-          v-model="credentials.password">
+        <InputGroup label="Password" type="password" placeholder="6+ Characters" v-model="credentials.password">
           <svg class="fill-current" width="22" height="22" viewBox="0 0 22 22" fill="none"
             xmlns="http://www.w3.org/2000/svg">
             <g opacity="0.5">
@@ -97,17 +91,12 @@ const validateCredentials = () => {
 
         <div class="mb-5 mt-6">
           <div
-            class="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 font-medium text-white transition hover:bg-opacity-90 text-center" @click="login()">
+            class="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 font-medium text-white transition hover:bg-opacity-90 text-center"
+            @click="login()">
             Sign In
           </div>
         </div>
 
-        <!-- <div class="mt-6 text-center">
-          <p class="font-medium">
-            Don’t have any account?
-            <router-link to="/auth/signup" class="text-primary">Sign up</router-link>
-          </p>
-        </div> -->
       </form>
     </DefaultAuthCard>
   </FullScreenLayout>
