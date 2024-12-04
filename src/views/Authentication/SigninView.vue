@@ -21,7 +21,7 @@ const login = () => {
     validateCredentials();
     console.log('Valid Credentials:', credentials.value);
   } else {
-    console.log('Invalid Credentials');
+    console.log('Invalid Credentials', errors.value);
   }
 }
 
