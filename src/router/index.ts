@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import SigninView from '@/views/Authentication/SigninView.vue'
-import SignupView from '@/views/Authentication/SignupView.vue'
 import CalendarView from '@/views/CalendarView.vue'
 import BasicChartView from '@/views/Charts/BasicChartView.vue'
 import ECommerceView from '@/views/Dashboard/ECommerceView.vue'
@@ -12,17 +11,8 @@ import ProfileView from '@/views/ProfileView.vue'
 import TablesView from '@/views/TablesView.vue'
 import AlertsView from '@/views/UiElements/AlertsView.vue'
 import ButtonsView from '@/views/UiElements/ButtonsView.vue'
-import DepartmentsUiView from '@/views/DepartmentsUiView.vue'
 
 const routes = [
-  {
-    path: '/departments',
-    name: 'departments',
-    component: DepartmentsUiView,
-    meta: {
-      title: 'Departments'
-    }
-  },
   {
     path: '/',
     name: 'eCommerce',
@@ -109,14 +99,6 @@ const routes = [
     component: SigninView,
     meta: {
       title: 'Signin'
-    }
-  },
-  {
-    path: '/auth/signup',
-    name: 'signup',
-    component: SignupView,
-    meta: {
-      title: 'Signup'
     }
   }
 ]
