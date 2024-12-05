@@ -23,19 +23,19 @@ const routes = [
     }
   },
   {
-    path: '/Departments',
-    name: 'Departments',
+    path: '/calendar',
+    name: 'calendar',
     component: CalendarView,
     meta: {
-      title: 'Departments'
+      title: 'Calendar'
     }
   },
   {
-    path: '/Appointments',
-    name: 'Appointments',
+    path: '/profile',
+    name: 'profile',
     component: ProfileView,
     meta: {
-      title: 'Appointments'
+      title: 'Profile'
     }
   },
   {

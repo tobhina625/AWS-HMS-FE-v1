@@ -9,7 +9,7 @@
     "playwright.config.*",
     "src/**/*.ts", 
     "src/**/*.vue"
-  ],
+, "src/components/Alertplugin.js"  ],
   "compilerOptions": {
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,

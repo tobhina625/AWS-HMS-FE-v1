@@ -94,7 +94,7 @@ const cardItems = ref([
               fill=""
             />
           </svg>`,
-    title: 'Total ',
+    title: 'Total User',
     total: '3.456',
     growthRate: -0.95
   }
