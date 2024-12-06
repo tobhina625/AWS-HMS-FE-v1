@@ -5,6 +5,9 @@ import ChartThree from '@/components/Charts/ChartThree.vue'
 import ChartTwo from '@/components/Charts/ChartTwo.vue'
 import ChatCardTest from '@/components/ChatCardTest.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import AppointmentChart from '../../components/Charts/AppointmentChart.vue'
+import DoctorsChatCard from '../../components/DoctorsChatCard.vue'
+import DepartmentsChatCard from '../../components/DepartmentsChatCard.vue'
 </script>
 
 <template>
@@ -24,11 +27,15 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
           <div class="flex gap-6 col-span-12" >
             <!-- ====== Chat Card Start -->
-            <ChatCardTest />
+            <!-- <ChatCardTest /> -->
+            <DoctorsChatCard/>
             <!-- ====== Chat Card End -->
   
             <!-- ====== Chat Card Start -->
-            <ChatCardTest />
+            <!-- <ChatCardTest /> -->
+            <!-- <DoctorsChatCard/> -->
+             <DepartmentsChatCard />
+
             <!-- ====== Chat Card End -->
 
           </div>
@@ -38,9 +45,9 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
       <div class="flex-1">
         <div class="grid grid-cols-1 gap-4 md:gap-6 2xl:gap-7.5">
           <!-- ====== Chart Two Start -->
-          <ChartTwo />
+          <!-- <ChartTwo /> -->
           <!-- ====== Chart Two End -->
-
+          <AppointmentChart/>
           <!-- ====== Chart Three Start -->
           <ChartThree />
           <!-- ====== Chart Three End -->
