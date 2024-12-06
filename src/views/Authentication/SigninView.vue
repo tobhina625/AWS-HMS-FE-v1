@@ -2,7 +2,9 @@
 import DefaultAuthCard from '../../components/Auths/DefaultAuthCard.vue'
 import InputGroup from '../../components/Auths/InputGroup.vue'
 import FullScreenLayout from '../../layouts/FullScreenLayout.vue'
+import httpClient from '../../http/httpClient.vue'
 
+import { useRouter } from 'vue-router';
 import { ref } from 'vue'
 
 const pageTitle = ref('Sign In')
@@ -16,17 +18,43 @@ const errors = ref({
   password: '',
 })
 
-const login = () => {
+const apiError = ref('') // Add API error state
+const router = useRouter();
+
+const login = async () => {
+  validateCredentials();
   if (!errors.value.email && !errors.value.password) {
-    validateCredentials();
-    console.log('Valid Credentials:', credentials.value);
+    try {
+      apiError.value = '';
+
+      // Call the API to authenticate the user
+      let user = {
+        email: credentials.value.email,
+        password: credentials.value.password,
+      }
+      const response = await httpClient.postDataFromHttpClient('/account/login', user)
+
+      // Handle successful response
+      console.log('Login successful:', response.data);
+      localStorage.setItem('hms-token', response.data);
+      router.push({name: 'eCommerce'});
+
+      setTimeout(() => (
+        localStorage.removeItem('hms-token')
+      ), 10000)
+
+    } catch (err) {
+      // Handle API errors
+      const error = err as any;
+      apiError.value = error.response?.data?.message || 'An error occurred during login.';
+      console.error('Login failed:', error);
+    }
   } else {
     console.log('Invalid Credentials', errors.value);
   }
 }
 
 const validateCredentials = () => {
-
   errors.value.email = '';
   errors.value.password = '';
 
@@ -78,6 +106,10 @@ const validateCredentials = () => {
           </svg>
         </InputGroup>
         <p v-if="errors.password" class="text-red text-sm mt-1 mb-1">{{ errors.password }}</p>
+
+        <!-- Show API error -->
+        <p v-if="apiError" class="text-red text-sm mt-1 mb-1">{{ apiError }}</p>
+
 
         <div class="flex justify-between items-center">
           <p class="font-medium">
