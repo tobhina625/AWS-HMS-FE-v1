@@ -15,7 +15,7 @@ const chartData = {
       data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39, 51]
     }
   ],
-  //labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug']
+  labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug']
 }
 
 const chart = ref(null)
