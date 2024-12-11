@@ -47,11 +47,11 @@ const apexOptions = {
 
 <template>
   <div
-    class="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-12"
+    class="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-5"
   >
     <div class="mb-3 justify-between gap-4 sm:flex">
       <div>
-        <h4 class="text-xl font-bold text-black dark:text-white">Appointment Overview</h4>
+        <h4 class="text-xl font-bold text-black dark:text-white">Visitors Analytics</h4>
       </div>
       <div>
         <div class="relative z-20 inline-block">
@@ -102,8 +102,8 @@ const apexOptions = {
         <div class="flex w-full items-center">
           <span class="mr-2 block h-3 w-full max-w-3 rounded-full bg-primary"></span>
           <p class="flex w-full justify-between text-sm font-medium text-black dark:text-white">
-            <span> Male </span>
-            <!-- <span> 65% </span> -->
+            <span> Desktop </span>
+            <span> 65% </span>
           </p>
         </div>
       </div>
@@ -111,8 +111,8 @@ const apexOptions = {
         <div class="flex w-full items-center">
           <span class="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#6577F3]"></span>
           <p class="flex w-full justify-between text-sm font-medium text-black dark:text-white">
-            <span> Female </span>
-            <!-- <span> 34% </span> -->
+            <span> Tablet </span>
+            <span> 34% </span>
           </p>
         </div>
       </div>
@@ -120,8 +120,8 @@ const apexOptions = {
         <div class="flex w-full items-center">
           <span class="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#8FD0EF]"></span>
           <p class="flex w-full justify-between text-sm font-medium text-black dark:text-white">
-            <span> Child </span>
-            <!-- <span> 45% </span> -->
+            <span> Mobile </span>
+            <span> 45% </span>
           </p>
         </div>
       </div>
@@ -129,8 +129,8 @@ const apexOptions = {
         <div class="flex w-full items-center">
           <span class="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#0FADCF]"></span>
           <p class="flex w-full justify-between text-sm font-medium text-black dark:text-white">
-            <span> Germany </span>
-            <!-- <span> 12% </span> -->
+            <span> Unknown </span>
+            <span> 12% </span>
           </p>
         </div>
       </div>
