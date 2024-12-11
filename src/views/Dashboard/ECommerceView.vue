@@ -5,9 +5,12 @@ import ChartThree from '@/components/Charts/ChartThree.vue'
 import ChartTwo from '@/components/Charts/ChartTwo.vue'
 import ChatCardTest from '@/components/ChatCardTest.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import AppointmentChart from '../../components/Charts/AppointmentChart.vue'
-import DoctorsChatCard from '../../components/DoctorsChatCard.vue'
-import DepartmentsChatCard from '../../components/DepartmentsChatCard.vue'
+import AppointmentChart from '../../components/Dashboard/AppointmentChart.vue'
+import DoctorsChatCard from '../../components/Dashboard/DoctorsChatCard.vue'
+import DepartmentsChatCard from '../../components/Dashboard/DepartmentsChatCard.vue'
+import DataStats from '../../components/Dashboard/DataStats.vue'
+import DataChart from '../../components/Dashboard/DataChart.vue'
+import AppointmentOverviewChart from '../../components/Dashboard/AppointmentOverviewChart.vue'
 </script>
 
 <template>
@@ -16,12 +19,12 @@ import DepartmentsChatCard from '../../components/DepartmentsChatCard.vue'
     <div class="flex gap-6 flex-col xl:flex-row">
       <div class="flex-[2]">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6 2xl:gap-7.5">
-          <DataStatsOne />
+          <DataStats/>
         </div>
   
         <div class="mt-4 grid grid-cols-2 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
           <!-- ====== Chart One Start -->
-          <ChartOne />
+          <DataChart/>
           <!-- ====== Chart One End -->
 
 
@@ -34,7 +37,7 @@ import DepartmentsChatCard from '../../components/DepartmentsChatCard.vue'
             <!-- ====== Chat Card Start -->
             <!-- <ChatCardTest /> -->
             <!-- <DoctorsChatCard/> -->
-             <DepartmentsChatCard />
+            <DepartmentsChatCard/>
 
             <!-- ====== Chat Card End -->
 
@@ -49,7 +52,7 @@ import DepartmentsChatCard from '../../components/DepartmentsChatCard.vue'
           <!-- ====== Chart Two End -->
           <AppointmentChart/>
           <!-- ====== Chart Three Start -->
-          <ChartThree />
+          <AppointmentOverviewChart/>
           <!-- ====== Chart Three End -->
 
         </div>

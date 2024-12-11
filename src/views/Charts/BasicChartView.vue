@@ -4,7 +4,7 @@ import ChartOne from '@/components/Charts/ChartOne.vue'
 import ChartThree from '@/components/Charts/ChartThree.vue'
 import ChartTwo from '@/components/Charts/ChartTwo.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import AppointmentChart from '../../components/Charts/AppointmentChart.vue'
+import AppointmentChart from '../../components/Dashboard/AppointmentChart.vue'
 
 import { ref } from 'vue'
 
