@@ -46,16 +46,16 @@ const products = ref([
 ])
 </script>
 
-<!-- <template>
+<template>
   <div
     class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark"
   >
     <div class="py-6 px-4 md:px-6 xl:px-7.5">
       <h4 class="text-xl font-bold text-black dark:text-white">Top Products</h4>
-    </div> -->
+    </div>
 
     <!-- Table Header -->
-    <!-- <div
+    <div
       class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
     >
       <div class="col-span-3 flex items-center">
@@ -73,10 +73,10 @@ const products = ref([
       <div class="col-span-1 flex items-center">
         <p class="font-medium">Profit</p>
       </div>
-    </div> -->
+    </div>
 
     <!-- Table Rows -->
-    <!-- <div
+    <div
       v-for="product in products"
       :key="product.id"
       class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
@@ -103,4 +103,4 @@ const products = ref([
       </div>
     </div>
   </div>
-</template> -->
+</template>
