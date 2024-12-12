@@ -9,9 +9,10 @@ import FormElementsView from '@/views/Forms/FormElementsView.vue'
 import FormLayoutView from '@/views/Forms/FormLayoutView.vue'
 import SettingsView from '@/views/Pages/SettingsView.vue'
 import ProfileView from '@/views/ProfileView.vue'
-import TablesView from '@/views/TablesView.vue'
+import TablesView from '@/views/DoctorsView.vue'
 import AlertsView from '@/views/UiElements/AlertsView.vue'
 import ButtonsView from '@/views/UiElements/ButtonsView.vue'
+import DoctorsView from '@/views/DoctorsView.vue'
 
 const routes = [
   {
@@ -55,11 +56,11 @@ const routes = [
     }
   },
   {
-    path: '/tables',
-    name: 'tables',
-    component: TablesView,
+    path: '/doctors',
+    name: 'doctors',
+    component: DoctorsView,
     meta: {
-      title: 'Tables'
+      title: 'Doctors'
     }
   },
   {

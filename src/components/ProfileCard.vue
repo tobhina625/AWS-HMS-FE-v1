@@ -6,6 +6,7 @@
     </button>
  
   <!-- ====== Profile Section Start -->
+  <br>
   <svg width="997" height="209" viewBox="0 0 997 209" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <rect width="997" height="209" rx="20" fill="url(#pattern0_718_131)"/>
 <defs>
