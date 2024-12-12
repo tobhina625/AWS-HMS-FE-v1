@@ -1,32 +1,34 @@
-
 <template>
   <div class="flex-1 rounded-sm border border-stroke bg-white py-6 shadow-default dark:border-strokedark dark:bg-boxdark">
     <!-- Heading -->
     <h2 class="text-2xl font-bold mb-4 p-3">Doctors</h2>
-    <hr class="mb-4" />
+    <hr class="mb-4 border-t border-[#D3D3D3]" />
 
     <!-- Doctor Cards -->
     <div
-      v-for="doctor in doctors"
-      :key="doctor.id"
+      v-for="Doctor in Doctors"
+      :key="Doctor.id"
       class="flex items-center p-4 bg-white shadow rounded-lg mb-4"
     >
       <!-- Doctor Image -->
       <img
-        :src="doctor.image"
+        :src="Doctor.image"
         alt="Doctor Picture"
         class="w-16 h-16 rounded-full mr-4"
       />
 
       <!-- Doctor Details -->
       <div class="flex-1">
-        <h3 class="font-semibold text-lg">{{ doctor.name }}</h3>  
-        <p class="text-sm text-gray-500">{{ doctor.occupation }}</p>
+        <h3 class="font-semibold text-lg">{{ Doctor.name }}</h3>
+        <p class="text-sm text-gray-500">{{ Doctor.occupation }}</p>
       </div>
 
       <!-- Action Icons -->
-      <button class="text-gray-500 hover:text-gray-700">📞</button>
-      <button class="text-gray-500 hover:text-gray-700 ml-2">⋮</button>
+      <button class="text-gray-500 hover:text-gray-700 ml-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+        </svg>
+      </button>
     </div>
   </div>
 </template>
@@ -37,7 +39,7 @@ import userOne from '@/assets/images/user/user-01.png'
 import userTwo from '@/assets/images/user/user-02.png'
 import userThree from '@/assets/images/user/user-03.png'
 
-const doctors = ref([
+const Doctors = ref([
   {
     id: 1,
     name: "Dr. Jennifer J",
@@ -58,14 +60,13 @@ const doctors = ref([
   },
 ]);
 
-
 // Fetch doctors from the backend
 const fetchDoctors = async () => {
   try {
     // Replace the URL with your actual API endpoint
     const response = await fetch("https://api.example.com/doctors");
     const data = await response.json();
-    doctors.value = data;
+    Doctors.value = data;
   } catch (error) {
     console.error("Error fetching doctors:", error);
   }

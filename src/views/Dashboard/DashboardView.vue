@@ -23,20 +23,14 @@ import AppointmentOverviewChart from '../../components/Dashboard/AppointmentOver
         </div>
   
         <div class="mt-4 grid grid-cols-2 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-          <!-- ====== Chart One Start -->
+          
           <DataChart/>
-          <!-- ====== Chart One End -->
 
 
           <div class="flex gap-6 col-span-12" >
-            <!-- ====== Chat Card Start -->
-            <!-- <ChatCardTest /> -->
+          
             <DoctorsChatCard/>
-            <!-- ====== Chat Card End -->
-  
-            <!-- ====== Chat Card Start -->
-            <!-- <ChatCardTest /> -->
-            <!-- <DoctorsChatCard/> -->
+           
             <DepartmentsChatCard/>
 
             <!-- ====== Chat Card End -->
@@ -47,13 +41,11 @@ import AppointmentOverviewChart from '../../components/Dashboard/AppointmentOver
   
       <div class="flex-1">
         <div class="grid grid-cols-1 gap-4 md:gap-6 2xl:gap-7.5">
-          <!-- ====== Chart Two Start -->
-          <!-- <ChartTwo /> -->
-          <!-- ====== Chart Two End -->
-          <AppointmentChart/>
-          <!-- ====== Chart Three Start -->
-          <AppointmentOverviewChart/>
-          <!-- ====== Chart Three End -->
+         
+        <AppointmentChart/>
+     
+        <AppointmentOverviewChart/>
+      
 
         </div>
       </div>

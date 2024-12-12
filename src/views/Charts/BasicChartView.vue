@@ -25,7 +25,6 @@ const pageTitle = ref('Basic Chart')
       <!-- ====== Chart Two Start -->
       <ChartTwo />
       <!-- ====== Chart Two End -->
-      <AppointmentChart/>
       <!-- ====== Chart Three Start -->
       <ChartThree />
       <!-- ====== Chart Three End -->
