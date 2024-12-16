@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import BreadcrumbDefault from '@/components/Breadcrumbs/BreadcrumbDefault.vue'
-import DoctorUI from '@/components/Doctors/DoctorUI.vue'
+import TableOne from '@/components/Tables/TableOne.vue'
+import TableTwo from '@/components/Tables/TableTwo.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import Search from '../components/Doctors/Search.vue'
-import Add from '../components/Doctors/Add.vue'
 
-
-const pageTitle = ref('Doctors')
+const pageTitle = ref('Tables')
 </script>
 
 <template>
@@ -17,10 +15,8 @@ const pageTitle = ref('Doctors')
     <!-- Breadcrumb End -->
 
     <div class="flex flex-col gap-10">
-      <Add/>
-      <Search/>
-     
-      <DoctorUI />
+      <TableOne />
+      <TableTwo />
     </div>
   </DefaultLayout>
 </template>
