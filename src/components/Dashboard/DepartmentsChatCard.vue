@@ -8,7 +8,7 @@
     <div
       v-for="Department in Departments"
       :key="Department.id"
-      class="flex items-center p-4 bg-white shadow rounded-lg mb-4"
+      class="flex items-center p-4 bg-white  dark:bg-strokedark shadow rounded-lg mb-4"
     >
        <!-- Department Detail -->
       <img

@@ -26,7 +26,7 @@ import AppointmentOverviewChart from '../../components/Dashboard/AppointmentOver
           
           <DataChart/>
 
-
+          <div>
           <div class="flex gap-6 col-span-12" >
           
             <DoctorsChatCard/>

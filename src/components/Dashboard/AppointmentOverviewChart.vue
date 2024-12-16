@@ -5,7 +5,7 @@ import VueApexCharts from 'vue3-apexcharts'
 
 const chartData = {
   series: [65, 34, 45, 12],
-  labels: ['Desktop', 'Tablet', 'Mobile', 'Unknown']
+  labels: ['Male', 'Female', 'Child', 'Germany']
 }
 
 const chart = ref(null)
@@ -58,7 +58,7 @@ const apexOptions = {
           <select
             name=""
             id=""
-            class="relative z-20 inline-flex appearance-none bg-transparent py-1 pl-3 pr-8 text-sm font-medium outline-none"
+            class="relative z-20 inline-flex appearance-none  dark:bg-boxdark bg-transparent py-1 pl-3 pr-8 text-sm font-medium outline-none"
           >
             <option value="">Monthly</option>
             <option value="">Yearly</option>
@@ -103,7 +103,7 @@ const apexOptions = {
           <span class="mr-2 block h-3 w-full max-w-3 rounded-full bg-primary"></span>
           <p class="flex w-full justify-between text-sm font-medium text-black dark:text-white">
             <span> Male </span>
-            <!-- <span> 65% </span> -->
+            <span> 65% </span>
           </p>
         </div>
       </div>
@@ -112,7 +112,7 @@ const apexOptions = {
           <span class="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#6577F3]"></span>
           <p class="flex w-full justify-between text-sm font-medium text-black dark:text-white">
             <span> Female </span>
-            <!-- <span> 34% </span> -->
+            <span> 34% </span>
           </p>
         </div>
       </div>
@@ -121,7 +121,7 @@ const apexOptions = {
           <span class="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#8FD0EF]"></span>
           <p class="flex w-full justify-between text-sm font-medium text-black dark:text-white">
             <span> Child </span>
-            <!-- <span> 45% </span> -->
+            <span> 45% </span>
           </p>
         </div>
       </div>
@@ -130,7 +130,7 @@ const apexOptions = {
           <span class="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#0FADCF]"></span>
           <p class="flex w-full justify-between text-sm font-medium text-black dark:text-white">
             <span> Germany </span>
-            <!-- <span> 12% </span> -->
+            <span> 12% </span>
           </p>
         </div>
       </div>

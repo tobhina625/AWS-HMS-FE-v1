@@ -41,7 +41,7 @@
       <div
         v-for="appointment in filteredAppointments"
         :key="appointment.id"
-        class="flex items-center p-4 bg-white rounded-lg shadow"
+        class="flex items-center p-4 bg-white  dark:bg-strokedark rounded-lg shadow"
       >
         <img
           :src="appointment.image"
