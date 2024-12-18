@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import BreadcrumbDefault from '@/components/Breadcrumbs/BreadcrumbDefault.vue'
-import DoctorUI from '@/components/Doctors/DoctorUI.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Search from '@/components/Doctors/Search.vue'
+import List from '@/components/Doctors/List.vue'
 
 
 
@@ -19,7 +19,7 @@ const pageTitle = ref('Doctors')
     <div class="flex flex-col gap-10">
       
       <Search/>
-      <DoctorUI />
+      <List />
     </div>
   </DefaultLayout>
 </template>
