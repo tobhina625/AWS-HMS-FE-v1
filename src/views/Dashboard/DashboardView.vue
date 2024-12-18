@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import DataStatsOne from '@/components/DataStats/DataStatsOne.vue'
-import ChartOne from '@/components/Charts/ChartOne.vue'
-import ChartThree from '@/components/Charts/ChartThree.vue'
-import ChartTwo from '@/components/Charts/ChartTwo.vue'
-import ChatCardTest from '@/components/ChatCardTest.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import DoctorsChatCard from '../../components/Dashboard/DoctorsChatCard.vue'
-import DepartmentsChatCard from '../../components/Dashboard/DepartmentsChatCard.vue'
-import DataStats from '../../components/Dashboard/DataStats.vue'
-import AppointmentOverviewChart from '../../components/Dashboard/AppointmentOverviewChart.vue'
-import Appointment from '../../components/Dashboard/Appointment.vue'
-import IncomeChart from '../../components/Dashboard/IncomeChart.vue'
+import Appointment from '@/components/Dashboard/Appointment.vue'
+import AppointmentOverviewChart from '@/components/Dashboard/AppointmentOverviewChart.vue'
+import DataStats from '@/components/Dashboard/DataStats.vue'
+import DepartmentsChatCard from '@/components/Dashboard/DepartmentsChatCard.vue'
+import DoctorsChatCard from '@/components/Dashboard/DoctorsChatCard.vue'
+import IncomeChart from '@/components/Dashboard/IncomeChart.vue'
 </script>
 
 <template>

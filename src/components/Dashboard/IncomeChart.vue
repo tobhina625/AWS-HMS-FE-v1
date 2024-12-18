@@ -15,7 +15,6 @@ const chartData = {
       data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39, 51]
     }
   ],
-  //labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug']
 }
 
 const chart = ref(null)
@@ -152,23 +151,6 @@ const apexOptions = {
         </div>
       </div>
       <div class="flex w-full max-w-45 justify-end">
-        <div class="inline-flex items-center rounded-md bg-whiter p-1.5 dark:bg-meta-4">
-          <!-- <button
-            class="rounded bg-white py-1 px-3 text-xs font-medium text-black shadow-card hover:bg-white hover:shadow-card dark:bg-boxdark dark:text-white dark:hover:bg-boxdark"
-          >
-            Day
-          </button>
-          <button
-            class="rounded py-1 px-3 text-xs font-medium text-black hover:bg-white hover:shadow-card dark:text-white dark:hover:bg-boxdark"
-          >
-            Week
-          </button>
-          <button
-            class="rounded py-1 px-3 text-xs font-medium text-black hover:bg-white hover:shadow-card dark:text-white dark:hover:bg-boxdark"
-          >
-            Month
-          </button> -->
-        </div>
       </div>
     </div>
     <div>
