@@ -11,6 +11,7 @@ import ProfileView from '@/views/ProfileView.vue'
 import TablesView from '@/views/TablesView.vue'
 import AlertsView from '@/views/UiElements/AlertsView.vue'
 import ButtonsView from '@/views/UiElements/ButtonsView.vue'
+import ListView from '@/views/DoctorsUI/listView.vue'
 
 const routes = [
   {
@@ -54,11 +55,11 @@ const routes = [
     }
   },
   {
-    path: '/tables',
-    name: 'tables',
-    component: TablesView,
+    path: '/doctors',
+    name: 'doctors',
+    component: ListView,
     meta: {
-      title: 'Tables'
+      title: 'Doctors'
     }
   },
   {
