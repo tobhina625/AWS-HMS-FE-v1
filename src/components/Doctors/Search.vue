@@ -3,7 +3,7 @@
     <div class="gap-6 flex justify-end flex-col md:flex-row">
 
       <input type="text" placeholder="Search"
-        class="w-full max-w-80 rounded-lg border-[1.5px] border-stroke bg-transparent px-5 py-1 font-normal text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary">
+        class="w-full max-w-80 rounded-lg border-[1.5px] border-stroke px-5 py-1 font-normal text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary">
       <button class="hover:text-primary">
         <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2 opacity-100 border border-stroke  dark:bg-meta-4">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
