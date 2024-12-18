@@ -17,10 +17,10 @@ const errors = ref({
   password: '',
 })
 
-const apiError = ref('') // Add API error state
+const apiError = ref('')
 const router = useRouter();
 
-const login = async () => {
+const login = () => {
   validateCredentials();
   if (!errors.value.email && !errors.value.password) {
     try {
