@@ -2,7 +2,6 @@
 import DefaultAuthCard from '../../components/Auths/DefaultAuthCard.vue'
 import InputGroup from '../../components/Auths/InputGroup.vue'
 import FullScreenLayout from '../../layouts/FullScreenLayout.vue'
-import httpClient from '../../http/httpClient.vue'
 
 import { useRouter } from 'vue-router';
 import { ref } from 'vue'
@@ -32,11 +31,10 @@ const login = async () => {
         email: credentials.value.email,
         password: credentials.value.password,
       }
-      const response = await httpClient.postDataFromHttpClient('/account/login', user)
 
       // Handle successful response
-      console.log('Login successful:', response.data);
-      localStorage.setItem('hms-token', response.data);
+      // console.log('Login successful:', response.data);
+      // localStorage.setItem('hms-token', response.data);
       router.push({name: 'eCommerce'});
 
       setTimeout(() => (
