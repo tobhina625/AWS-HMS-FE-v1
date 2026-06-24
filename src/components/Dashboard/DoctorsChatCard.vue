@@ -1,87 +1,122 @@
 <template>
-  <div class="flex-1 rounded-sm border border-stroke bg-white py-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-    <!-- Heading -->
-    <h2 class="text-2xl font-bold mb-4 p-3">Doctors</h2>
-    <hr class="mb-4 border-t border-[#D3D3D3]" />
+  <div class="flex-1 rounded-2xl border border-white/40 bg-surface p-6 shadow-xl dark:border-strokedark/50 transition-all duration-300">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-extrabold text-emphasis tracking-tight">Doctors</h2>
+      <div class="p-1 px-3 bg-primary-light rounded-lg text-[10px] font-black uppercase text-primary">Online</div>
+    </div>
 
-    <!-- Doctor Cards -->
-    <div
-      v-for="Doctor in Doctors"
-      :key="Doctor.id"
-      class="flex items-center p-4 bg-white  dark:bg-strokedark shadow rounded-lg mb-4"
-    >
-      <!-- Doctor Image -->
-      <img
-        :src="Doctor.image"
-        alt="Doctor Picture"
-        class="w-16 h-16 rounded-full mr-4"
-      />
+    <!-- Doctor List -->
+    <div class="space-y-4 overflow-y-auto max-h-[360px] custom-scrollbar pr-2">
+      <div
+        v-for="doctor in doctorsChats"
+        :key="doctor.id"
+        class="group flex items-center p-3 rounded-2xl bg-elevated border border-transparent hover:border-primary/10 hover:bg-white dark:hover:bg-strokedark transition-all duration-300 shadow-sm"
+      >
+        <div class="relative w-12 h-12 flex-shrink-0">
+          <img :src="DoctorImage" class="w-full h-full rounded-xl object-cover" />
+          <div class="absolute -right-1 -top-1 w-3 h-3 bg-success border-2 border-white dark:border-boxdark rounded-full"></div>
+        </div>
 
-      <!-- Doctor Details -->
-      <div class="flex-1">
-        <h3 class="font-semibold text-lg">{{ Doctor.name }}</h3>
-        <p class="text-sm text-gray-500">{{ Doctor.occupation }}</p>
+        <div class="flex-1 ml-4 overflow-hidden">
+          <h3 class="font-bold text-emphasis truncate leading-tight">{{ doctor.name }}</h3>
+          <p class="text-[11px] font-semibold text-muted uppercase tracking-tighter truncate">{{ doctor.specialization }}</p>
+        </div>
+
+        <!-- Action Items -->
+        <div class="flex items-center gap-2">
+          <BaseButton
+            variant="ghost"
+            @click="copyToClipboard(doctor.phoneNumber, doctor.id)"
+            class="!p-2 !rounded-xl !bg-surface !border !border-stroke dark:!border-strokedark shadow-sm hover:!text-primary relative group/btn"
+          >
+            <CallIcon class="w-4 h-4" />
+
+            <div
+              v-if="hoveredDoctorId === doctor.id"
+              class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-[10px] text-white rounded-lg whitespace-nowrap opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-opacity"
+            >
+              {{ copiedDoctorId === doctor.id ? 'Copied!' : doctor.phoneNumber }}
+            </div>
+          </BaseButton>
+
+          <BaseButton variant="ghost" class="!p-2 hover:!bg-elevated rounded-xl transition-colors">
+            <KebabIcon class="w-4 h-4 text-muted" />
+          </BaseButton>
+        </div>
       </div>
 
-      <!-- Action Icons -->
-      <button class="text-gray-500 hover:text-gray-700">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-    </svg>
-  </button>
-      <button class="text-gray-500 hover:text-gray-700 ml-2">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
-        </svg>
-      </button>
+      <div v-if="isLoading" class="flex flex-col items-center py-10 opacity-30">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      <div v-else-if="!hasMore" class="text-center py-4 text-[10px] font-black text-muted uppercase tracking-[0.2em]">End of Roster</div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import userOne from '@/assets/images/user/user-01.png'
-import userTwo from '@/assets/images/user/user-02.png'
-import userThree from '@/assets/images/user/user-03.png'
+  import { ref, onMounted } from 'vue';
+  import BaseButton from '@/components/Base/BaseButton.vue';
+  import CallIcon from '@/assets/images/SVGs/CallIcon.svg';
+  import KebabIcon from '@/assets/images/SVGs/KebabIcon.svg';
+  import DoctorImage from '@/assets/images/user/doctor1.png';
+  import DoctorsChatService from '@/services/DashboardDoctorChatCard/doctorsChat.service';
 
-const Doctors = ref([
-  {
-    id: 1,
-    name: "Dr. Jennifer J",
-    occupation: "Dentist",
-    image: userOne, // Placeholder image
-  },
-  {
-    id: 2,
-    name: "Dr. Michael R",
-    occupation: "Cardiologist",
-    image: userTwo, // Placeholder image
-  },
-  {
-    id: 3,
-    name: "Dr. Emma W",
-    occupation: "Neurologist",
-    image: userThree, // Placeholder image
-  },
-]);
+  const doctorsChats = ref([]);
+  const doctorsChatService = new DoctorsChatService();
+  const page = ref(0);
+  const size = 5;
+  const isLoading = ref(false);
+  const hasMore = ref(true);
 
-// Fetch doctors from the backend
-const fetchDoctors = async () => {
-  try {
-    // Replace the URL with your actual API endpoint
-    const response = await fetch("https://api.example.com/doctors");
-    const data = await response.json();
-    Doctors.value = data;
-  } catch (error) {
-    console.error("Error fetching doctors:", error);
-  }
-};
+  // Tooltip state
+  const hoveredDoctorId = ref(null);
+  const copiedDoctorId = ref(null);
 
-onMounted(() => {
-  fetchDoctors();
-});
+  const fetchDoctors = async () => {
+    if (isLoading.value || !hasMore.value) return;
+
+    isLoading.value = true;
+    try {
+      const response = await doctorsChatService.getDoctorsinfo(page.value, size);
+      if (response.content.length > 0) {
+        doctorsChats.value.push(...response.content);
+        page.value++;
+      } else {
+        hasMore.value = false;
+      }
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const copyToClipboard = async (phoneNumber, id) => {
+    try {
+      await navigator.clipboard.writeText(phoneNumber);
+      copiedDoctorId.value = id;
+
+      setTimeout(() => {
+        copiedDoctorId.value = null;
+      }, 2000);
+    } catch (e) {
+      console.error('Copy failed:', e);
+    }
+  };
+
+  onMounted(() => {
+    fetchDoctors();
+  });
 </script>
 
 <style scoped>
-/* Add any additional custom styling here if needed */
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.3s ease;
+  }
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+  }
 </style>

@@ -5,9 +5,9 @@ export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   darkMode: 'class',
   safelist: [
-    'bg-[#142f72]', 
-    'bg-[#142f72cc]', 
-    'bg-[#377fb9]', 
+    'bg-blue', 
+    'bg-blueLight', 
+    'bg-blue-sidebar', 
   ],
   theme: {
     fontFamily: {
@@ -23,6 +23,13 @@ export default {
       colors: {
         current: 'currentColor',
         transparent: 'transparent',
+        light: 'var(--text-light)',
+        dark: 'var(--text-dark)',
+        muted: 'var(--text-muted)',
+        emphasis: 'var(--text-emphasis)',
+        surface: 'var(--bg-surface)',
+        elevated: 'var(--bg-elevated)',
+        'border-default': 'var(--border-default)',
         white: '#FFFFFF',
         black: '#1C2434',
         red: '#FB5454',
@@ -32,12 +39,14 @@ export default {
         bodydark1: '#DEE4EE',
         bodydark2: '#8A99AF',
         primary: '#3C50E0',
+        'primary-light': '#6577F3',
         secondary: '#80CAEE',
         stroke: '#E2E8F0',
         gray: '#EFF4FB',
         graydark: '#333A48',
         'gray-2': '#F7F9FC',
         'gray-3': '#FAFAFA',
+        'gray-light': '#F3F4F6',
         whiten: '#F1F5F9',
         whiter: '#F5F7FD',
         boxdark: '#24303F',
@@ -56,10 +65,18 @@ export default {
         'meta-9': '#E5E7EB',
         'meta-10': '#0FADCF',
         success: '#219653',
+        'success-light': '#10B981',
         danger: '#D34053',
+        'danger-light': '#EF4444',
         warning: '#FFA70B',
+        'warning-light': '#F59E0B',
         blue: '#142f72',
         blueLight: '#142f72cc',
+        'blue-sidebar': '#2554AC',
+        'blue-hover': '#556DD7',
+        'gray-muted': '#707E94',
+        'gray-muted-dark': '#939CA6',
+        'gray-border': '#D3D3D3',
       },
       fontSize: {
         'title-xxl': ['44px', '55px'],
@@ -231,7 +248,7 @@ export default {
         video: "url('../images/video/video.png')"
       },
       content: {
-        'icon-copy': 'url("../images/icon/icon-copy-alt.svg")'
+        'icon-copy': 'url("@/assets/images/SVGs/CopyIcon.svg")'
       },
       transitionProperty: { width: 'width', stroke: 'stroke' },
       borderWidth: {

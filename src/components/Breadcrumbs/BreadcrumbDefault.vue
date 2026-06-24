@@ -1,20 +1,20 @@
 <script setup lang="ts">
-const props = defineProps(['pageTitle'])
+  import HomeVariantIcon from '@/assets/images/SVGs/HomeVariantIcon.svg';
+
+  const props = defineProps(['pageTitle']);
 </script>
 
 <template>
-  <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <h2 class="text-title-md2 font-semibold text-black dark:text-white">
-      {{ props.pageTitle }}
-    </h2>
-
-    <nav>
-      <ol class="flex items-center gap-2">
-        <li>
-          <router-link class="font-medium" to="/"> Dashboard / </router-link>
-        </li>
-        <li class="font-medium text-primary">{{ props.pageTitle }}</li>
-      </ol>
-    </nav>
-  </div>
+  <nav class="flex items-center px-4 py-1.5 bg-elevated rounded-full border border-stroke dark:border-strokedark/50">
+    <ol class="flex items-center gap-2.5 text-[11px] font-black uppercase tracking-widest">
+      <li>
+        <router-link class="flex items-center text-gray-400 hover:text-primary transition-colors" to="/">
+          <HomeVariantIcon class="w-3.5 h-3.5 mr-1" />
+          HMS
+        </router-link>
+      </li>
+      <li class="text-muted">/</li>
+      <li class="text-primary truncate max-w-[150px]">{{ props.pageTitle }}</li>
+    </ol>
+  </nav>
 </template>

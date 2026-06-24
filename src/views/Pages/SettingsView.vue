@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import BreadcrumbDefault from '@/components/Breadcrumbs/BreadcrumbDefault.vue'
-import SettingsCard from '@/components/SettingsCard.vue'
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
+  import { ref } from 'vue';
+  import BreadcrumbDefault from '@/components/Breadcrumbs/BreadcrumbDefault.vue';
+  import SettingsCard from '@/components/SettingsCard.vue';
+  import DefaultLayout from '@/layouts/DefaultLayout.vue';
 
-const pageTitle = ref('Settings Page')
+  const pageTitle = ref('Settings Page');
 </script>
 
 <template>
@@ -13,7 +13,9 @@ const pageTitle = ref('Settings Page')
       <!-- Breadcrumb Start -->
       <BreadcrumbDefault :pageTitle="pageTitle" />
       <!-- Breadcrumb End -->
-      <SettingsCard />
+      <div class="mt-6">
+        <SettingsCard />
+      </div>
     </div>
   </DefaultLayout>
 </template>

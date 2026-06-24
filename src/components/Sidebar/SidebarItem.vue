@@ -1,70 +1,82 @@
 <script setup lang="ts">
-import { useSidebarStore } from '@/stores/sidebar'
-import { useRoute } from 'vue-router'
-import SidebarDropdown from './SidebarDropdown.vue'
+  import { useSidebarStore } from '@/stores/sidebar';
+  import { RouteLocationNormalizedLoaded, useRoute } from 'vue-router';
+  import SidebarDropdown from './SidebarDropdown.vue';
+  import ChevronRightTriangleIcon from '@/assets/images/SVGs/ChevronRightTriangle.svg';
+  import { watch } from 'vue';
 
-const sidebarStore = useSidebarStore()
+  const sidebarStore = useSidebarStore();
 
-const props = defineProps(['item', 'index'])
-const currentPage = useRoute().name
+  const props = defineProps(['item', 'index']);
+  const route = useRoute();
 
-interface SidebarItem {
-  label: string
-}
-
-const handleItemClick = () => {
-  const pageName = sidebarStore.page === props.item.label ? '' : props.item.label
-  sidebarStore.page = pageName
-
-  if (props.item.children) {
-    return props.item.children.some((child: SidebarItem) => sidebarStore.selected === child.label)
+  interface SidebarItem {
+    label: string;
+    route?: string;
+    children?: SidebarItem[];
+    icon?: string;
   }
-}
+
+  const updateStoreFromRoute = (route: RouteLocationNormalizedLoaded) => {
+    const matchedLabel = findLabelByRoute(props.item, route.path);
+    if (matchedLabel) {
+      sidebarStore.page = matchedLabel;
+    }
+  };
+
+  const findLabelByRoute = (item: SidebarItem, currentPath: string): string | null => {
+    if (item.route === currentPath) return item.label;
+
+    if (item.children) {
+      for (const child of item.children) {
+        if (child.route === currentPath) return item.label;
+      }
+    }
+
+    return null;
+  };
+
+  watch(
+    () => route.path,
+    () => {
+      updateStoreFromRoute(route);
+    },
+    { immediate: true }
+  );
 </script>
 
 <template>
   <li>
-    <router-link
-      :to="item.route"
-      class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-bold   hover:text-blue duration-300 ease-in-out hover:bg-[#ffff]  dark:hover:bg-meta-4  dark:hover:text-white  }"
-      @click.prevent="handleItemClick"
+    <div
+      v-if="item.children"
+      @click="sidebarStore.page = sidebarStore.page === item.label ? '' : item.label"
+      class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-bold duration-300 ease-in-out cursor-pointer"
       :class="{
-        'bg-[#fff] text-blue dark:bg-meta-4 dark:text-white' : sidebarStore.page === item.label,
-        'text-white': sidebarStore.page != item.label
+        'bg-light dark:bg-dark text-blue': sidebarStore.page === item.label,
+        'text-light dark:text-emphasis hover:text-blue dark:hover:text-blue hover:bg-light dark:hover:bg-dark': sidebarStore.page !== item.label,
       }"
     >
-      <span v-html="item.icon"></span>
+      <component :is="item.icon" class="w-[18px] h-[18px] shrink-0" />
+      {{ item.label }}
+      <ChevronRightTriangleIcon class="ml-auto h-3 w-3 transform transition-transform duration-200" :class="{ 'rotate-90': sidebarStore.page === item.label }" />
+    </div>
+
+    <router-link
+      v-else
+      :to="item.route"
+      class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-bold hover:text-blue duration-300 ease-in-out"
+      :class="{
+        'bg-light dark:bg-dark text-blue': sidebarStore.page === item.label,
+        'text-light dark:text-emphasis hover:text-blue dark:hover:text-blue hover:bg-light dark:hover:bg-dark': sidebarStore.page != item.label,
+      }"
+    >
+      <component :is="item.icon" class="w-[18px] h-[18px] shrink-0"></component>
 
       {{ item.label }}
-
-      <svg
-        v-if="item.children"
-        class="absolute right-4 top-1/2 -translate-y-1/2 fill-current"
-        :class="{ 'rotate-180': sidebarStore.page === item.label }"
-        width="20"
-        height="20"
-        viewBox="0 0 20 20"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M4.41107 6.9107C4.73651 6.58527 5.26414 6.58527 5.58958 6.9107L10.0003 11.3214L14.4111 6.91071C14.7365 6.58527 15.2641 6.58527 15.5896 6.91071C15.915 7.23614 15.915 7.76378 15.5896 8.08922L10.5896 13.0892C10.2641 13.4147 9.73651 13.4147 9.41107 13.0892L4.41107 8.08922C4.08563 7.76378 4.08563 7.23614 4.41107 6.9107Z"
-          fill=""
-        />
-      </svg>
     </router-link>
 
-    <!-- Dropdown Menu Start -->
     <div class="translate transform overflow-hidden" v-show="sidebarStore.page === item.label">
-      <SidebarDropdown
-        v-if="item.children"
-        :items="item.children"
-        :currentPage="currentPage"
-        :page="item.label"
-      />
-      <!-- Dropdown Menu End -->
+      <SidebarDropdown v-if="item.children" :items="item.children" :page="item.label" />
     </div>
   </li>
 </template>

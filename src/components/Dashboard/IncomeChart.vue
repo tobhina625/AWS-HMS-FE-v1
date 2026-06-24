@@ -1,167 +1,141 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-// @ts-ignore
-import VueApexCharts from 'vue3-apexcharts'
+  import { ref, onMounted, onUnmounted, computed } from 'vue';
+  import VueApexCharts from 'vue3-apexcharts';
+  import DashboardService from '@/services/Dashboard/dashboard.service';
+  import { useDarkModeStore } from '@/stores/darkMode';
 
-const chartData = {
-  series: [
-    {
-      name: 'Income',
-      data: [23, 11, 22, 27, 13, 22, 37, 21, 44, 22, 30, 45]
-    },
+  const dashboardService = new DashboardService();
+  const darkModeStore = useDarkModeStore();
 
-    {
-      name: 'Outcome',
-      data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39, 51]
+  const getCssVar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const chart = ref(null);
+  const loading = ref(true);
+  const financialData = ref<any>(null);
+
+  const chartData = computed(() => {
+    const data = financialData.value;
+    if (!data) {
+      return {
+        series: [
+          { name: 'Income', data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+          { name: 'Outcome', data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+        ],
+      };
     }
-  ],
-}
+    const income = data.incomeData ?? data.IncomeData ?? [];
+    const outcome = data.outcomeData ?? data.OutcomeData ?? [];
+    return {
+      series: [
+        { name: 'Income', data: Array.isArray(income) ? income : [] },
+        { name: 'Outcome', data: Array.isArray(outcome) ? outcome : [] },
+      ],
+    };
+  });
 
-const chart = ref(null)
-
-const apexOptions = {
-  legend: {
-    show: false,
-    position: 'top',
-    horizontalAlign: 'left'
-  },
-  colors: ['#3C50E0', '#80CAEE'],
-  chart: {
-    fontFamily: 'Satoshi, sans-serif',
-    height: 335,
-    type: 'area',
-    dropShadow: {
-      enabled: true,
-      color: '#623CEA14',
-      top: 10,
-      blur: 4,
-      left: 0,
-      opacity: 0.1
-    },
-
-    toolbar: {
-      show: false
-    }
-  },
-  responsive: [
-    {
-      breakpoint: 1024,
-      options: {
-        chart: {
-          height: 300
-        }
+  const fetchFinancialOverview = async () => {
+    loading.value = true;
+    try {
+      const response = await dashboardService.getFinancialOverview();
+      const data = response?.data;
+      if (data) {
+        financialData.value = data;
       }
-    },
-    {
-      breakpoint: 1366,
-      options: {
-        chart: {
-          height: 350
-        }
-      }
+    } catch (error) {
+      console.error('Error fetching financial overview:', error);
+    } finally {
+      loading.value = false;
     }
-  ],
-  stroke: {
-    width: [2, 2],
-    curve: 'straight'
-  },
+  };
 
-  labels: {
-    show: false,
-    position: 'top'
-  },
-  grid: {
+  let refreshInterval: ReturnType<typeof setInterval> | null = null;
+  onMounted(() => {
+    fetchFinancialOverview();
+    refreshInterval = setInterval(fetchFinancialOverview, 60000);
+  });
+  onUnmounted(() => {
+    if (refreshInterval) clearInterval(refreshInterval);
+  });
+
+  const categories = computed(() => {
+    const data = financialData.value;
+    return data?.categories || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  });
+
+  const apexOptions = computed(() => ({
+    legend: { show: false },
+    colors: [getCssVar('--color-primary'), getCssVar('--color-secondary')],
+    chart: {
+      fontFamily: 'Satoshi, sans-serif',
+      height: 335,
+      type: 'area',
+      toolbar: { show: false },
+      dropShadow: {
+        enabled: true,
+        color: getCssVar('--color-chart-shadow'),
+        top: 10,
+        blur: 4,
+        left: 0,
+        opacity: 0.1,
+      },
+    },
+    stroke: { width: [3, 3], curve: 'smooth' },
+    grid: {
+      borderColor: darkModeStore.darkMode ? getCssVar('--color-strokedark') : getCssVar('--color-grid-light'),
+      strokeDashArray: 5,
+      xaxis: { lines: { show: true } },
+      yaxis: { lines: { show: true } },
+    },
+    dataLabels: { enabled: false },
+    markers: { size: 0, hover: { size: 5 } },
     xaxis: {
-      lines: {
-        show: true
-      }
+      type: 'category',
+      categories: categories.value,
+      axisBorder: { show: false },
+      axisTicks: { show: false },
     },
     yaxis: {
-      lines: {
-        show: true
-      }
-    }
-  },
-  dataLabels: {
-    enabled: false
-  },
-  markers: {
-    size: 4,
-    colors: '#fff',
-    strokeColors: ['#3056D3', '#80CAEE'],
-    strokeWidth: 3,
-    strokeOpacity: 0.9,
-    strokeDashArray: 0,
-    fillOpacity: 1,
-    discrete: [],
-    hover: {
-      size: undefined,
-      sizeOffset: 5
-    }
-  },
-  xaxis: {
-    type: 'category',
-    categories: chartData.labels,
-    axisBorder: {
-      show: false
+      min: 0,
+      max: 100,
+      labels: {
+        style: {
+          colors: darkModeStore.darkMode ? getCssVar('--color-bodydark') : getCssVar('--color-bodydark2'),
+          fontWeight: 500,
+        },
+      },
     },
-    axisTicks: {
-      show: false
-    }
-  },
-  yaxis: {
-    title: {
-      style: {
-        fontSize: '0px'
-      }
+    fill: {
+      type: 'gradient',
+      gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] },
     },
-    min: 0,
-    max: 100
-  }
-}
+  }));
 </script>
 
 <template>
-  <div
-    class="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-12"
-  >
-    <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
-      <div class="flex w-full flex-wrap gap-3 sm:gap-5">
-        <div class="flex min-w-47.5">
-          <span
-            class="mt-1 mr-2 flex h-4 w-full max-w-4 items-center justify-center rounded-full border border-primary"
-          >
-            <span class="block h-2.5 w-full max-w-2.5 rounded-full bg-primary"></span>
-          </span>
-          <div class="w-full">
-            <p class="font-semibold text-primary">Income</p>
-            <p class="text-sm font-medium">$142k</p>
-          </div>
-        </div>
-        <div class="flex min-w-47.5">
-          <span
-            class="mt-1 mr-2 flex h-4 w-full max-w-4 items-center justify-center rounded-full border border-secondary"
-          >
-            <span class="block h-2.5 w-full max-w-2.5 rounded-full bg-secondary"></span>
-          </span>
-          <div class="w-full">
-            <p class="font-semibold text-secondary">OutCome</p>
-            <p class="text-sm font-medium">$43k</p>
-          </div>
-        </div>
+  <div class="rounded-2xl border border-white/40 bg-surface p-7.5 shadow-xl dark:border-strokedark/50 transition-all duration-300">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-xl font-extrabold text-emphasis tracking-tight">Financial Overview</h2>
+        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Hospital Revenue & Expenses</p>
       </div>
-      <div class="flex w-full max-w-45 justify-end">
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <span class="block h-3 w-3 rounded-full bg-primary shadow-[0_0_10px_rgba(60,80,224,0.4)]"></span>
+          <span class="text-sm font-bold text-muted">Income</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="block h-3 w-3 rounded-full bg-secondary shadow-[0_0_10px_rgba(128,202,238,0.4)]"></span>
+          <span class="text-sm font-bold text-muted">Outcome</span>
+        </div>
       </div>
     </div>
-    <div>
-      <div id="chartOne" class="-ml-5">
-        <VueApexCharts
-          type="area"
-          height="350"
-          :options="apexOptions"
-          :series="chartData.series"
-          ref="chart"
-        />
+
+    <div class="relative">
+      <div v-if="loading" class="h-[350px] flex items-center justify-center">
+        <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      <div v-else id="chartOne" class="-ml-5">
+        <VueApexCharts type="area" height="350" :options="apexOptions" :series="chartData.series" ref="chart" />
       </div>
     </div>
   </div>

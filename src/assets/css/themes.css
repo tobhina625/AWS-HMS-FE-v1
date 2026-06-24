@@ -1,0 +1,159 @@
+:root {
+  /* Primary Colors */
+  --color-primary: #3C50E0;
+  --color-primary-light: #6577F3;
+  --color-secondary: #80CAEE;
+  
+  /* Semantic Theme-Aware Colors */
+  --text-light: #FFFFFF;
+  --text-dark: #1C2434;
+  --bg-light: #FFFFFF;
+  --bg-dark: #1C2434;
+  --text-muted: #64748B;
+  --text-emphasis: #1C2434;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F7F9FC;
+  --border-default: #E2E8F0;
+  --text-sidebar: #ffffff
+  
+  /* Base Colors */
+  --color-white: #FFFFFF;
+  --color-black: #1C2434;
+  --color-black-2: #010101;
+  --color-red: #FB5454;
+  
+  /* Body Text Colors */
+  --color-body: #64748B;
+  --color-bodydark: #AEB7C0;
+  --color-bodydark1: #DEE4EE;
+  --color-bodydark2: #8A99AF;
+  
+  /* Gray Scale */
+  --color-gray: #EFF4FB;
+  --color-gray-2: #F7F9FC;
+  --color-gray-3: #FAFAFA;
+  --color-gray-light: #F3F4F6;
+  --color-gray-border: #D3D3D3;
+  --color-gray-muted: #707E94;
+  --color-graydark: #333A48;
+  
+  /* White Variants */
+  --color-whiten: #F1F5F9;
+  --color-whiter: #F5F7FD;
+  
+  /* Box/Card Colors (Dark Mode) */
+  --color-boxdark: #24303F;
+  --color-boxdark-2: #1A222C;
+  
+  /* Stroke/Border Colors */
+  --color-stroke: #E2E8F0;
+  --color-strokedark: #2E3A47;
+  --color-form-strokedark: #3d4d60;
+  --color-form-input: #1d2a39;
+  --color-border-light: #ccc;
+  --color-bg-light: #f9f9f9;
+  --color-grid-light: #f1f1f1;
+  
+  /* Meta Colors (Status/Semantic) */
+  --color-meta-1: #DC3545;
+  --color-meta-2: #EFF2F7;
+  --color-meta-3: #10B981;
+  --color-meta-4: #313D4A;
+  --color-meta-5: #259AE6;
+  --color-meta-6: #FFBA00;
+  --color-meta-7: #FF6766;
+  --color-meta-8: #F0950C;
+  --color-meta-9: #E5E7EB;
+  --color-meta-10: #0FADCF;
+  
+  /* Status Colors */
+  --color-success: #219653;
+  --color-success-light: #10B981;
+  --color-danger: #D34053;
+  --color-danger-light: #EF4444;
+  --color-warning: #FFA70B;
+  --color-warning-light: #F59E0B;
+  
+  /* Brand Blue */
+  --color-blue: #142f72;
+  --color-blue-light: #142f72cc;
+  --color-blue-sidebar: #2554AC;
+  --color-blue-hover: #556DD7;
+  
+  /* Chart Colors */
+  --color-chart-1: #3C50E0;
+  --color-chart-2: #6577F3;
+  --color-chart-3: #8FD0EF;
+  --color-chart-4: #0FADCF;
+  --color-chart-5: #10B981;
+  --color-chart-6: #F59E0B;
+  --color-chart-7: #EF4444;
+  --color-chart-8: #8B5CF6;
+  --color-chart-shadow: #623CEA14;
+  
+  /* Gradient Colors - Start */
+  --color-gradient-blue-start: #3b82f6;
+  --color-gradient-blue-end: #1d4ed8;
+  --color-gradient-teal-start: #14b8a6;
+  --color-gradient-teal-end: #0f766e;
+  --color-gradient-purple-start: #a855f7;
+  --color-gradient-purple-end: #7e22ce;
+  --color-gradient-sky-start: #0ea5e9;
+  --color-gradient-sky-end: #0284c7;
+  --color-gradient-green-start: #10b981;
+  --color-gradient-green-end: #059669;
+  --color-gradient-amber-start: #f59e0b;
+  --color-gradient-amber-end: #d97706;
+  --color-gradient-red-start: #ef4444;
+  --color-gradient-red-end: #b91c1c;
+  --color-gradient-violet-start: #8b5cf6;
+  --color-gradient-violet-end: #6d28d9;
+  --color-gradient-pink-start: #ec4899;
+  --color-gradient-pink-end: #be185d;
+  --color-gradient-slate-start: #64748b;
+  --color-gradient-slate-end: #475569;
+  
+  /* Glow/Shadow Colors (with alpha) */
+  --color-glow-blue: rgba(59, 130, 246, 0.15);
+  --color-glow-teal: rgba(20, 184, 166, 0.15);
+  --color-glow-purple: rgba(168, 85, 247, 0.15);
+  --color-glow-sky: rgba(14, 165, 233, 0.15);
+  --color-glow-green: rgba(16, 185, 129, 0.15);
+  --color-glow-amber: rgba(245, 158, 11, 0.15);
+  --color-glow-red: rgba(239, 68, 68, 0.15);
+  --color-glow-violet: rgba(139, 92, 246, 0.15);
+  --color-glow-pink: rgba(236, 72, 153, 0.15);
+  --color-glow-slate: rgba(100, 116, 139, 0.15);
+  
+  /* Permission Badge Colors */
+  --color-permission-list: rgba(168, 85, 247, 0.1);
+  --color-permission-list-dark: rgba(168, 85, 247, 0.15);
+  --color-permission-add: rgba(34, 197, 94, 0.1);
+  --color-permission-add-dark: rgba(34, 197, 94, 0.15);
+  --color-permission-view: rgba(59, 130, 246, 0.1);
+  --color-permission-view-dark: rgba(59, 130, 246, 0.15);
+  --color-permission-edit: rgba(234, 179, 8, 0.1);
+  --color-permission-edit-dark: rgba(234, 179, 8, 0.15);
+  --color-permission-delete: rgba(239, 68, 68, 0.1);
+  --color-permission-delete-dark: rgba(239, 68, 68, 0.15);
+}
+
+.dark {
+  /* Semantic Theme-Aware Colors - Dark Mode Overrides */
+  /* Keep text-light as white for contrast on primary/danger/colored backgrounds */
+  --text-light: #FFFFFF;
+  --text-dark: #FFFFFF;
+  --bg-light: #1A222C;
+  --bg-dark: #FFFFFF;
+  --text-muted: #AEB7C0;
+  --text-emphasis: #FFFFFF;
+  --bg-surface: #24303F;
+  --bg-elevated: #313D4A;
+  --border-default: #2E3A47;
+  
+  /* Override colors for dark mode where needed */
+  --color-body: #AEB7C0;
+  --color-bodydark: #DEE4EE;
+  --color-grid-light: #2E3A47;
+  --color-gray-muted: #939CA6;
+}

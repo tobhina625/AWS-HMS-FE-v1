@@ -1,134 +1,217 @@
 <script setup lang="ts">
-import DefaultAuthCard from '../../components/Auths/DefaultAuthCard.vue'
-import InputGroup from '../../components/Auths/InputGroup.vue'
-import FullScreenLayout from '../../layouts/FullScreenLayout.vue'
+  import DefaultAuthCard from '@/components/Auths/DefaultAuthCard.vue';
+  import BaseInput from '@/components/Base/BaseInput.vue';
+  import BaseButton from '@/components/Base/BaseButton.vue';
+  import BaseCheckbox from '@/components/Base/BaseCheckbox.vue';
+  import FullScreenLayout from '@/layouts/FullScreenLayout.vue';
+  import useAlert from '@/plugins/alert/useAlert';
+  import AutenticationService from '@/services/Authentication/Signin.service';
+  import { useGeolocation } from '@/composables/useGeolocation';
+  import { ref } from 'vue';
+  import { useRouter } from 'vue-router';
+  import EmailIcon from '@/assets/images/SVGs/EmailIcon.svg';
+  import EyeIcon from '@/assets/images/SVGs/Eye.svg';
+  import EyeSlashIcon from '@/assets/images/SVGs/EyeSlash.svg';
 
-import { useRouter } from 'vue-router';
-import { ref } from 'vue'
+  const { showAlert } = useAlert();
+  const signinService = new AutenticationService();
+  const { getCurrentPosition, isSupported } = useGeolocation();
+  const pageTitle = ref('Account Sign In');
+  const showPassword = ref(false);
+  const isVerifyingLocation = ref(false);
 
-const pageTitle = ref('Sign In')
-const credentials = ref({
-  email: '',
-  password: '',
-})
+  const credentials = ref({
+    email: '',
+    password: '',
+  });
 
-const errors = ref({
-  email: '',
-  password: '',
-})
+  const errors = ref({
+    email: '',
+    password: '',
+  });
 
-const apiError = ref('')
-const router = useRouter();
+  const apiError = ref('');
+  const router = useRouter();
 
-const login = () => {
-  validateCredentials();
-  if (!errors.value.email && !errors.value.password) {
-    try {
-      apiError.value = '';
+  const login = async () => {
+    validateCredentials();
+    if (!errors.value.email && !errors.value.password) {
+      try {
+        apiError.value = '';
 
-      // Call the API to authenticate the user
-      let user = {
-        email: credentials.value.email,
-        password: credentials.value.password,
+        let user = {
+          email: credentials.value.email,
+          password: credentials.value.password,
+        };
+
+        const response = await signinService.signInUser(user);
+
+        if (response.isSuccess) {
+          const loginData = response.data;
+
+          // Store token temporarily
+          const tempToken = loginData.token;
+
+          // Check if location verification is needed
+          isVerifyingLocation.value = true;
+          try {
+            // Get user's current location
+            if (isSupported.value) {
+              const location = await getCurrentPosition();
+
+              // Send location to backend for verification
+              const locationData = {
+                latitude: location.latitude,
+                longitude: location.longitude,
+              };
+
+              const locationResponse = await signinService.verifyLocation(locationData, tempToken);
+
+              if (locationResponse.isSuccess) {
+                const verificationResult = locationResponse.data;
+
+                if (!verificationResult.isWithinRange && verificationResult.allowedRadius) {
+                  // Location verification failed
+                  showAlert('error', verificationResult.message, 'Location Verification Failed');
+                  isVerifyingLocation.value = false;
+                  return;
+                }
+
+                // Location verified or not required
+                if (verificationResult.isWithinRange) {
+                  showAlert('success', 'Location verified successfully', 'Login Successful');
+                }
+              }
+            }
+          } catch (locationError: any) {
+            // Location error - check if it's required
+            console.warn('Location error:', locationError);
+            // Continue with login if location is not mandatory
+          } finally {
+            isVerifyingLocation.value = false;
+          }
+
+          // Store auth data
+          localStorage.setItem('hms-token', loginData.token);
+          localStorage.setItem(
+            'hms-user',
+            JSON.stringify({
+              userName: loginData.userName,
+              email: loginData.email,
+              roles: loginData.roles,
+              designations: loginData.designations,
+            })
+          );
+          router.push('/');
+        } else {
+          showAlert('error', response.error, 'Invalid Credentials');
+        }
+      } catch (err) {
+        const error = err as any;
+        apiError.value = error.response?.data?.message || 'An error occurred during login.';
+        console.error('Login failed:', error);
       }
-
-      // Handle successful response
-      // console.log('Login successful:', response.data);
-      // localStorage.setItem('hms-token', response.data);
-      router.push({name: 'eCommerce'});
-
-      setTimeout(() => (
-        localStorage.removeItem('hms-token')
-      ), 10000)
-
-    } catch (err) {
-      // Handle API errors
-      const error = err as any;
-      apiError.value = error.response?.data?.message || 'An error occurred during login.';
-      console.error('Login failed:', error);
     }
-  } else {
-    console.log('Invalid Credentials', errors.value);
-  }
-}
+  };
 
-const validateCredentials = () => {
-  errors.value.email = '';
-  errors.value.password = '';
+  const validateCredentials = () => {
+    validateEmail();
+    validatePassword();
+  };
 
-  if (!credentials.value.email) {
-    errors.value.email = 'Email is required.';
-  } else {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(credentials.value.email)) {
-      errors.value.email = 'Invalid email format.';
+  const validateEmail = () => {
+    errors.value.email = '';
+
+    if (!credentials.value.email) {
+      errors.value.email = 'Email is required.';
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(credentials.value.email)) {
+        errors.value.email = 'Invalid email format.';
+      }
     }
-  }
+  };
 
-  if (!credentials.value.password) {
-    errors.value.password = 'Password is required.';
-  } else if (credentials.value.password.length < 6) {
-    errors.value.password = 'Password must be at least 6 characters.';
-  }
-}
+  const validatePassword = () => {
+    errors.value.password = '';
+
+    if (!credentials.value.password) {
+      errors.value.password = 'Password is required.';
+    } else if (credentials.value.password.length < 6) {
+      errors.value.password = 'Password must be at least 6 characters.';
+    }
+  };
 </script>
 
 <template>
   <FullScreenLayout>
-    <DefaultAuthCard :pageTitle="pageTitle">
-      <form @submit.prevent="login">
+    <DefaultAuthCard :pageTitle="pageTitle" subtitle="Welcome back! Please sign in to your dashboard.">
+      <form @submit.prevent="login" class="space-y-6">
+        <BaseInput
+          label="Email Address"
+          type="email"
+          placeholder="e.g. name@hospital.com"
+          v-model="credentials.email"
+          @change="validateEmail()"
+          :error="errors.email !== ''"
+          :error-message="errors.email"
+          :field-required="true"
+        >
+          <EmailIcon class="text-muted" />
+        </BaseInput>
 
-        <InputGroup label="Email" type="email" placeholder="Enter your email" v-model="credentials.email">
-          <svg class="fill-current" width="22" height="22" viewBox="0 0 22 22" fill="none"
-            xmlns="http://www.w3.org/2000/svg">
-            <g opacity="0.5">
-              <path
-                d="M19.2516 3.30005H2.75156C1.58281 3.30005 0.585938 4.26255 0.585938 5.46567V16.6032C0.585938 17.7719 1.54844 18.7688 2.75156 18.7688H19.2516C20.4203 18.7688 21.4172 17.8063 21.4172 16.6032V5.4313C21.4172 4.26255 20.4203 3.30005 19.2516 3.30005ZM19.2516 4.84692C19.2859 4.84692 19.3203 4.84692 19.3547 4.84692L11.0016 10.2094L2.64844 4.84692C2.68281 4.84692 2.71719 4.84692 2.75156 4.84692H19.2516ZM19.2516 17.1532H2.75156C2.40781 17.1532 2.13281 16.8782 2.13281 16.5344V6.35942L10.1766 11.5157C10.4172 11.6875 10.6922 11.7563 10.9672 11.7563C11.2422 11.7563 11.5172 11.6875 11.7578 11.5157L19.8016 6.35942V16.5688C19.8703 16.9125 19.5953 17.1532 19.2516 17.1532Z"
-                fill="" />
-            </g>
-          </svg>
-        </InputGroup>
-        <p v-if="errors.email" class="text-red text-sm mt-1 mb-1">{{ errors.email }}</p>
-
-        <InputGroup label="Password" type="password" placeholder="6+ Characters" v-model="credentials.password">
-          <svg class="fill-current" width="22" height="22" viewBox="0 0 22 22" fill="none"
-            xmlns="http://www.w3.org/2000/svg">
-            <g opacity="0.5">
-              <path
-                d="M16.1547 6.80626V5.91251C16.1547 3.16251 14.0922 0.825009 11.4797 0.618759C10.0359 0.481259 8.59219 0.996884 7.52656 1.95938C6.46094 2.92188 5.84219 4.29688 5.84219 5.70626V6.80626C3.84844 7.18438 2.33594 8.93751 2.33594 11.0688V17.2906C2.33594 19.5594 4.19219 21.3813 6.42656 21.3813H15.5016C17.7703 21.3813 19.6266 19.525 19.6266 17.2563V11C19.6609 8.93751 18.1484 7.21876 16.1547 6.80626ZM8.55781 3.09376C9.31406 2.40626 10.3109 2.06251 11.3422 2.16563C13.1641 2.33751 14.6078 3.98751 14.6078 5.91251V6.70313H7.38906V5.67188C7.38906 4.70938 7.80156 3.78126 8.55781 3.09376ZM18.1141 17.2906C18.1141 18.7 16.9453 19.8688 15.5359 19.8688H6.46094C5.05156 19.8688 3.91719 18.7344 3.91719 17.325V11.0688C3.91719 9.52189 5.15469 8.28438 6.70156 8.28438H15.2953C16.8422 8.28438 18.1141 9.52188 18.1141 11V17.2906Z"
-                fill="" />
-              <path
-                d="M10.9977 11.8594C10.5852 11.8594 10.207 12.2031 10.207 12.65V16.2594C10.207 16.6719 10.5508 17.05 10.9977 17.05C11.4102 17.05 11.7883 16.7063 11.7883 16.2594V12.6156C11.7883 12.2031 11.4102 11.8594 10.9977 11.8594Z"
-                fill="" />
-            </g>
-          </svg>
-        </InputGroup>
-        <p v-if="errors.password" class="text-red text-sm mt-1 mb-1">{{ errors.password }}</p>
+        <div class="relative">
+          <BaseInput
+            label="Password"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="Min. 6 characters"
+            v-model="credentials.password"
+            @change="validatePassword()"
+            :error="errors.password !== ''"
+            :error-message="errors.password"
+            :field-required="true"
+          >
+            <div class="flex items-center">
+              <EyeIcon v-if="!showPassword" @click="showPassword = true" class="cursor-pointer text-muted hover:text-primary transition-colors" />
+              <EyeSlashIcon v-else @click="showPassword = false" class="cursor-pointer text-muted hover:text-primary transition-colors" />
+            </div>
+          </BaseInput>
+        </div>
 
         <!-- Show API error -->
-        <p v-if="apiError" class="text-red text-sm mt-1 mb-1">{{ apiError }}</p>
+        <div v-if="apiError" class="bg-danger/10 dark:bg-danger/20 border border-danger/20 dark:border-danger/30 p-3 rounded-lg">
+          <p class="text-danger dark:text-danger text-sm font-medium">{{ apiError }}</p>
+        </div>
 
+        <div class="flex justify-between items-center text-sm">
+          <BaseCheckbox label="Remember me" id="remember_me" />
 
-        <div class="flex justify-between items-center">
-          <p class="font-medium">
-            <input type="checkbox" id="remember_me" value="remember_me" />
-            <label for="remember_me"> Remember me</label>
-          </p>
+          <router-link to="/#" class="text-primary font-semibold hover:underline decoration-2 underline-offset-4">Forgot Password?</router-link>
+        </div>
 
-          <p class="font-medium">
-            <router-link to="/#" class="text-primary">Forget Password?</router-link>
+        <!-- Location verification status -->
+        <div v-if="isVerifyingLocation" class="bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 p-3 rounded-lg">
+          <p class="text-primary dark:text-primary text-sm font-medium flex items-center gap-2">
+            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Verifying your location...
           </p>
         </div>
 
-        <div class="mb-5 mt-6">
-          <div
-            class="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 font-medium text-white transition hover:bg-opacity-90 text-center"
-            @click="login()">
-            Sign In
-          </div>
+        <div class="pt-4">
+          <BaseButton type="submit" size="lg" block class="group !py-4" :disabled="isVerifyingLocation">
+            <span v-if="isVerifyingLocation">Verifying Location...</span>
+            <span v-else>Sign In to Account</span>
+            <span v-if="!isVerifyingLocation" class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300">→</span>
+          </BaseButton>
         </div>
-
       </form>
     </DefaultAuthCard>
   </FullScreenLayout>
 </template>
+
+<style scoped>
+  /* Custom transitions and refinements if needed */
+</style>

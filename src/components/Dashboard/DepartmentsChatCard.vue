@@ -1,82 +1,75 @@
 <template>
-  <div class="flex-1 rounded-sm border border-stroke bg-white py-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-    <!-- Heading -->
-    <h2 class="text-2xl font-bold mb-4 p-3">Department</h2>
-    <hr class="mb-4 border-t border-[#D3D3D3]" />
+  <div class="flex-1 rounded-2xl border border-white/40 bg-surface p-6 shadow-xl dark:border-strokedark/50 transition-all duration-300">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-extrabold text-emphasis tracking-tight">Departments</h2>
+      <div class="p-1 px-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg text-[10px] font-black uppercase text-teal-600 dark:text-teal-400">All Units</div>
+    </div>
 
-    <!-- Doctor Cards -->
-    <div
-      v-for="Department in Departments"
-      :key="Department.id"
-      class="flex items-center p-4 bg-white  dark:bg-strokedark shadow rounded-lg mb-4"
-    >
-       <!-- Department Detail -->
-      <img
-        :src="Department.image"
-        alt="Doctor Picture"
-        class="w-16 h-16 rounded-full mr-4"
-      />
+    <!-- Department List -->
+    <div class="space-y-4 overflow-y-auto max-h-[360px] min-h-[360px] custom-scrollbar pr-2">
+      <div
+        v-for="department in departments"
+        :key="department.id"
+        class="group flex items-center p-4 rounded-2xl bg-elevated border border-transparent hover:border-teal-500/10 hover:bg-white dark:hover:bg-strokedark transition-all duration-300 shadow-sm"
+      >
+        <div class="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600 shrink-0">
+          <EnvelopeIcon class="w-6 h-6" />
+        </div>
 
-      <!-- Department Details -->
-      <div class="flex-1">
-        <h3 class="font-semibold text-lg">{{ Department.name }}</h3>
-        <p class="text-sm text-gray-500">{{ Department.occupation }}</p>
+        <div class="flex-1 ml-4 overflow-hidden">
+          <h3 class="font-bold text-emphasis truncate leading-tight">{{ department.name }}</h3>
+          <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-tighter">Operational</p>
+        </div>
+
+        <BaseButton variant="ghost" class="!p-2 hover:!bg-elevated rounded-xl transition-colors">
+          <KebabIcon class="w-4 h-4 text-gray-400" />
+        </BaseButton>
       </div>
 
-      <!-- Action Icons -->
-      <button class="text-gray-500 hover:text-gray-700 ml-2">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
-        </svg>
-      </button>
+      <div v-if="isLoading" class="flex flex-col items-center py-10 opacity-30">
+        <div class="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      <div v-else-if="!hasMore" class="text-center py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Listing Complete</div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import userOne from '@/assets/images/user/user-01.png'
-import userTwo from '@/assets/images/user/user-02.png'
-import userThree from '@/assets/images/user/user-03.png'
+  import EnvelopeIcon from '@/assets/images/SVGs/EnvelopeIcon.svg';
 
-const Departments = ref([
-  {
-    id: 1,
-    name: "Dr. Jennifer J",
-    occupation: "Dentist",
-    image: userOne, // Placeholder image
-  },
-  {
-    id: 2,
-    name: "Dr. Michael R",
-    occupation: "Cardiologist",
-    image: userTwo, // Placeholder image
-  },
-  {
-    id: 3,
-    name: "Dr. Emma W",
-    occupation: "Neurologist",
-    image: userThree, // Placeholder image
-  },
-]);
+  import { ref, onMounted } from 'vue';
+  import BaseButton from '@/components/Base/BaseButton.vue';
+  import DepartmentsServices from '@/services/dashboardDepartment/departments.service';
+  import KebabIcon from '@/assets/images/SVGs/KebabIcon.svg';
 
-// Fetch doctors from the backend
-const fetchDepartments = async () => {
-  try {
-    // Replace the URL with your actual API endpoint
-    const response = await fetch("https://api.example.com/doctors");
-    const data = await response.json();
-    Department.value = data;
-  } catch (error) {
-    console.error("Error fetching doctors:", error);
-  }
-};
+  const departments = ref([]);
+  const page = ref(0);
+  const size = 5;
+  const isLoading = ref(false);
+  const hasMore = ref(true);
+  const departmentsService = new DepartmentsServices();
 
-onMounted(() => {
-  fetchDepartments();
-});
+  const fetchDepartments = async () => {
+    if (isLoading.value || !hasMore.value) return;
+
+    isLoading.value = true;
+    try {
+      const response = await departmentsService.getDepartments(page.value, size);
+      if (response.content.length > 0) {
+        departments.value.push(...response.content);
+        page.value++;
+      } else {
+        hasMore.value = false;
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  onMounted(() => {
+    fetchDepartments();
+  });
 </script>
-
-<style scoped>
-/* Add any additional custom styling here if needed */
-</style>

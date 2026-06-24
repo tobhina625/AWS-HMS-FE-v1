@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import HeaderArea from '@/components/Header/HeaderArea.vue'
-import SidebarArea from '@/components/Sidebar/SidebarArea.vue'
+  import HeaderArea from '../components/Header/HeaderArea.vue';
+  import SidebarArea from '../components/Sidebar/SidebarArea.vue';
 </script>
 
 <template>
@@ -18,7 +18,7 @@ import SidebarArea from '@/components/Sidebar/SidebarArea.vue'
 
       <!-- ===== Main Content Start ===== -->
       <main>
-        <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+        <div class="mx-auto p-6 md:px-6 2xl:px-11">
           <slot></slot>
         </div>
       </main>

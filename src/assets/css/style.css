@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import './themes.css';
 
 @tailwind base;
 @tailwind components;
@@ -6,22 +7,48 @@
 
 @layer base {
     body {
-        @apply relative z-1 bg-whiten font-satoshi text-base font-normal text-body dark:text-bodydark dark:bg-boxdark-2;
+        @apply relative z-1 bg-whiten font-satoshi text-base font-normal text-body dark:text-bodydark dark:bg-boxdark-2 antialiased transition-colors duration-300;
+    }
+    
+    /* Smooth transitions for dark mode */
+    *,
+    *::before,
+    *::after {
+        @apply transition-colors duration-200;
+    }
+
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        @apply bg-transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        @apply bg-stroke dark:bg-strokedark rounded-full hover:bg-gray-2 dark:hover:bg-strokedark/80 transition-colors;
     }
 }
 
 @layer components {
+    .glass-card {
+        @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-xl dark:bg-boxdark/80 dark:border-strokedark/50;
+    }
 }
 
 @layer utilities {
+
     /* Chrome, Safari and Opera */
     .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
 
     .no-scrollbar {
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none;
+        /* IE and Edge */
+        scrollbar-width: none;
+        /* Firefox */
     }
 
     .chat-height {
@@ -35,11 +62,11 @@
 
 /* third-party libraries CSS */
 
-.tableCheckbox:checked ~ div span {
+.tableCheckbox:checked~div span {
     @apply opacity-100;
 }
 
-.tableCheckbox:checked ~ div {
+.tableCheckbox:checked~div {
     @apply border-primary bg-primary;
 }
 
@@ -138,8 +165,8 @@ span.flatpickr-weekday,
 }
 
 .flatpickr-day.inRange {
-    box-shadow: -5px 0 0 #F3F4F6,
-    5px 0 0 #F3F4F6 !important;
+    box-shadow: -5px 0 0 var(--color-gray-light),
+        5px 0 0 var(--color-gray-light) !important;
     @apply dark:!shadow-7;
 }
 
@@ -155,7 +182,7 @@ span.flatpickr-weekday,
 .flatpickr-day:focus,
 .flatpickr-day.prevMonthDay:focus,
 .flatpickr-day.nextMonthDay:focus {
-    @apply !border-[#F3F4F6] !bg-[#F3F4F6] dark:!border-meta-4 dark:!bg-meta-4;
+    @apply !border-gray-light !bg-gray-light dark:!border-meta-4 dark:!bg-meta-4;
 }
 
 .flatpickr-day.selected,
@@ -183,14 +210,14 @@ span.flatpickr-weekday,
 .flatpickr-day.selected.nextMonthDay,
 .flatpickr-day.startRange.nextMonthDay,
 .flatpickr-day.endRange.nextMonthDay {
-    background: #3c50e0;
+    background: var(--color-primary);
     @apply !border-primary !bg-primary hover:!border-primary hover:!bg-primary;
 }
 
-.flatpickr-day.selected.startRange + .endRange:not(:nth-child(7n + 1)),
-.flatpickr-day.startRange.startRange + .endRange:not(:nth-child(7n + 1)),
-.flatpickr-day.endRange.startRange + .endRange:not(:nth-child(7n + 1)) {
-    box-shadow: -10px 0 0 #3c50e0;
+.flatpickr-day.selected.startRange+.endRange:not(:nth-child(7n + 1)),
+.flatpickr-day.startRange.startRange+.endRange:not(:nth-child(7n + 1)),
+.flatpickr-day.endRange.startRange+.endRange:not(:nth-child(7n + 1)) {
+    box-shadow: -10px 0 0 var(--color-primary);
 }
 
 .map-btn .jvm-zoom-btn {
@@ -209,15 +236,39 @@ span.flatpickr-weekday,
     @apply right-0;
 }
 
-.taskCheckbox:checked ~ .box span {
+.jvm-container {
+    @apply dark:!bg-boxdark;
+}
+
+.jvm-tooltip {
+    @apply dark:!bg-meta-4 dark:!text-bodydark1 dark:!border-strokedark dark:shadow-lg;
+}
+
+.jvm-series-container path {
+    @apply dark:!stroke-strokedark;
+}
+
+.jvm-legend {
+    @apply dark:!bg-boxdark dark:!border-strokedark;
+}
+
+.jvm-legend-title {
+    @apply dark:!text-white;
+}
+
+.jvm-legend-tick-text {
+    @apply dark:!fill-bodydark;
+}
+
+.taskCheckbox:checked~.box span {
     @apply opacity-100;
 }
 
-.taskCheckbox:checked ~ p {
+.taskCheckbox:checked~p {
     @apply line-through;
 }
 
-.taskCheckbox:checked ~ .box {
+.taskCheckbox:checked~.box {
     @apply border-primary bg-primary dark:border-primary;
 }
 
@@ -236,13 +287,79 @@ input[type='search']::-webkit-search-cancel-button {
 }
 
 .custom-input-date-1::-webkit-calendar-picker-indicator {
-    background-image: url(../images/icon/icon-calendar.svg);
+    background-image: url(@/assets/images/SVGs/Calender.svg);
 }
 
 .custom-input-date-2::-webkit-calendar-picker-indicator {
-    background-image: url(../images/icon/icon-arrow-down.svg);
+    background-image: url(@/assets/images/SVGs/Icon-Arrow-Down.svg);
 }
 
 [x-cloak] {
     display: none !important;
+}
+
+/* Vue Toastification Dark Mode */
+.custom-toast {
+    @apply dark:!bg-boxdark dark:!border-strokedark dark:shadow-lg;
+}
+
+.custom-toast-body {
+    @apply dark:!text-bodydark1;
+}
+
+.Vue-Toastification__toast--success {
+    @apply dark:border-success/50;
+    background-color: rgb(33 150 83 / 0.4) !important;
+}
+
+.dark .Vue-Toastification__toast--success {
+    background-color: rgb(33 150 83 / 0.4) !important;
+}
+
+.Vue-Toastification__toast--success .custom-toast-body {
+    @apply dark:!text-success-light;
+}
+
+.Vue-Toastification__toast--error {
+    @apply dark:border-danger/50;
+}
+
+.dark .Vue-Toastification__toast--error {
+    background-color: rgb(211 64 83 / 0.4) !important;
+}
+
+.Vue-Toastification__toast--error .custom-toast-body {
+    @apply dark:!text-danger-light;
+}
+
+.Vue-Toastification__toast--warning {
+    @apply dark:border-warning/50;
+}
+
+.dark .Vue-Toastification__toast--warning {
+    background-color: rgb(255 167 11 / 0.4) !important;
+}
+
+.Vue-Toastification__toast--warning .custom-toast-body {
+    @apply dark:!text-warning-light;
+}
+
+.Vue-Toastification__toast--info {
+    @apply dark:border-primary/50;
+}
+
+.dark .Vue-Toastification__toast--info {
+    background-color: rgb(60 80 224 / 0.4) !important;
+}
+
+.Vue-Toastification__toast--info .custom-toast-body {
+    @apply dark:!text-primary-light;
+}
+
+.Vue-Toastification__close-button {
+    @apply dark:!text-bodydark dark:hover:!text-white;
+}
+
+.Vue-Toastification__progress-bar {
+    @apply dark:!bg-primary/60;
 }

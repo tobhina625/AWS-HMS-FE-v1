@@ -1,7 +1,8 @@
 {
-  "extends": "@tsconfig/node18/tsconfig.json",
+  "extends": "@tsconfig/node22/tsconfig.json",
   "exclude": ["node_modules"],
   "include": [
+    "env.d.ts",
     "vite.config.*",
     "vitest.config.*",
     "cypress.config.*",
@@ -11,6 +12,10 @@
     "src/**/*.vue"
   ],
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "composite": true,
