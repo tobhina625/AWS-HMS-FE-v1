@@ -6,7 +6,7 @@
 
   import { ref, onMounted } from 'vue';
   import BaseInput from '@/components/Base/BaseInput.vue';
-  import BaseTextarea from '@/components/Base/BaseTextarea.vue';
+  import BaseTextArea from '@/components/Base/BaseTextArea.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import { useDarkModeStore, type ThemePreference } from '@/stores/darkMode';
   import { useUserProfile } from '@/composables/useUserProfile';
@@ -214,11 +214,11 @@
 
             <!-- Bio Section -->
             <div class="mb-5.5">
-              <BaseTextarea label="BIO" v-model="formData.bio" placeholder="Write your bio here" id="bio" name="bio" :rows="6">
+              <BaseTextArea label="BIO" v-model="formData.bio" placeholder="Write your bio here" id="bio" name="bio" :rows="6">
                 <template #icon>
                   <PencilSquare class="fill-current text-blue dark:text-white" />
                 </template>
-              </BaseTextarea>
+              </BaseTextArea>
             </div>
 
             <!-- Save and Cancel Buttons -->

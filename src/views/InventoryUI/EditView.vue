@@ -14,7 +14,7 @@
   import FormStepper from '@/components/UI/FormStepper.vue';
   import BaseInput from '@/components/Base/BaseInput.vue';
   import BaseSelect from '@/components/Base/BaseSelect.vue';
-  import BaseTextarea from '@/components/Base/BaseTextarea.vue';
+  import BaseTextArea from '@/components/Base/BaseTextArea.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import BaseCheckbox from '@/components/Base/BaseCheckbox.vue';
   import { useToast } from 'vue-toastification';
@@ -264,7 +264,7 @@
               <BaseInput v-model="formData.barcode" label="Barcode" placeholder="Barcode number" />
             </div>
 
-            <BaseTextarea v-model="formData.description" label="Description" placeholder="Enter item description" rows="3" />
+            <BaseTextArea v-model="formData.description" label="Description" placeholder="Enter item description" rows="3" />
           </div>
 
           <!-- Step 2: Stock & Pricing -->
@@ -336,7 +336,7 @@
               <BaseCheckbox label="Hazardous Material" v-model="formData.isHazardous" />
             </div>
 
-            <BaseTextarea v-model="formData.notes" label="Notes" placeholder="Additional notes or comments" rows="3" />
+            <BaseTextArea v-model="formData.notes" label="Notes" placeholder="Additional notes or comments" rows="3" />
           </div>
 
           <!-- Navigation Buttons -->

@@ -2,7 +2,7 @@
   import '@vuepic/vue-datepicker/dist/main.css';
   import BaseModal from '@/components/Base/BaseModal.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
-  import BaseTextarea from '@/components/Base/BaseTextarea.vue';
+  import BaseTextArea from '@/components/Base/BaseTextArea.vue';
   import BaseSelect from '@/components/Base/BaseSelect.vue';
   import BaseSelectNative from '@/components/Base/BaseSelectNative.vue';
   import { useApiSearchDropdown } from '@/composables/useApiSearchDropdown';
@@ -167,11 +167,11 @@
     <!-- Symptoms -->
     <div class="mt-6">
       <h3 class="text-base font-black text-muted uppercase tracking-widest pb-1 border-b border-stroke dark:border-strokedark mb-4">Symptoms</h3>
-      <BaseTextarea label="Symptoms" placeholder="Enter symptoms" v-model="patientHistory.symptom" />
+      <BaseTextArea label="Symptoms" placeholder="Enter symptoms" v-model="patientHistory.symptom" />
     </div>
     <div class="mt-6">
       <h3 class="text-base font-black text-muted uppercase tracking-widest pb-1 border-b border-stroke dark:border-strokedark mb-4">Prescription</h3>
-      <BaseTextarea label="Prescription" placeholder="Enter prescription" v-model="patientHistory.prescriptionText" />
+      <BaseTextArea label="Prescription" placeholder="Enter prescription" v-model="patientHistory.prescriptionText" />
     </div>
 
     <!-- Footer -->

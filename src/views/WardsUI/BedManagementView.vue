@@ -14,7 +14,7 @@
   import DefaultLayout from '@/layouts/DefaultLayout.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import BaseInput from '@/components/Base/BaseInput.vue';
-  import BaseTextarea from '@/components/Base/BaseTextarea.vue';
+  import BaseTextArea from '@/components/Base/BaseTextArea.vue';
   import BaseCheckbox from '@/components/Base/BaseCheckbox.vue';
   import BaseSelectNative from '@/components/Base/BaseSelectNative.vue';
   import WardServices from '@/services/Ward/ward.services';
@@ -301,7 +301,7 @@
                   <BaseInput v-model="editForm.bedNumber" label="Bed Number" placeholder="e.g. 101, A-1" field-required />
                   <BaseSelectNative v-model="editForm.status" label="Status" :options="BED_STATUS_OPTIONS" />
                   <BaseCheckbox v-model="editForm.hasOxygen" label="Has Oxygen" :id="`edit-oxygen-${bed.id}`" />
-                  <BaseTextarea v-model="editForm.notes" label="Notes" :rows="2" placeholder="Additional notes..." />
+                  <BaseTextArea v-model="editForm.notes" label="Notes" :rows="2" placeholder="Additional notes..." />
                 </div>
                 <div class="flex gap-2 mt-4">
                   <BaseButton variant="outline" size="sm" @click="cancelEditBed" class="flex-1">Cancel</BaseButton>
@@ -351,7 +351,7 @@
             <div class="space-y-4">
               <BaseInput v-model="newBed.bedNumber" label="Bed Number" placeholder="e.g. 101, A-1" field-required />
               <BaseCheckbox v-model="newBed.hasOxygen" label="Has Oxygen Supply" id="hasOxygen" />
-              <BaseTextarea v-model="newBed.notes" label="Notes" :rows="3" placeholder="Additional notes..." />
+              <BaseTextArea v-model="newBed.notes" label="Notes" :rows="3" placeholder="Additional notes..." />
             </div>
 
             <div class="flex gap-3 mt-6">

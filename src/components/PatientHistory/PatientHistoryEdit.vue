@@ -24,12 +24,12 @@
       </div>
 
       <div class="flex gap-4">
-        <BaseTextarea label="Notes" v-model="form.notes" placeholder="Enter remarks or additional details" class="w-full md:w-1/2" :rows="4" />
+        <BaseTextArea label="Notes" v-model="form.notes" placeholder="Enter remarks or additional details" class="w-full md:w-1/2" :rows="4" />
 
-        <BaseTextarea label="Advice Admission" v-model="form.adviceAdmission" placeholder="Provide recommendations or advice" class="w-full md:w-1/2" :rows="4" />
+        <BaseTextArea label="Advice Admission" v-model="form.adviceAdmission" placeholder="Provide recommendations or advice" class="w-full md:w-1/2" :rows="4" />
       </div>
 
-      <BaseTextarea label="Prescription" v-model="form.prescription" :rows="4" placeholder="Enter prescribed treatments or medication plan" />
+      <BaseTextArea label="Prescription" v-model="form.prescription" :rows="4" placeholder="Enter prescribed treatments or medication plan" />
 
       <div class="flex gap-4 mt-4">
         <BaseButton class="w-full" @click="handleSubmit">Update</BaseButton>
@@ -46,7 +46,7 @@
   import { ref, onMounted } from 'vue';
   import BaseInput from '../Base/BaseInput.vue';
   import BaseSelectNative from '../Base/BaseSelectNative.vue';
-  import BaseTextarea from '../Base/BaseTextarea.vue';
+  import BaseTextArea from '../Base/BaseTextArea.vue';
   import BaseButton from '../Base/BaseButton.vue';
   import flatpickr from 'flatpickr';
 
