@@ -6,7 +6,7 @@
   import FormViewTemplate from '@/components/Templates/FormViewTemplate.vue';
   import BaseInput from '@/components/Base/BaseInput.vue';
   import BaseSelect from '@/components/Base/BaseSelect.vue';
-  import BaseTextarea from '@/components/Base/BaseTextarea.vue';
+  import BaseTextArea from '@/components/Base/BaseTextArea.vue';
   import ModuleServices from '@/services/Module/Module.services';
 
   const router = useRouter();
@@ -95,7 +95,7 @@
         field-required
       />
 
-      <BaseTextarea label="Description" v-model="formData.description" placeholder="Enter module description..." rows="3" />
+      <BaseTextArea label="Description" v-model="formData.description" placeholder="Enter module description..." rows="3" />
     </FormViewTemplate>
   </DefaultLayout>
 </template>

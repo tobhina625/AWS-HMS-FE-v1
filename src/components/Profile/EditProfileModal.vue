@@ -3,7 +3,7 @@
   import { useToast } from 'vue-toastification';
   import BaseModal from '@/components/Base/BaseModal.vue';
   import BaseInput from '@/components/Base/BaseInput.vue';
-  import BaseTextarea from '@/components/Base/BaseTextarea.vue';
+  import BaseTextArea from '@/components/Base/BaseTextArea.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import BaseSelect from '@/components/Base/BaseSelect.vue';
   import BaseCnicInput from '@/components/Base/BaseCnicInput.vue';
@@ -167,7 +167,7 @@
         <BaseInput v-model="formData.specialization" label="Specialization" placeholder="Enter specialization" />
       </div>
 
-      <BaseTextarea v-model="formData.notes" label="Notes" placeholder="Additional notes" :rows="3" />
+      <BaseTextArea v-model="formData.notes" label="Notes" placeholder="Additional notes" :rows="3" />
     </form>
 
     <template #footer>
