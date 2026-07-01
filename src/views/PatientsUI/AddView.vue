@@ -28,6 +28,7 @@
     gender: '',
     age: '',
     address: '',
+    emailAddress: '',
     nationality: '',
     passportNumber: '',
     guardianCNIC: '',
@@ -68,9 +69,10 @@
         cnic: formData.value.cnic,
         gender: Number(formData.value.gender),
         address: formData.value.address,
-        nationality: formData.value.nationality || undefined,
-        passportNumber: formData.value.passportNumber || undefined,
-        guardianCNIC: formData.value.guardianCNIC || undefined,
+        emailAddress: formData.value.emailAddress || '',
+        nationality: formData.value.nationality || '',
+        passportNumber: formData.value.passportNumber || '',
+        guardianCNIC: formData.value.guardianCNIC || '',
       };
 
       // console.log('Submitting patient with payload:', payload);
@@ -156,6 +158,17 @@
         field-required
         class="md:col-span-2"
         @change="validateField('address', formData.address, [rules.required()])"
+      />
+
+      <BaseInput
+        label="Email Address"
+        type="email"
+        field-required
+        v-model="formData.emailAddress"
+        placeholder="Enter email address"
+        :error="!!errors.emailAddress"
+        :error-message="errors.emailAddress"
+        @change="validateField('emailAddress', formData.emailAddress, [rules.email()])"
       />
 
       <BaseInput label="Nationality (Optional)" v-model="formData.nationality" placeholder="e.g. Pakistani" :error="!!errors.nationality" :error-message="errors.nationality" />

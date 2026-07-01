@@ -7,6 +7,7 @@ export interface IAddPatient {
   cnic: string;
   gender: number;
   address: string;
+  emailAddress: string;
   nationality?: string;
   passportNumber?: string;
   guardianCNIC?: string;
@@ -22,6 +23,7 @@ export interface IEditPatient {
   cnic: string;
   gender: number;
   address: string;
+  emailAddress: string;
   nationality?: string;
   passportNumber?: string;
   guardianCNIC?: string;
@@ -37,6 +39,7 @@ export interface IPatient {
   cnic: string;
   gender: string | number;
   address: string;
+  emailAddress: string;
   nationality?: string;
   passportNumber?: string;
   guardianCNIC?: string;

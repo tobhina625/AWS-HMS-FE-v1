@@ -30,6 +30,7 @@
     gender: '',
     age: '',
     address: '',
+    emailAddress: '',
     nationality: '',
     passportNumber: '',
     guardianCNIC: '',
@@ -65,6 +66,7 @@
           gender: d.gender != null ? String(d.gender) : '',
           age: d.age != null ? String(d.age) : '',
           address: d.address || '',
+          emailAddress: d.emailAddress || '',
           nationality: d.nationality || '',
           passportNumber: d.passportNumber || '',
           guardianCNIC: d.guardianCNIC || '',
@@ -99,9 +101,10 @@
         age: Number(formData.value.age),
         address: formData.value.address,
         gender: Number(formData.value.gender),
-        nationality: formData.value.nationality || undefined,
-        passportNumber: formData.value.passportNumber || undefined,
-        guardianCNIC: formData.value.guardianCNIC || undefined,
+        emailAddress: formData.value.emailAddress || '',
+        nationality: formData.value.nationality || '',
+        passportNumber: formData.value.passportNumber || '',
+        guardianCNIC: formData.value.guardianCNIC || '',
       };
       const response = await patientService.updatePatient(payload);
       if (response.isSuccess) {
@@ -211,6 +214,17 @@
       <BaseInput label="Nationality" v-model="formData.nationality" placeholder="e.g. Pakistani" :error="!!errors.nationality" :error-message="errors.nationality" />
 
       <BaseInput label="Passport Number" v-model="formData.passportNumber" placeholder="For international patients" :error="!!errors.passportNumber" :error-message="errors.passportNumber" />
+
+      <BaseInput
+        label="Email Address"
+        type="email"
+        field-required
+        v-model="formData.emailAddress"
+        placeholder="Enter email address"
+        :error="!!errors.emailAddress"
+        :error-message="errors.emailAddress"
+        @change="validateField('emailAddress', formData.emailAddress, [rules.email()])"
+      />
 
       <BaseCnicInput label-prefix="Guardian" v-model="formData.guardianCNIC" :error="!!errors.guardianCNIC" :error-message="errors.guardianCNIC" />
     </FormViewTemplate>
