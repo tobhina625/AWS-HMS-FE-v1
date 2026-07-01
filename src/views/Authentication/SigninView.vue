@@ -152,20 +152,8 @@
       <form @submit.prevent="login" class="space-y-6">
         <!-- Login As: Employee / Patient -->
         <div class="flex items-center gap-6">
-          <BaseRadio
-            id="login_as_employee"
-            name="loginAs"
-            label="As Employee"
-            value="employee"
-            v-model="IsPatient"
-          />
-          <BaseRadio
-            id="login_as_patient"
-            name="loginAs"
-            label="As Patient"
-            value="patient"
-            v-model="IsPatient"
-          />
+          <BaseRadio id="login_as_employee" name="loginAs" label="As Employee" value="employee" v-model="IsPatient" />
+          <BaseRadio id="login_as_patient" name="loginAs" label="As Patient" value="patient" v-model="IsPatient" />
         </div>
 
         <BaseInput

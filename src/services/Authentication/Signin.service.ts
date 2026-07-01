@@ -10,10 +10,7 @@ class AutenticationService {
 
   async signInUser(userCredential: SignInDto, IsPatient: boolean = false): Promise<any> {
     try {
-      const response = await this._genericService.post(
-        `api/account/login?IsPatient=${IsPatient}`,
-        userCredential
-      );
+      const response = await this._genericService.post(`api/account/login?IsPatient=${IsPatient}`, userCredential);
       return response;
     } catch (error) {
       console.error('Error Signin:', error);
