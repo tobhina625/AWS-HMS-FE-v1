@@ -3,6 +3,7 @@
   import BaseInput from '@/components/Base/BaseInput.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import BaseCheckbox from '@/components/Base/BaseCheckbox.vue';
+  import BaseRadio from '@/components/Base/BaseRadio.vue';
   import FullScreenLayout from '@/layouts/FullScreenLayout.vue';
   import useAlert from '@/plugins/alert/useAlert';
   import AutenticationService from '@/services/Authentication/Signin.service';
@@ -25,6 +26,8 @@
     password: '',
   });
 
+  const IsPatient = ref<'employee' | 'patient'>('employee');
+
   const errors = ref({
     email: '',
     password: '',
@@ -44,7 +47,7 @@
           password: credentials.value.password,
         };
 
-        const response = await signinService.signInUser(user);
+        const response = await signinService.signInUser(user, IsPatient.value === 'patient');
 
         if (response.isSuccess) {
           const loginData = response.data;
@@ -147,6 +150,24 @@
   <FullScreenLayout>
     <DefaultAuthCard :pageTitle="pageTitle" subtitle="Welcome back! Please sign in to your dashboard.">
       <form @submit.prevent="login" class="space-y-6">
+        <!-- Login As: Employee / Patient -->
+        <div class="flex items-center gap-6">
+          <BaseRadio
+            id="login_as_employee"
+            name="loginAs"
+            label="As Employee"
+            value="employee"
+            v-model="IsPatient"
+          />
+          <BaseRadio
+            id="login_as_patient"
+            name="loginAs"
+            label="As Patient"
+            value="patient"
+            v-model="IsPatient"
+          />
+        </div>
+
         <BaseInput
           label="Email Address"
           type="email"
