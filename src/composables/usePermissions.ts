@@ -9,6 +9,7 @@ export interface UserPermission {
   isView: boolean;
   isEdit: boolean;
   isDelete: boolean;
+  isList: boolean;
 }
 
 export function usePermissions() {
@@ -29,18 +30,24 @@ export function usePermissions() {
 
     // Admin users have all permissions
     if (hasRole('Admin') || hasRole('SuperAdmin') || hasRole('System Administrator') || hasRole('Hospital Administrator')) {
-      // Set a flag indicating admin access
       localStorage.setItem('hms-is-admin', 'true');
       return;
     } else {
       localStorage.removeItem('hms-is-admin');
     }
 
+    // ── Fast path: permissions already stored from login response ──────────
+    const storedPerms = getStoredPermissions();
+    if (storedPerms.length > 0) {
+      permissions.value = storedPerms;
+      return;
+    }
+
+    // ── Fallback: fetch permissions from API (role-based) ──────────────────
     loading.value = true;
     error.value = null;
 
     try {
-      // Get the user's primary role (first role in the array)
       const userDesignations = user.designations || [];
 
       if (userDesignations.length === 0) {
@@ -49,10 +56,8 @@ export function usePermissions() {
         return;
       }
 
-      // Get permissions for the first designation's role
       const firstDesignation = userDesignations[0];
-
-      const roleId = firstDesignation.role?.id || firstDesignation.roleId;
+      const roleId = (firstDesignation.role?.id as number | undefined) || (firstDesignation as any).roleId;
 
       if (!roleId) {
         error.value = 'Invalid role configuration';
@@ -64,8 +69,6 @@ export function usePermissions() {
 
       if (response.isSuccess) {
         permissions.value = response.data.permission || [];
-
-        // Store permissions in localStorage for quick access
         localStorage.setItem('hms-permissions', JSON.stringify(permissions.value));
       } else {
         error.value = response.error || 'Failed to load permissions';
@@ -94,7 +97,7 @@ export function usePermissions() {
     return localStorage.getItem('hms-is-admin') === 'true' || hasRole('Admin') || hasRole('SuperAdmin') || hasRole('System Administrator') || hasRole('Hospital Administrator');
   };
 
-  const hasPermission = (moduleName: string, action?: 'add' | 'view' | 'edit' | 'delete'): boolean => {
+  const hasPermission = (moduleName: string, action?: 'add' | 'view' | 'edit' | 'delete' | 'list'): boolean => {
     // Admin users have all permissions
     if (isAdmin()) {
       return true;
@@ -108,10 +111,12 @@ export function usePermissions() {
 
     if (!action) {
       // If no specific action, check if user has any permission for this module
-      return permission.isView || permission.isAdd || permission.isEdit || permission.isDelete;
+      return permission.isList || permission.isView || permission.isAdd || permission.isEdit || permission.isDelete;
     }
 
     switch (action) {
+      case 'list':
+        return permission.isList;
       case 'add':
         return permission.isAdd;
       case 'view':
@@ -125,8 +130,11 @@ export function usePermissions() {
     }
   };
 
+  // For sidebar visibility: user must have isList (can see the listing page)
+  // OR isView (can view individual records) — either grants sidebar access.
   const canViewModule = (moduleName: string): boolean => {
-    return hasPermission(moduleName, 'view') || hasPermission(moduleName);
+    if (isAdmin()) return true;
+    return hasPermission(moduleName, 'list') || hasPermission(moduleName, 'view');
   };
 
   const canAddToModule = (moduleName: string): boolean => {
@@ -149,6 +157,10 @@ export function usePermissions() {
 
   const userPermissions = computed(() => (permissions.value.length > 0 ? permissions.value : getStoredPermissions()));
 
+  const canListModule = (moduleName: string): boolean => {
+    return hasPermission(moduleName, 'list');
+  };
+
   return {
     permissions: userPermissions,
     loading,
@@ -156,6 +168,7 @@ export function usePermissions() {
     loadUserPermissions,
     hasPermission,
     canViewModule,
+    canListModule,
     canAddToModule,
     canEditModule,
     canDeleteFromModule,

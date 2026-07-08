@@ -48,10 +48,9 @@
         };
 
         const response = await signinService.signInUser(user, IsPatient.value === 'patient');
-
         if (response.isSuccess) {
           const loginData = response.data;
-
+          // console.log("response", response.data.permissions);
           // Store token temporarily
           const tempToken = loginData.token;
 
@@ -105,6 +104,23 @@
               designations: loginData.designations,
             })
           );
+
+          // Store permissions from login response for RBAC
+          const adminRoles = ['Admin', 'SuperAdmin', 'System Administrator', 'Hospital Administrator'];
+          const isAdmin = loginData.roles?.some((r: string) => adminRoles.includes(r));
+
+          if (isAdmin) {
+            localStorage.setItem('hms-is-admin', 'true');
+            localStorage.removeItem('hms-permissions');
+          } else {
+            localStorage.removeItem('hms-is-admin');
+            if (loginData.permissions && loginData.permissions.length > 0) {
+              localStorage.setItem('hms-permissions', JSON.stringify(loginData.permissions));
+            } else {
+              localStorage.removeItem('hms-permissions');
+            }
+          }
+
           router.push('/');
         } else {
           showAlert('error', response.error, 'Invalid Credentials');

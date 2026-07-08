@@ -18,12 +18,23 @@ export interface DesignationDto {
   };
 }
 
+export interface UserPermissionDto {
+  id: number;
+  name: string;
+  isAdd: boolean;
+  isView: boolean;
+  isEdit: boolean;
+  isDelete: boolean;
+  isList: boolean;
+}
+
 export interface LoginResponseDto {
   token: string;
   userName: string;
   email: string;
   roles: string[];
   designations: DesignationDto[];
+  permissions: UserPermissionDto[];
 }
 
 export interface UserData {

@@ -20,6 +20,7 @@
   const dashboardService = new DashboardService();
 
   const isSystemAdmin = computed(() => hasRole('System Administrator'));
+  const isPatient = computed(() => hasRole('Patient'));
   const systemAdminData = ref<any>(null);
   const systemAdminLoading = ref(false);
 
@@ -66,7 +67,7 @@
 
 <template>
   <DefaultLayout>
-    <!-- Modern Dashboard Header -->
+    <!-- Dashboard Header -->
     <header class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div>
         <h1 class="text-3xl font-extrabold text-emphasis tracking-tight">
@@ -104,11 +105,21 @@
       <SystemAdminQuickLinks />
     </div>
 
-    <!-- Default Dashboard (other roles) -->
+    <!-- Patient Dashboard — appointments only -->
+    <div v-else-if="isPatient" class="flex flex-col xl:flex-row gap-8">
+      <div class="flex-[2]">
+        <AppointmentTable />
+      </div>
+      <div class="flex-1">
+        <AppointmentOverviewChart />
+      </div>
+    </div>
+
+    <!-- Default Dashboard (all other roles) -->
     <div v-else class="flex flex-col xl:flex-row gap-8">
       <!-- Left Column: Stats & Charts -->
       <div class="flex-[3] space-y-8">
-        <!-- Quick Stats - 2 rows of 5 cards each on xl -->
+        <!-- Quick Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           <DataStats />
         </div>

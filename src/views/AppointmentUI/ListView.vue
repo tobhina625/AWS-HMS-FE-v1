@@ -19,11 +19,13 @@
   import { usePermissions } from '@/composables/usePermissions';
   import { useSelection } from '@/composables/useSelection';
   import { useConfirmDelete } from '@/composables/useConfirmDelete';
+  import { useAuth } from '@/composables/useAuth';
 
   const pageTitle = ref('Appointments Management');
   const appointmentService = new AppointmentServices();
   const viewMode = ref<'grid' | 'table'>('table');
-
+  const { hasRole } = useAuth();
+  const isPatient = computed(() => hasRole('Patient'));
   const { canDeleteFromModule } = usePermissions();
   const { confirmDelete, confirmBulkDelete } = useConfirmDelete();
   const { selectedIds, selectionCount, toggle, selectAll, deselectAll, toggleAll } = useSelection<number>();
@@ -48,17 +50,14 @@
     location: item.location || '-',
   });
 
-  const {
-    loading,
-    listFilters,
-    apiResponse,
-    isEmpty,
-    hasData,
-    fetchData,
-    handleSearch,
-    handlePageChange: changePage,
-    handlePageSizeChange,
-  } = useListView<IAppointment>((filters: string) => appointmentService.getAppointments(filters));
+  const fetchAppointments = (filters: string) => {
+    if (isPatient.value) {
+      return appointmentService.getMyAppointments(); // backend scopes this to the logged-in patient
+    }
+    return appointmentService.getAppointments(filters); // full list for all other roles
+  };
+
+  const { loading, listFilters, apiResponse, isEmpty, hasData, fetchData, handleSearch, handlePageChange: changePage, handlePageSizeChange } = useListView<IAppointment>(fetchAppointments);
 
   listFilters.value.isDeleted = false;
 

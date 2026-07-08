@@ -34,6 +34,7 @@
 
   const target = ref(null);
   const sidebarStore = useSidebarStore();
+  // const { canViewModule, canListModule, loadUserPermissions } = usePermissions();
   const { canViewModule, loadUserPermissions } = usePermissions();
   const { hasRole } = useAuth();
 
@@ -111,16 +112,16 @@
     },
   ]);
 
-  // Map route paths to module names for permission checking
+  // Map route paths to module names as returned by the login API permissions
   const routeToModuleMap: Record<string, string> = {
     '/': 'Dashboard',
     '/appointments': 'Appointments',
     '/patients': 'Patients',
-    '/PatientHistoryForPatient': 'Patient History',
-    '/patient-bill': 'Patient Bills',
+    '/patienthistoryforpatient': 'Patient History',
+    '/patient-bill': 'Billing',
     '/wards': 'Wards',
     '/operation-theatre': 'Operation Theatre',
-    '/surgery': 'Surgery',
+    '/surgery': 'Surgeries',
     '/lab-tests': 'Lab Tests',
     '/lab-test': 'Lab Tests',
     '/employees': 'Employees',
@@ -143,7 +144,7 @@
     '/vendors': 'Vendors',
     '/purchase-orders': 'Purchase Orders',
     '/branches': 'Branches',
-    '/system-configuration': 'SystemConfiguration',
+    '/system-configuration': 'System Configuration',
   };
 
   const checkItemPermission = (item: any): boolean => {
@@ -152,29 +153,29 @@
       return true;
     }
 
-    // Check if user is admin (has access to all permission-related features)
+    // Admin users have full access
     const isUserAdmin = hasRole('Admin') || hasRole('SuperAdmin') || hasRole('System Administrator') || hasRole('Hospital Administrator');
     if (isUserAdmin) {
       return true;
     }
 
-    // If item has children, check if at least one child is accessible
+    // If item has children, show it only if at least one child is accessible
     if (item.children && item.children.length > 0) {
-      const hasAccessibleChild = item.children.some((child: any) => checkItemPermission(child));
-      return hasAccessibleChild;
+      return item.children.some((child: any) => checkItemPermission(child));
     }
 
-    // Check permission for the route
+    // Check isList / isView permission for the module
     if (item.route) {
       const moduleName = routeToModuleMap[item.route];
       if (moduleName) {
-        const hasPermission = canViewModule(moduleName);
-        return hasPermission;
+        // canViewModule checks isList || isView — if both false the item is hidden
+        return canViewModule(moduleName);
       }
+      // Route not in map → allow (sub-route of an already accessible area)
+      return true;
     }
 
-    // Default: show the item if no specific permission check
-    return true;
+    return false;
   };
 
   const filterMenuItems = (items: any[]): any[] => {

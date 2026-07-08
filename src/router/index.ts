@@ -841,14 +841,14 @@ const isTokenExpired = (): boolean => {
   }
 };
 
-// Route to module mapping for permission checks
+// Route to module mapping for permission checks (names must match the API's permission.name values)
 const routePermissionMap: Record<string, string> = {
   '/appointments': 'Appointments',
   '/patients': 'Patients',
-  '/patient-bill': 'Patient Bills',
+  '/patient-bill': 'Billing',
   '/wards': 'Wards',
   '/operation-theatre': 'Operation Theatre',
-  '/surgery': 'Surgery',
+  '/surgery': 'Surgeries',
   '/disease': 'Disease',
   '/employees': 'Employees',
   '/departments': 'Departments',
@@ -860,7 +860,7 @@ const routePermissionMap: Record<string, string> = {
   '/permissions': 'Permissions',
   '/lab-tests': 'Lab Tests',
   '/branches': 'Branches',
-  '/system-configuration': 'SystemConfiguration',
+  '/system-configuration': 'System Configuration',
   '/lab-test': 'Lab Tests',
   '/roles': 'Roles',
   '/vendors': 'Vendors',
