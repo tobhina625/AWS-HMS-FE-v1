@@ -152,12 +152,7 @@
 
             <!-- Bill Type Select -->
             <div class="mb-5">
-              <BaseSelectNative
-                label="Bill Type"
-                v-model="formData.billType"
-                :options="billTypeOptions"
-                :fieldRequired="true"
-              />
+              <BaseSelectNative label="Bill Type" v-model="formData.billType" :options="billTypeOptions" :fieldRequired="true" />
             </div>
 
             <!-- Reason -->
@@ -176,12 +171,7 @@
 
             <!-- Optional Entity ID -->
             <div class="mb-5">
-              <BaseInput
-                label="Entity ID (Optional Surgery/Admission/Lab ID)"
-                type="number"
-                placeholder="e.g. 12"
-                v-model="formData.entityId"
-              />
+              <BaseInput label="Entity ID (Optional Surgery/Admission/Lab ID)" type="number" placeholder="e.g. 12" v-model="formData.entityId" />
             </div>
 
             <!-- Total Amount -->

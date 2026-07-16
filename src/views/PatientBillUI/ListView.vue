@@ -224,8 +224,8 @@
   const tableColumns = ['patientName', 'patientCnic', 'billTypeLabel', 'reason', 'totalAmount', 'paidAmount', 'remainingBalance', 'status'];
 
   const statusColorMap = {
-    'Paid': 'bg-meta-3/15 text-meta-3 border-meta-3/30',
-    'Pending': 'bg-warning/15 text-warning border-warning/30',
+    Paid: 'bg-meta-3/15 text-meta-3 border-meta-3/30',
+    Pending: 'bg-warning/15 text-warning border-warning/30',
   };
 
   onMounted(async () => {
@@ -271,8 +271,14 @@
     </ListViewTemplate>
 
     <!-- Bill Details & Invoice Modal -->
-    <div v-if="showDetailsModal && selectedBillDetails" class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 print:bg-white print:p-0 print:absolute" @click.self="showDetailsModal = false">
-      <div class="bg-surface rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-stroke dark:border-strokedark print:shadow-none print:border-none print:max-h-full print:bg-white print:text-black">
+    <div
+      v-if="showDetailsModal && selectedBillDetails"
+      class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 print:bg-white print:p-0 print:absolute"
+      @click.self="showDetailsModal = false"
+    >
+      <div
+        class="bg-surface rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-stroke dark:border-strokedark print:shadow-none print:border-none print:max-h-full print:bg-white print:text-black"
+      >
         <!-- Header (hidden in print) -->
         <div class="sticky top-0 bg-surface border-b border-stroke dark:border-strokedark p-6 flex items-center justify-between print:hidden">
           <h2 class="text-2xl font-bold text-emphasis">Invoice & Bill Details</h2>
@@ -295,7 +301,12 @@
               <p class="text-sm text-bodydark dark:text-bodydark1">Type: {{ selectedBillDetails.billTypeLabel }}</p>
             </div>
             <div class="text-right">
-              <span :class="['inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border', selectedBillDetails.isPaid ? 'bg-meta-3/15 text-meta-3 border-meta-3/30' : 'bg-warning/15 text-warning border-warning/30']">
+              <span
+                :class="[
+                  'inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border',
+                  selectedBillDetails.isPaid ? 'bg-meta-3/15 text-meta-3 border-meta-3/30' : 'bg-warning/15 text-warning border-warning/30',
+                ]"
+              >
                 {{ selectedBillDetails.status }}
               </span>
             </div>
@@ -339,15 +350,13 @@
           <!-- Payment History -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold text-emphasis uppercase tracking-wider">Payment Transaction History</h4>
-            
-            <div v-if="loadingPayments" class="text-center py-6 text-bodydark">
-              Loading transactions...
-            </div>
-            
+
+            <div v-if="loadingPayments" class="text-center py-6 text-bodydark">Loading transactions...</div>
+
             <div v-else-if="paymentHistory.length === 0" class="text-sm text-bodydark dark:text-bodydark1 bg-slate-50 dark:bg-meta-4 p-4 rounded-xl text-center">
               No payments have been recorded for this bill yet.
             </div>
-            
+
             <div v-else class="overflow-x-auto">
               <table class="w-full text-left text-sm">
                 <thead>
@@ -383,29 +392,25 @@
     </div>
 
     <!-- Payments Modal Wrapper -->
-    <PaymentModal
-      :show="showPayModal"
-      :bill="billToPay"
-      @close="showPayModal = false"
-      @success="handlePaymentSuccess"
-    />
+    <PaymentModal :show="showPayModal" :bill="billToPay" @close="showPayModal = false" @success="handlePaymentSuccess" />
   </DefaultLayout>
 </template>
 
 <style>
-/* CSS Print Styling */
-@media print {
-  body * {
-    visibility: hidden;
+  /* CSS Print Styling */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #printable-invoice,
+    #printable-invoice * {
+      visibility: visible;
+    }
+    #printable-invoice {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
   }
-  #printable-invoice, #printable-invoice * {
-    visibility: visible;
-  }
-  #printable-invoice {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-}
 </style>

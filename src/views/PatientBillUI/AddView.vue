@@ -113,11 +113,7 @@
   const addPatientBill = async () => {
     validateForm();
 
-    const hasErrors =
-      errors.value.patientId ||
-      errors.value.reason ||
-      errors.value.totalAmount ||
-      errors.value.paidAmount;
+    const hasErrors = errors.value.patientId || errors.value.reason || errors.value.totalAmount || errors.value.paidAmount;
 
     if (hasErrors) {
       showAlert('error', 'Please correct the validation errors.', 'Validation Error');
@@ -186,12 +182,7 @@
 
               <!-- Bill Type Dropdown -->
               <div class="w-full mb-4 px-2.5 xl:w-1/2">
-                <BaseSelectNative
-                  label="Bill Type"
-                  v-model="formData.billType"
-                  :options="billTypeOptions"
-                  :fieldRequired="true"
-                />
+                <BaseSelectNative label="Bill Type" v-model="formData.billType" :options="billTypeOptions" :fieldRequired="true" />
               </div>
 
               <!-- Reason -->
@@ -210,12 +201,7 @@
 
               <!-- Optional Entity ID -->
               <div class="w-full mb-4 px-2.5 xl:w-1/2">
-                <BaseInput
-                  label="Entity ID (Optional Surgery/Admission/Lab ID)"
-                  type="number"
-                  placeholder="e.g. 12"
-                  v-model="formData.entityId"
-                />
+                <BaseInput label="Entity ID (Optional Surgery/Admission/Lab ID)" type="number" placeholder="e.g. 12" v-model="formData.entityId" />
               </div>
 
               <!-- Total Amount -->

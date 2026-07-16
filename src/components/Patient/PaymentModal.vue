@@ -114,7 +114,7 @@
         <div class="bg-slate-50 dark:bg-meta-4 p-4 rounded-xl space-y-1">
           <p class="text-xs text-bodydark dark:text-bodydark1 uppercase tracking-wider font-semibold">Patient</p>
           <p class="text-sm font-bold text-emphasis">{{ patientName }}</p>
-          
+
           <div class="grid grid-cols-2 gap-4 mt-2 pt-2 border-t border-stroke dark:border-strokedark">
             <div>
               <p class="text-xs text-bodydark dark:text-bodydark1">Bill ID</p>
@@ -140,12 +140,7 @@
         />
 
         <!-- Payment Method selection -->
-        <BaseSelectNative
-          label="Payment Method"
-          v-model="paymentMethod"
-          :options="paymentMethodOptions"
-          :fieldRequired="true"
-        />
+        <BaseSelectNative label="Payment Method" v-model="paymentMethod" :options="paymentMethodOptions" :fieldRequired="true" />
       </div>
 
       <!-- Actions -->
