@@ -1,5 +1,5 @@
 import GenericService from '../g-service';
-import type { IAddPatientBills } from '../PatientBill/Patientbill.dto';
+import type { IAddPatientBills, IPatientBills } from '../PatientBill/Patientbill.dto';
 
 class PatientBillsService {
   private readonly _genericService: GenericService;
@@ -55,6 +55,17 @@ class PatientBillsService {
       return response;
     } catch (error) {
       console.error('Error adding patient bills:', error);
+      throw error;
+    }
+  }
+
+  // Update existing patient bill
+  async updatePatientBill(data: IPatientBills): Promise<any> {
+    try {
+      const response = await this._genericService.put('api/patient-bills/update', data);
+      return response;
+    } catch (error) {
+      console.error('Error updating patient bill:', error);
       throw error;
     }
   }

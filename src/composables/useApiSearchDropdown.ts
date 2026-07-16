@@ -12,8 +12,10 @@ export type ApiSearchOption = {
 export interface UseApiSearchDropdownOptions {
   /** Minimum characters before calling `fetchSearchPage`. Below this, `loadDefault` runs. Default 2. */
   minSearchLength?: number;
-  fetchDefaultPage: () => Promise<ApiSearchOption[]>;
-  fetchSearchPage: (term: string) => Promise<ApiSearchOption[]>;
+  /** When set, enables paginated loading. The composable will pass page & size to fetch callbacks and track hasMore / loadMore state. */
+  pageSize?: number;
+  fetchDefaultPage: (page?: number, size?: number) => Promise<ApiSearchOption[]>;
+  fetchSearchPage: (term: string, page?: number, size?: number) => Promise<ApiSearchOption[]>;
   getSelectedId: () => string | number | undefined | null | '';
 }
 
@@ -21,19 +23,34 @@ export interface UseApiSearchDropdownOptions {
  * Searchable BaseSelect pattern: load a short default page from the backend, then replace options
  * when the user types (search). Clearing the query restores the default page and keeps the
  * current selection visible when it is not in that page.
+ *
+ * When `pageSize` is provided, the composable supports infinite-scroll pagination via `loadMore()`.
  */
 export function useApiSearchDropdown(opts: UseApiSearchDropdownOptions) {
   const minLen = opts.minSearchLength ?? 2;
+  const pageSize = opts.pageSize ?? 0; // 0 = no pagination
   const items = ref<ApiSearchOption[]>([]);
   const loading = ref(false);
   const searchPerformed = ref(false);
+  const hasMore = ref(false);
+  const currentPage = ref(0);
+  const currentSearchTerm = ref('');
 
   const loadDefault = async () => {
     const prevSnapshot = items.value.slice();
     loading.value = true;
+    currentPage.value = 0;
+    currentSearchTerm.value = '';
+    hasMore.value = false;
     try {
-      const list = await opts.fetchDefaultPage();
+      const list = await opts.fetchDefaultPage(0, pageSize || undefined);
       let arr = Array.isArray(list) ? [...list] : [];
+
+      // Track if there might be more pages
+      if (pageSize > 0) {
+        hasMore.value = arr.length >= pageSize;
+      }
+
       const id = opts.getSelectedId();
       if (id !== undefined && id !== null && id !== '') {
         const sid = String(id);
@@ -45,6 +62,30 @@ export function useApiSearchDropdown(opts: UseApiSearchDropdownOptions) {
       items.value = arr;
     } catch {
       items.value = [];
+      hasMore.value = false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /** Fetch the next page and append results to the current list. Only works when `pageSize` is set. */
+  const loadMore = async () => {
+    if (!pageSize || loading.value || !hasMore.value) return;
+    loading.value = true;
+    const nextPage = currentPage.value + 1;
+    try {
+      let list: ApiSearchOption[];
+      if (currentSearchTerm.value) {
+        list = await opts.fetchSearchPage(currentSearchTerm.value, nextPage, pageSize);
+      } else {
+        list = await opts.fetchDefaultPage(nextPage, pageSize);
+      }
+      const arr = Array.isArray(list) ? list : [];
+      hasMore.value = arr.length >= pageSize;
+      currentPage.value = nextPage;
+      items.value = [...items.value, ...arr];
+    } catch {
+      hasMore.value = false;
     } finally {
       loading.value = false;
     }
@@ -59,11 +100,18 @@ export function useApiSearchDropdown(opts: UseApiSearchDropdownOptions) {
     }
     loading.value = true;
     searchPerformed.value = true;
+    currentPage.value = 0;
+    currentSearchTerm.value = t;
     try {
-      const list = await opts.fetchSearchPage(t);
-      items.value = Array.isArray(list) ? list : [];
+      const list = await opts.fetchSearchPage(t, 0, pageSize || undefined);
+      const arr = Array.isArray(list) ? list : [];
+      if (pageSize > 0) {
+        hasMore.value = arr.length >= pageSize;
+      }
+      items.value = arr;
     } catch {
       items.value = [];
+      hasMore.value = false;
     } finally {
       loading.value = false;
     }
@@ -71,5 +119,5 @@ export function useApiSearchDropdown(opts: UseApiSearchDropdownOptions) {
 
   const emptyMessage = (idleText = 'Type at least 2 characters to filter the list') => computed(() => (searchPerformed.value ? 'No results found' : idleText));
 
-  return { items, loading, searchPerformed, loadDefault, onSearch, emptyMessage };
+  return { items, loading, searchPerformed, hasMore, loadDefault, loadMore, onSearch, emptyMessage };
 }

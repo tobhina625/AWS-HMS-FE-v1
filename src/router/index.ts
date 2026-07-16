@@ -44,6 +44,7 @@ import RolesListForPermissions from '@/views/RolePermissionsUI/ListView.vue';
 import RolesPermissionsView from '@/views/RolePermissionsUI/RolePermissions.vue';
 import PatientUIListView from '../views/PatientBillUI/ListView.vue';
 import PatientsBillsAddView from '../views/PatientBillUI/AddView.vue';
+import PatientBillsEditView from '../views/PatientBillUI/EditView.vue';
 import AppointmentListView from '@/views/AppointmentUI/ListView.vue';
 import AppointmentAddView from '@/views/AppointmentUI/AddView.vue';
 import AppointmentEditView from '@/views/AppointmentUI/EditView.vue';
@@ -472,6 +473,15 @@ const routes = [
     component: PatientsBillsAddView,
     meta: {
       title: 'Add Patient Bill',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/patient-bills/edit/:id',
+    name: 'patientbillsEdit',
+    component: PatientBillsEditView,
+    meta: {
+      title: 'Edit Patient Bill',
       requiresAuth: true,
     },
   },

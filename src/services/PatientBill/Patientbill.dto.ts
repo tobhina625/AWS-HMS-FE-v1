@@ -30,11 +30,11 @@ export interface IAddPatientBills {
   remainingBalance: number;
   patient: {
     id?: number;
-    name: string;
-    age: number;
-    phone: string;
-    cnic: string;
-    gender: number;
-    address: string;
+    name?: string;
+    age?: number;
+    phone?: string;
+    cnic?: string;
+    gender?: number;
+    address?: string;
   };
 }

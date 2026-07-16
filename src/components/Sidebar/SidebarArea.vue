@@ -11,8 +11,8 @@
   import DashboardSVG from '@/assets/images/SVGs/Dashboard.svg';
   import AppointmentSVG from '@/assets/images/SVGs/Appointment.svg';
   import PatientSVG from '@/assets/images/SVGs/Patient.svg';
-  // import HistorySVG from '@/assets/images/SVGs/History.svg';
-  // import BillingSVG from '@/assets/images/SVGs/Billing.svg';
+  import HistorySVG from '@/assets/images/SVGs/History.svg';
+  import BillingSVG from '@/assets/images/SVGs/Billing.svg';
   import WardSVG from '@/assets/images/SVGs/Department.svg';
   import OperationSVG from '@/assets/images/SVGs/OperationTheatre.svg';
   import SurgerySVG from '@/assets/images/SVGs/Surgery.svg';
@@ -67,6 +67,7 @@
         { icon: ClipboardListIcon, label: 'Admission queue', route: '/admissions/queue' },
         { icon: ClipboardCheckIcon, label: 'Patient Surgeries', route: '/patient-surgeries' },
         { icon: ClipboardCheckIcon, label: 'Treatments', route: '/treatments' },
+        { icon: HistorySVG, label: 'Patient History', route: '/patienthistoryforpatient' },
       ],
     },
 
@@ -98,6 +99,7 @@
     {
       name: 'FINANCE',
       menuItems: [
+        { icon: BillingSVG, label: 'Patient Bill', route: '/patient-bill' },
         { icon: BriefcaseIcon, label: 'Vendors', route: '/vendors' },
         { icon: ClipboardListIcon, label: 'Purchase Orders', route: '/purchase-orders' },
       ],
