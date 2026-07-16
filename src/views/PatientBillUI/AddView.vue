@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import router from '@/router';
+  import { useRoute } from 'vue-router';
   import useAlert from '@/plugins/alert/useAlert';
   import { ref, computed, onMounted } from 'vue';
   import PatientBillsService from '@/services/PatientBill/Patientbill.services';
@@ -15,6 +16,10 @@
   const patientBillServices = new PatientBillsService();
   const patientServices = new PatientServices();
   const { showAlert } = useAlert();
+
+  const route = useRoute();
+  const isPatientPreselected = ref(false);
+  const patientName = ref('');
 
   const pageTitle = ref('Add Patient Bill');
   const isSubmitting = ref(false);
@@ -138,7 +143,11 @@
       const response = await patientBillServices.addPatientBills(billPayload);
       if (response?.isSuccess !== false) {
         showAlert('success', 'Patient bill added successfully.', 'Success');
-        router.push('/patient-bill');
+        if (isPatientPreselected.value) {
+          router.push(`/patients/profile/${patientId.value}`);
+        } else {
+          router.push('/patient-bill');
+        }
       } else {
         showAlert('error', response?.error || 'Failed to add patient bill.', 'Error');
       }
@@ -150,7 +159,23 @@
     }
   };
   onMounted(async () => {
-    await patientDd.loadDefault();
+    const qPatientId = route.query.patientId;
+    if (qPatientId) {
+      isPatientPreselected.value = true;
+      patientId.value = String(qPatientId);
+      try {
+        const response = await patientServices.getPatientById(patientId.value);
+        const p = response?.data || response?.Data || response;
+        if (p) {
+          patientName.value = `${p.firstName || ''} ${p.lastName || ''} (${p.cnic || 'No CNIC'})`.trim();
+        }
+      } catch (error) {
+        console.error('Error fetching patient details:', error);
+        showAlert('error', 'Failed to load preselected patient details.', 'Error');
+      }
+    } else {
+      await patientDd.loadDefault();
+    }
   });
 </script>
 
@@ -163,9 +188,16 @@
         <div class="p-5 space-y-6 sm:p-6">
           <form @submit.prevent="addPatientBill">
             <div class="-mx-2.5 flex flex-wrap gap-y-5">
-              <!-- Patient Search Dropdown -->
+              <!-- Patient Search Dropdown or Read Only Name -->
               <div class="w-full mb-4 px-2.5 xl:w-1/2">
+                <div v-if="isPatientPreselected">
+                  <label class="mb-2 text-sm font-semibold text-emphasis">Patient Name</label>
+                  <div class="flex items-center h-[46px] px-4 rounded-lg bg-slate-100 dark:bg-meta-4 text-emphasis font-bold border border-stroke dark:border-strokedark">
+                    {{ patientName }}
+                  </div>
+                </div>
                 <BaseSelect
+                  v-else
                   label="Patient"
                   v-model="patientId"
                   :options="patientDd.items.value"
