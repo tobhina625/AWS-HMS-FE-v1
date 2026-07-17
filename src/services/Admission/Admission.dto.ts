@@ -41,3 +41,14 @@ export interface IAdmissionQueueSummary {
   preAdmissionPipelineCount: number;
   totalNonDeleted: number;
 }
+
+export interface IAdmissionStatistics {
+  totalAdmissions: number;
+  admittedPatients: number;
+  pendingAdmissions: number;
+  dischargedPatients: number;
+  needsBedCount: number;
+  preAdmissionPipelineCount: number;
+  admissionsByStatus: Array<{ status: string; count: number }>;
+  admissionsByWard: Array<{ ward: string; count: number }>;
+}

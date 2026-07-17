@@ -1,5 +1,5 @@
 import GenericService from '../g-service';
-import type { IAddAdmission, IUpdateAdmission, IAdmissionQueueSummary } from './Admission.dto';
+import type { IAddAdmission, IUpdateAdmission, IAdmissionQueueSummary, IAdmissionStatistics } from './Admission.dto';
 
 class AdmissionServices {
   private readonly _genericService: GenericService;
@@ -30,6 +30,22 @@ class AdmissionServices {
       return payload ?? null;
     } catch (error) {
       console.error('Error fetching admission queue summary:', error);
+      throw error;
+    }
+  }
+
+  async getAdmissionStatistics(dateFilter: string = ''): Promise<IAdmissionStatistics | null> {
+    try {
+      const url = dateFilter ? `api/admissions/statistics?dateFilter=${dateFilter}` : 'api/admissions/statistics';
+      const response = (await this._genericService.get(url)) as {
+        data?: IAdmissionStatistics;
+        Data?: IAdmissionStatistics;
+        isSuccess?: boolean;
+      };
+      const payload = response.data ?? response.Data;
+      return payload ?? null;
+    } catch (error) {
+      console.error('Error fetching admission statistics:', error);
       throw error;
     }
   }
