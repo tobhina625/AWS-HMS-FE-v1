@@ -18,6 +18,7 @@ export interface IPatientBills {
   paidAmount: number;
   remainingBalance: number;
   patient: IPatient;
+  createdAt?: string;
 }
 
 export interface IAddPatientBills {

@@ -39,6 +39,11 @@
       </div>
     </div>
 
+    <!-- Header Stats Slot -->
+    <div v-if="$slots['header-stats']">
+      <slot name="header-stats"></slot>
+    </div>
+
     <div class="grid grid-cols-1 gap-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="flex-1 w-full max-w-2xl">

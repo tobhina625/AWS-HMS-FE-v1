@@ -19,6 +19,20 @@ class PatientBillsService {
     }
   }
 
+  async getBillingSummary(searchTerm: string = '', dateFilter: string = ''): Promise<any> {
+    try {
+      const params = [];
+      if (searchTerm) params.push(`searchTerm=${encodeURIComponent(searchTerm)}`);
+      if (dateFilter) params.push(`dateFilter=${encodeURIComponent(dateFilter)}`);
+      const url = params.length > 0 ? `api/patient-bills/summary?${params.join('&')}` : 'api/patient-bills/summary';
+      const response = await this._genericService.get(url);
+      return response;
+    } catch (error) {
+      console.error('Error fetching billing summary:', error);
+      throw error;
+    }
+  }
+
   async getPatientBillsByPatientId(patientId: number, page: number = 0, size: number = 10): Promise<any> {
     try {
       const response = await this._genericService.get('api/patient-bills/by-patient', `id=${patientId}&page=${page}&size=${size}`);
