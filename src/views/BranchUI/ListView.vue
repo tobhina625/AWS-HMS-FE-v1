@@ -45,7 +45,16 @@
     handleSearch,
     handlePageChange: changePage,
     handlePageSizeChange,
-  } = useListView<BranchDto>((filters) => BranchService.getAllBranches(filters.page, filters.size, filters.sort, filters.searchTerm), 8);
+  } = useListView<BranchDto>((filters) => {
+    const params = new URLSearchParams(filters);
+    return BranchService.getAllBranches(
+      Number(params.get('page') ?? 0),
+      Number(params.get('size') ?? 8),
+      params.get('sort') ?? '',
+      params.get('searchTerm') ?? '',
+      params.get('dateFilter') ?? '',
+    );
+  }, 8);
 
   const transformBranchData = (item: any): BranchDto => ({
     id: item.id,
@@ -147,6 +156,7 @@
       <template #search>
         <SearchWithViewToggle
           v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
           placeholder="Search branches..."
           addButtonRoute="branches/add"
           :showAdd="true"

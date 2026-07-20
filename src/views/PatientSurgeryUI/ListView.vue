@@ -94,7 +94,7 @@
       <template #subtitle>Manage patient surgical procedures and operation records.</template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" :showAdd="true" placeholder="Search patient surgeries..." add-button-route="patient-surgeries/add" @search="getSearchTerm" />
+        <SearchWithViewToggle v-model="viewMode" v-model:date-filter="listFilters.dateFilter" :showAdd="true" placeholder="Search patient surgeries..." add-button-route="patient-surgeries/add" @search="getSearchTerm" />
       </template>
 
       <template #table>

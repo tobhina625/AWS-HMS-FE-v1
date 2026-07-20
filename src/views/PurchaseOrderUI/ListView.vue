@@ -127,7 +127,7 @@
       </template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" :showAdd="true" placeholder="Search purchase orders..." add-button-route="purchase-orders/add" @search="getSearchTerm" />
+        <SearchWithViewToggle v-model="viewMode" v-model:date-filter="listFilters.dateFilter" :showAdd="true" placeholder="Search purchase orders..." add-button-route="purchase-orders/add" @search="getSearchTerm" />
       </template>
 
       <template #table>

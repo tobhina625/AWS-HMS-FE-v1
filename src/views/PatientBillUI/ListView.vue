@@ -3,9 +3,11 @@
   import router from '@/router';
   import DefaultLayout from '@/layouts/DefaultLayout.vue';
   import ListViewTemplate from '@/components/Templates/ListViewTemplate.vue';
-  import SearchBar from '@/components/UI/SearchBar.vue';
+  import SearchWithViewToggle from '@/components/UI/SearchWithViewToggle.vue';
   import DynamicTable from '@/components/UI/DynamicTable.vue';
   import DynamicPagination from '@/components/UI/DynamicPagination.vue';
+  import EmptyState from '@/components/UI/EmptyState.vue';
+  import GridViewCard from '@/components/UI/GridViewCard.vue';
   import PatientBillsServices from '@/services/PatientBill/Patientbill.services';
   import PatientPaymentService from '@/services/PatientPayment/Patientpayment.services';
   import EnumService from '@/services/Enum/Enum.service';
@@ -24,8 +26,14 @@
   const PatientPaymentServiceInstance = new PatientPaymentService();
   const enumService = new EnumService();
   const loading = ref(false);
+  const viewMode = ref<'grid' | 'table'>('table');
 
-  const listFilters = ref({
+  const listFilters = ref<{
+    page: number;
+    size: number;
+    searchTerm: string;
+    dateFilter: 'today' | 'yesterday' | '';
+  }>({
     page: 0,
     size: 10,
     searchTerm: '',
@@ -258,6 +266,21 @@
     Pending: 'bg-warning/15 text-warning border-warning/30',
   };
 
+  const hasData = computed(() => apiResponse.value.data.length > 0);
+
+  const getBillFields = (bill: any) => [
+    { label: 'CNIC', value: bill.patientCnic },
+    { label: 'Bill Type', value: bill.billTypeLabel },
+    { label: 'Total', value: formatCurrency(bill.totalAmount) },
+    { label: 'Paid', value: formatCurrency(bill.paidAmount) },
+    { label: 'Balance', value: formatCurrency(bill.remainingBalance) },
+    { label: 'Status', value: bill.status, badgeClass: bill.isPaid ? statusColorMap.Paid : statusColorMap.Pending },
+  ];
+
+  const handleAddNew = () => {
+    router.push('/patient-bills/add');
+  };
+
   onMounted(async () => {
     await fetchBillTypes();
     await fetchPatientBills();
@@ -324,36 +347,45 @@
       </template>
 
       <template #search>
-        <SearchBar placeholder="Search bills by patient or CNIC..." add-button-route="patient-bills/add" @searchTerm="getSearchTerm" />
-      </template>
-
-      <template #filters>
-        <div class="relative z-20 bg-white dark:bg-boxdark rounded-lg">
-          <select
-            v-model="listFilters.dateFilter"
-            @change="handleDateFilterChange"
-            class="relative z-20 w-full min-w-[150px] appearance-none rounded border border-stroke bg-transparent py-2 px-4 pr-10 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input text-sm text-emphasis font-medium cursor-pointer"
-          >
-            <option value="">All Time</option>
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="thisMonth">This Month</option>
-            <option value="thisYear">This Year</option>
-          </select>
-          <span class="absolute right-4 top-1/2 z-30 -translate-y-1/2 pointer-events-none">
-            <svg class="fill-current text-bodydark" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z"
-              ></path>
-            </svg>
-          </span>
-        </div>
+        <SearchWithViewToggle
+          v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
+          placeholder="Search bills by patient or CNIC..."
+          add-button-route="patient-bills/add"
+          @search="getSearchTerm"
+          @date-filter="handleDateFilterChange"
+        />
       </template>
 
       <template #table>
+        <EmptyState
+          v-if="!loading && !hasData"
+          title="No Patient Bills Found"
+          description="Get started by creating your first patient bill."
+          icon="default"
+          action-label="Add First Patient Bill"
+          @action="handleAddNew"
+        />
+
+        <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
+          <GridViewCard
+            v-for="bill in apiResponse.data"
+            :key="bill.id"
+            :id="bill.id"
+            :title="`Bill #${bill.id}`"
+            :subtitle="bill.patientName"
+            :fields="getBillFields(bill)"
+            :selectable="false"
+            :show-details="true"
+            :show-delete="canDelete"
+            @edit="router.push(`/patient-bills/edit/${bill.id}`)"
+            @detail="handleShowDetails(bill)"
+            @delete="handleDelete(bill)"
+          />
+        </div>
+
         <DynamicTable
+          v-else
           :data="apiResponse.data"
           :columns="tableColumns"
           showEdit
@@ -368,6 +400,7 @@
 
       <template #pagination>
         <DynamicPagination
+          v-if="hasData"
           :currentPage="listFilters.page"
           :totalPages="apiResponse.totalPages"
           :totalElements="apiResponse.totalElements"

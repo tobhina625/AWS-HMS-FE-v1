@@ -47,12 +47,13 @@ export interface LocationVerificationResultDto {
 }
 
 class BranchService extends GService {
-  async getAllBranches(page: number = 0, size: number = 10, sort: string = '', searchTerm: string = '') {
+  async getAllBranches(page: number = 0, size: number = 10, sort: string = '', searchTerm: string = '', dateFilter: string = '') {
     const params = new URLSearchParams();
     params.append('page', String(page));
     if (size) params.append('size', size.toString());
     if (sort) params.append('sort', sort);
     if (searchTerm) params.append('searchTerm', searchTerm);
+    if (dateFilter) params.append('dateFilter', dateFilter);
 
     return this.get(`api/branches?${params.toString()}`);
   }

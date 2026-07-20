@@ -39,19 +39,19 @@
       </div>
     </div>
 
-    <!-- Header Stats Slot -->
-    <div v-if="$slots['header-stats']">
-      <slot name="header-stats"></slot>
-    </div>
-
     <div class="grid grid-cols-1 gap-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex-1 w-full max-w-2xl">
+        <div class="flex-1 w-full">
           <slot name="search"></slot>
         </div>
-        <div class="flex items-center gap-4">
+        <div v-if="$slots.filters" class="flex items-center gap-4">
           <slot name="filters"></slot>
         </div>
+      </div>
+
+      <!-- Header Stats Slot -->
+      <div v-if="$slots['header-stats']">
+        <slot name="header-stats"></slot>
       </div>
 
       <BaseCard no-padding class="relative">
