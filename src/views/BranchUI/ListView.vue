@@ -47,13 +47,7 @@
     handlePageSizeChange,
   } = useListView<BranchDto>((filters) => {
     const params = new URLSearchParams(filters);
-    return BranchService.getAllBranches(
-      Number(params.get('page') ?? 0),
-      Number(params.get('size') ?? 8),
-      params.get('sort') ?? '',
-      params.get('searchTerm') ?? '',
-      params.get('dateFilter') ?? '',
-    );
+    return BranchService.getAllBranches(Number(params.get('page') ?? 0), Number(params.get('size') ?? 8), params.get('sort') ?? '', params.get('searchTerm') ?? '', params.get('dateFilter') ?? '');
   }, 8);
 
   const transformBranchData = (item: any): BranchDto => ({

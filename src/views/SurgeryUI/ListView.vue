@@ -134,7 +134,14 @@
       </template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" v-model:date-filter="listFilters.dateFilter" :showAdd="true" placeholder="Search surgeries..." add-button-route="surgery/add" @search="getSearchTerm" />
+        <SearchWithViewToggle
+          v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
+          :showAdd="true"
+          placeholder="Search surgeries..."
+          add-button-route="surgery/add"
+          @search="getSearchTerm"
+        />
       </template>
 
       <template #table>

@@ -87,7 +87,14 @@
       <template #subtitle>Manage employee availability schedules and time slots.</template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" v-model:date-filter="listFilters.dateFilter" :showAdd="true" placeholder="Search by employee or branch..." add-button-route="availability/add" @search="getSearchTerm" />
+        <SearchWithViewToggle
+          v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
+          :showAdd="true"
+          placeholder="Search by employee or branch..."
+          add-button-route="availability/add"
+          @search="getSearchTerm"
+        />
       </template>
 
       <template #table>

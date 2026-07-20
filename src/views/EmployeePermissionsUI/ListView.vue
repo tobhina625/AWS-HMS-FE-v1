@@ -94,7 +94,15 @@
       <template #subtitle>Configure individual permissions for specific employees</template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" v-model:date-filter="listFilters.dateFilter" placeholder="Search Employees" :show-add="false" search-bar-class="flex-1 max-w-3xl min-w-[420px] [&_input]:min-h-[48px]" @search="getSearchTerm" @date-filter="handleDateFilterChange" />
+        <SearchWithViewToggle
+          v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
+          placeholder="Search Employees"
+          :show-add="false"
+          search-bar-class="flex-1 max-w-3xl min-w-[420px] [&_input]:min-h-[48px]"
+          @search="getSearchTerm"
+          @date-filter="handleDateFilterChange"
+        />
       </template>
 
       <template #table>

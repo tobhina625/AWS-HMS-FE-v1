@@ -89,7 +89,7 @@ export function useListView<T = any>(fetchFunction: (filters: string) => Promise
     async () => {
       listFilters.value.page = 0;
       await fetchData();
-    },
+    }
   );
 
   const handleSearch = async (query: string, transformFn?: (item: any) => T) => {

@@ -171,7 +171,14 @@
       </template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" v-model:date-filter="listFilters.dateFilter" :showAdd="true" placeholder="Search inventory..." add-button-route="inventory/add" @search="handleSearchChange" />
+        <SearchWithViewToggle
+          v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
+          :showAdd="true"
+          placeholder="Search inventory..."
+          add-button-route="inventory/add"
+          @search="handleSearchChange"
+        />
       </template>
 
       <template #table>

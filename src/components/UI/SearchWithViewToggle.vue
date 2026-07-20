@@ -70,15 +70,7 @@
       </div>
 
       <div class="relative">
-        <BaseSelect
-          :model-value="props.dateFilter ?? ''"
-          label=""
-          :options="dateFilterOptions"
-          display-key="name"
-          value-key="id"
-          class="min-w-[130px]"
-          @update:model-value="handleDateFilterChange"
-        />
+        <BaseSelect :model-value="props.dateFilter ?? ''" label="" :options="dateFilterOptions" display-key="name" value-key="id" class="min-w-[130px]" @update:model-value="handleDateFilterChange" />
       </div>
     </div>
   </div>
