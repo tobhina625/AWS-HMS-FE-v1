@@ -82,13 +82,13 @@ export function useListView<T = any>(fetchFunction: (filters: string) => Promise
     }
   };
 
-  // Date filtering is shared by all list pages. Keep the active row transform so
+// Date filtering is shared by all list pages. Keep the active row transform so
   // switching a filter never changes the table/grid's presentation format.
   watch(
     () => listFilters.value.dateFilter,
     async () => {
       listFilters.value.page = 0;
-      await fetchData();
+      await fetchData(lastTransformFn);
     }
   );
 

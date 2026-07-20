@@ -130,6 +130,7 @@
         <SearchWithViewToggle
           v-model="viewMode"
           v-model:date-filter="listFilters.dateFilter"
+          :showDateFilter="true"
           :showAdd="true"
           placeholder="Search purchase orders..."
           add-button-route="purchase-orders/add"

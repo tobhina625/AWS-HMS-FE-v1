@@ -350,6 +350,7 @@
         <SearchWithViewToggle
           v-model="viewMode"
           v-model:date-filter="listFilters.dateFilter"
+          :showDateFilter="true"
           placeholder="Search bills by patient or CNIC..."
           add-button-route="patient-bills/add"
           @search="getSearchTerm"

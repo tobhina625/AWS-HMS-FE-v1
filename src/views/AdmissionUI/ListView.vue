@@ -184,17 +184,18 @@
     >
       <template #subtitle>Manage patient admissions and discharge records.</template>
 
-      <template #search>
-        <SearchWithViewToggle
-          v-model="viewMode"
-          v-model:date-filter="dateFilter"
-          :showAdd="true"
-          placeholder="Search admissions..."
-          addButtonRoute="admissions/add"
-          @search="getSearchTerm"
-          @date-filter="handleDateFilterChange"
-        />
-      </template>
+<template #search>
+         <SearchWithViewToggle
+           v-model="viewMode"
+           v-model:date-filter="dateFilter"
+           :showAdd="true"
+           :showDateFilter="true"
+           placeholder="Search admissions..."
+           addButtonRoute="admissions/add"
+           @search="getSearchTerm"
+           @date-filter="handleDateFilterChange"
+         />
+       </template>
 
       <template #bulk-actions>
         <BulkDeleteButton :disabled="selectionCount === 0" @click="handleBulkDelete" />

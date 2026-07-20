@@ -97,6 +97,7 @@
         <SearchWithViewToggle
           v-model="viewMode"
           v-model:date-filter="listFilters.dateFilter"
+          :showDateFilter="true"
           :showAdd="true"
           placeholder="Search patient surgeries..."
           add-button-route="patient-surgeries/add"

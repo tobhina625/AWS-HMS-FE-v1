@@ -186,16 +186,17 @@
         <BulkDeleteButton :disabled="selectionCount === 0" @click="handleBulkDelete" />
       </template>
 
-      <template #search>
-        <SearchWithViewToggle
-          v-model="viewMode"
-          v-model:date-filter="listFilters.dateFilter"
-          :showAdd="true"
-          placeholder="Search appointments..."
-          add-button-route="appointments/add"
-          @search="getSearchTerm"
-        />
-      </template>
+<template #search>
+         <SearchWithViewToggle
+           v-model="viewMode"
+           v-model:date-filter="listFilters.dateFilter"
+           :showDateFilter="true"
+           :showAdd="true"
+           placeholder="Search appointments..."
+           add-button-route="appointments/add"
+           @search="getSearchTerm"
+         />
+       </template>
 
       <template #table>
         <AppointmentStatisticsDashboard v-if="hasData" />

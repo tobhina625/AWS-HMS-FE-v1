@@ -12,6 +12,7 @@
     showAdd?: boolean;
     searchBarClass?: string;
     dateFilter?: 'today' | 'yesterday' | '';
+    showDateFilter?: boolean;
   }>();
 
   const emit = defineEmits<{
@@ -69,7 +70,7 @@
         </BaseButton>
       </div>
 
-      <div class="relative">
+      <div v-if="props.showDateFilter" class="relative">
         <BaseSelect :model-value="props.dateFilter ?? ''" label="" :options="dateFilterOptions" display-key="name" value-key="id" class="min-w-[130px]" @update:model-value="handleDateFilterChange" />
       </div>
     </div>

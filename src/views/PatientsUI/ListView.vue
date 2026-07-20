@@ -154,16 +154,17 @@
         <BulkDeleteButton :disabled="selectionCount === 0" @click="handleBulkDelete" />
       </template>
 
-      <template #search>
-        <SearchWithViewToggle
-          v-model="viewMode"
-          v-model:date-filter="listFilters.dateFilter"
-          placeholder="Search by name, ID or mobile..."
-          addButtonRoute="patients/add"
-          :showAdd="true"
-          @search="getSearchTerm"
-        />
-      </template>
+<template #search>
+         <SearchWithViewToggle
+           v-model="viewMode"
+           v-model:date-filter="listFilters.dateFilter"
+           :showDateFilter="true"
+           placeholder="Search by name, ID or mobile..."
+           addButtonRoute="patients/add"
+           :showAdd="true"
+           @search="getSearchTerm"
+         />
+       </template>
 
       <template #table>
         <PatientStatisticsDashboard v-if="hasData" ref="statsDashboardRef" />
