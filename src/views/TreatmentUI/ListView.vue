@@ -125,7 +125,15 @@
       </template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" :showAdd="true" placeholder="Search treatments..." add-button-route="treatments/add" @search="getSearchTerm" />
+        <SearchWithViewToggle
+          v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
+          :showDateFilter="true"
+          :showAdd="true"
+          placeholder="Search treatments..."
+          add-button-route="treatments/add"
+          @search="getSearchTerm"
+        />
       </template>
 
       <template #table>

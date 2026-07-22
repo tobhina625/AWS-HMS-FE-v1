@@ -157,10 +157,11 @@
       <template #search>
         <SearchWithViewToggle
           v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
+          :showDateFilter="true"
           placeholder="Search by name, ID or mobile..."
           addButtonRoute="patients/add"
           :showAdd="true"
-          search-bar-class="flex-1 max-w-3xl min-w-[420px] [&_input]:min-h-[48px]"
           @search="getSearchTerm"
         />
       </template>

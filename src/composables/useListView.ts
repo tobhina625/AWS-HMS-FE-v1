@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 export interface ListFilters {
   page: number;
@@ -21,7 +21,10 @@ export function useListView<T = any>(fetchFunction: (filters: string) => Promise
     page: 0,
     size: initialPageSize,
     searchTerm: '',
+    dateFilter: '',
   });
+
+  let lastTransformFn: ((item: any) => T) | undefined;
 
   const apiResponse = ref<ApiResponse<T>>({
     data: [],
@@ -45,6 +48,7 @@ export function useListView<T = any>(fetchFunction: (filters: string) => Promise
   };
 
   const fetchData = async (transformFn?: (item: any) => T) => {
+    lastTransformFn = transformFn ?? lastTransformFn;
     loading.value = true;
     try {
       const filters = buildFilterString();
@@ -64,7 +68,7 @@ export function useListView<T = any>(fetchFunction: (filters: string) => Promise
       // Filter out deleted records on client-side as a safety measure
       content = content.filter((item: any) => item.isDeleted === false || item.isDeleted === undefined || item.isDeleted === null);
 
-      apiResponse.value.data = transformFn ? content.map(transformFn) : content;
+      apiResponse.value.data = lastTransformFn ? content.map(lastTransformFn) : content;
 
       apiResponse.value.itemsPerPage = response.size ?? response.Size ?? 10;
       apiResponse.value.totalPages = response.totalPages ?? response.TotalPages ?? 0;
@@ -77,6 +81,16 @@ export function useListView<T = any>(fetchFunction: (filters: string) => Promise
       loading.value = false;
     }
   };
+
+  // Date filtering is shared by all list pages. Keep the active row transform so
+  // switching a filter never changes the table/grid's presentation format.
+  watch(
+    () => listFilters.value.dateFilter,
+    async () => {
+      listFilters.value.page = 0;
+      await fetchData(lastTransformFn);
+    }
+  );
 
   const handleSearch = async (query: string, transformFn?: (item: any) => T) => {
     listFilters.value.searchTerm = query;

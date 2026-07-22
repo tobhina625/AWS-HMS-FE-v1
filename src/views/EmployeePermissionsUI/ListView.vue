@@ -23,6 +23,7 @@
     page: 0,
     size: 10,
     searchTerm: '',
+    dateFilter: '' as '' | 'today' | 'yesterday',
   });
   const apiResponse = ref({
     data: [],
@@ -39,6 +40,11 @@
 
   const getSearchTerm = async (query: string) => {
     listFilters.value.searchTerm = query;
+    listFilters.value.page = 0;
+    await loadTableData();
+  };
+
+  const handleDateFilterChange = async () => {
     listFilters.value.page = 0;
     await loadTableData();
   };
@@ -88,7 +94,15 @@
       <template #subtitle>Configure individual permissions for specific employees</template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" placeholder="Search Employees" :show-add="false" search-bar-class="flex-1 max-w-3xl min-w-[420px] [&_input]:min-h-[48px]" @search="getSearchTerm" />
+        <SearchWithViewToggle
+          v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
+          placeholder="Search Employees"
+          :show-add="false"
+          search-bar-class="flex-1 max-w-3xl min-w-[420px] [&_input]:min-h-[48px]"
+          @search="getSearchTerm"
+          @date-filter="handleDateFilterChange"
+        />
       </template>
 
       <template #table>

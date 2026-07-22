@@ -30,7 +30,7 @@
   const canDelete = computed(() => canDeleteFromModule('Admissions'));
 
   // Date filter for statistics
-  const dateFilter = ref('');
+  const dateFilter = ref<'today' | 'yesterday' | ''>('');
   const handleDateFilterChange = async () => {
     listFilters.value.page = 0;
     listFilters.value.dateFilter = dateFilter.value;
@@ -184,44 +184,26 @@
     >
       <template #subtitle>Manage patient admissions and discharge records.</template>
 
-      <template #header-stats>
-        <AdmissionStatisticsDashboard :date-filter="dateFilter" />
-      </template>
-
-      <template #filters>
-        <div class="relative z-20 bg-white dark:bg-boxdark rounded-lg">
-          <select
-            v-model="dateFilter"
-            @change="handleDateFilterChange"
-            class="relative z-20 w-full min-w-[150px] appearance-none rounded border border-stroke bg-transparent py-2 px-4 pr-10 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input text-sm text-emphasis font-medium cursor-pointer"
-          >
-            <option value="">All Time</option>
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="thisMonth">This Month</option>
-            <option value="thisYear">This Year</option>
-          </select>
-          <span class="absolute right-4 top-1/2 z-30 -translate-y-1/2 pointer-events-none">
-            <svg class="fill-current text-bodydark" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z"
-              ></path>
-            </svg>
-          </span>
-        </div>
+      <template #search>
+        <SearchWithViewToggle
+          v-model="viewMode"
+          v-model:date-filter="dateFilter"
+          :showAdd="true"
+          :showDateFilter="true"
+          placeholder="Search admissions..."
+          addButtonRoute="admissions/add"
+          @search="getSearchTerm"
+          @date-filter="handleDateFilterChange"
+        />
       </template>
 
       <template #bulk-actions>
         <BulkDeleteButton :disabled="selectionCount === 0" @click="handleBulkDelete" />
       </template>
 
-      <template #search>
-        <SearchWithViewToggle v-model="viewMode" :showAdd="true" placeholder="Search admissions..." addButtonRoute="admissions/add" @search="getSearchTerm" />
-      </template>
-
       <template #table>
+        <AdmissionStatisticsDashboard v-if="hasData" :date-filter="dateFilter" class="!mb-0" />
+
         <EmptyState
           v-if="isEmpty"
           title="No Admissions Found"

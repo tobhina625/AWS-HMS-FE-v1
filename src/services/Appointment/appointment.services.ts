@@ -39,9 +39,10 @@ class AppointmentServices {
     }
   }
 
-  async getMyAppointments(): Promise<any> {
+  async getMyAppointments(filters: string = ''): Promise<any> {
     try {
-      const response = await this._genericService.get('api/appointments/my-appointments');
+      const url = filters ? `api/appointments/my-appointments?${filters}` : 'api/appointments/my-appointments';
+      const response = await this._genericService.get(url);
       return response;
     } catch (error) {
       console.error('Error fetching my appointments:', error);

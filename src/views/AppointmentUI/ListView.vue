@@ -52,7 +52,7 @@
 
   const fetchAppointments = (filters: string) => {
     if (isPatient.value) {
-      return appointmentService.getMyAppointments(); // backend scopes this to the logged-in patient
+      return appointmentService.getMyAppointments(filters); // backend scopes this to the logged-in patient
     }
     return appointmentService.getAppointments(filters); // full list for all other roles
   };
@@ -187,7 +187,15 @@
       </template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" :showAdd="true" placeholder="Search appointments..." add-button-route="appointments/add" @search="getSearchTerm" />
+        <SearchWithViewToggle
+          v-model="viewMode"
+          v-model:date-filter="listFilters.dateFilter"
+          :showDateFilter="true"
+          :showAdd="true"
+          placeholder="Search appointments..."
+          add-button-route="appointments/add"
+          @search="getSearchTerm"
+        />
       </template>
 
       <template #table>

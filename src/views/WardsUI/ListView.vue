@@ -133,7 +133,7 @@
       </template>
 
       <template #search>
-        <SearchWithViewToggle v-model="viewMode" :showAdd="true" placeholder="Search wards..." add-button-route="wards/add" @search="getSearchTerm" />
+        <SearchWithViewToggle v-model="viewMode" v-model:date-filter="listFilters.dateFilter" :showAdd="true" placeholder="Search wards..." add-button-route="wards/add" @search="getSearchTerm" />
       </template>
 
       <template #table>
