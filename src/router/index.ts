@@ -57,16 +57,34 @@ import PermissionEditView from '@/views/PermissionUI/EditView.vue';
 import ModuleListView from '@/views/ModuleUI/ListView.vue';
 import ModuleAddView from '@/views/ModuleUI/AddView.vue';
 import ModuleEditView from '@/views/ModuleUI/EditView.vue';
+import EncounterWorkspaceView from '@/views/EncounterUI/WorkspaceView.vue';
+import PatientAllergyListView from '@/views/PatientAllergyUI/ListView.vue';
+import LabOrdersListView from '@/views/LabOrdersUI/ListView.vue';
 
 const routes = [
   {
     path: '/',
     name: 'Dashboard',
     component: DashboardView,
-    meta: {
-      title: 'Dashboard',
-      requiredAuth: true,
-    },
+    meta: { title: 'Dashboard', requiredAuth: true },
+  },
+  {
+    path: '/encounters/:id',
+    name: 'EncounterWorkspace',
+    component: EncounterWorkspaceView,
+    meta: { title: 'Clinical Encounter', requiresAuth: true },
+  },
+  {
+    path: '/patient-allergies',
+    name: 'PatientAllergies',
+    component: PatientAllergyListView,
+    meta: { title: 'Patient Allergies', requiresAuth: true },
+  },
+  {
+    path: '/lab-orders',
+    name: 'LabOrders',
+    component: LabOrdersListView,
+    meta: { title: 'Lab Orders Worklist', requiresAuth: true },
   },
   {
     path: '/permissions/employees',
@@ -880,6 +898,9 @@ const routePermissionMap: Record<string, string> = {
   '/treatments': 'Treatments',
   '/purchase-orders': 'Purchase Orders',
   '/availability': 'Availability',
+  '/lab-orders': 'Patient Labs',
+  '/patient-allergies': 'Patients',
+  '/encounters': 'Patients',
 };
 
 const checkRoutePermission = (path: string): boolean => {

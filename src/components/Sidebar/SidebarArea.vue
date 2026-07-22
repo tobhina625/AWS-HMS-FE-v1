@@ -63,6 +63,8 @@
         { icon: OperationSVG, label: 'Operation Theatre', route: '/operation-theatre' },
         { icon: SurgerySVG, label: 'Surgery', route: '/surgery' },
         { icon: LabTestSVG, label: 'Lab Tests', route: '/lab-tests' },
+        { icon: LabTestSVG, label: 'Lab Orders', route: '/lab-orders' },
+        { icon: ClipboardCheckIcon, label: 'Patient Allergies', route: '/patient-allergies' },
         { icon: ClipboardIcon, label: 'Admissions', route: '/admissions' },
         { icon: ClipboardListIcon, label: 'Admission queue', route: '/admissions/queue' },
         { icon: ClipboardCheckIcon, label: 'Patient Surgeries', route: '/patient-surgeries' },
@@ -147,6 +149,9 @@
     '/purchase-orders': 'Purchase Orders',
     '/branches': 'Branches',
     '/system-configuration': 'System Configuration',
+    '/lab-orders': 'Patient Labs',
+    '/patient-allergies': 'Patients',
+    '/encounters': 'Patients',
   };
 
   const checkItemPermission = (item: any): boolean => {

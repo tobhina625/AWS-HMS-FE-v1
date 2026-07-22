@@ -22,6 +22,9 @@
   import PatientHistoryModal from '@/components/PatientHistory/PatientHistoryModal.vue';
   import PatientHistoryServices from '@/services/PatientHistory/PatientHistory.services';
   import PatientsServices from '@/services/Patient/patient.services';
+  import PatientAllergyService from '@/services/PatientAllergy/PatientAllergy.services';
+  import PatientDiagnosisService from '@/services/PatientDiagnosis/PatientDiagnosis.services';
+  import PrescriptionService from '@/services/Prescription/Prescription.services';
   import type { IPatient } from '@/services/Patient/patient.interface';
   import useAlert from '@/plugins/alert/useAlert';
   import { useConfirm } from '@/composables/useConfirm';
@@ -36,9 +39,19 @@
   const { cnicConfig, loadCnicConfig } = useCnicConfig();
   const patientService = new PatientsServices();
   const patientHistoryService = new PatientHistoryServices();
+  const allergyService = new PatientAllergyService();
+  const diagnosisService = new PatientDiagnosisService();
+  const prescriptionService = new PrescriptionService();
   const canDelete = computed(() => canDeleteFromModule('Patients'));
   const showHistoryModal = ref(false);
   const medicalHistoryKey = ref(0);
+
+  // Clinical summary data
+  const allergies = ref<any[]>([]);
+  const recentEncounters = ref<any[]>([]);
+  const diagnoses = ref<any[]>([]);
+  const prescriptions = ref<any[]>([]);
+  const clinicalLoading = ref(false);
 
   const pageTitle = ref('Patient Profile');
   const currentTab = ref('about');
@@ -158,9 +171,41 @@
     router.push({ path: '/appointments/add', query: { patientId: patientId.value } });
   };
 
+  const loadClinicalData = async (id: number) => {
+    clinicalLoading.value = true;
+    try {
+      const [allergyRes, diagnosisRes, rxRes, encounterRes] = await Promise.allSettled([
+        allergyService.getByPatientId(id),
+        diagnosisService.getByPatientId(id),
+        prescriptionService.getByPatientId(id),
+        patientHistoryService.getPatientHistoryByPatientId(id, 0, 5),
+      ]);
+      allergies.value = allergyRes.status === 'fulfilled' ? allergyRes.value || [] : [];
+      diagnoses.value = diagnosisRes.status === 'fulfilled' ? diagnosisRes.value || [] : [];
+      prescriptions.value = rxRes.status === 'fulfilled' ? rxRes.value || [] : [];
+      const encData = encounterRes.status === 'fulfilled' ? encounterRes.value : null;
+      recentEncounters.value = encData?.data?.items || encData?.data || encData?.items || [];
+    } catch {
+      // silently fail — clinical data is supplementary
+    } finally {
+      clinicalLoading.value = false;
+    }
+  };
+
+  const navigateToEncounter = (encounterId: number) => {
+    router.push(`/encounters/${encounterId}`);
+  };
+
+  const navigateToAllergies = () => {
+    router.push({ path: '/patient-allergies', query: { patientId: patientId.value } });
+  };
+
   onMounted(async () => {
     await loadCnicConfig();
-    loadPatientDetails();
+    await loadPatientDetails();
+    if (patientDetails.value.id) {
+      loadClinicalData(patientDetails.value.id);
+    }
   });
 </script>
 
@@ -235,13 +280,13 @@
           </div>
 
           <!-- Tabs -->
-          <div class="mt-6 border-b border-stroke dark:border-strokedark">
-            <nav class="flex gap-8">
+          <div class="mt-6 border-b border-stroke dark:border-strokedark overflow-x-auto">
+            <nav class="flex gap-6 min-w-max">
               <BaseButton
                 variant="ghost"
                 @click="currentTab = 'about'"
                 :class="[
-                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors',
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
                   currentTab === 'about' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
                 ]"
               >
@@ -252,9 +297,59 @@
               </BaseButton>
               <BaseButton
                 variant="ghost"
+                @click="currentTab = 'encounters'"
+                :class="[
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
+                  currentTab === 'encounters' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
+                ]"
+              >
+                <div class="flex items-center gap-2">
+                  🩺 Encounters
+                  <span v-if="recentEncounters.length" class="bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {{ recentEncounters.length }}
+                  </span>
+                </div>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
+                @click="currentTab = 'allergies'"
+                :class="[
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
+                  currentTab === 'allergies' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
+                ]"
+              >
+                <div class="flex items-center gap-2">
+                  🛡️ Allergies
+                  <span v-if="allergies.length" class="bg-danger text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {{ allergies.length }}
+                  </span>
+                </div>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
+                @click="currentTab = 'diagnoses'"
+                :class="[
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
+                  currentTab === 'diagnoses' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
+                ]"
+              >
+                <div class="flex items-center gap-2">🔬 Diagnoses</div>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
+                @click="currentTab = 'prescriptions'"
+                :class="[
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
+                  currentTab === 'prescriptions' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
+                ]"
+              >
+                <div class="flex items-center gap-2">💊 Prescriptions</div>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
                 @click="currentTab = 'medical'"
                 :class="[
-                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors',
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
                   currentTab === 'medical' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
                 ]"
               >
@@ -397,6 +492,137 @@
             </div>
           </div>
         </template>
+
+        <!-- Encounters Tab -->
+        <div v-if="currentTab === 'encounters'" class="lg:col-span-3">
+          <div class="flex justify-end mb-4">
+            <BaseButton variant="primary" size="sm" @click="handleAddMedicalHistory">+ New Encounter</BaseButton>
+          </div>
+          <div v-if="clinicalLoading" class="space-y-3">
+            <div v-for="i in 3" :key="i" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 animate-pulse h-16"></div>
+          </div>
+          <div v-else-if="!recentEncounters.length" class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-12 text-center">
+            <div class="text-4xl mb-3">🩺</div>
+            <p class="text-bodydark">No encounters recorded yet.</p>
+          </div>
+          <div v-else class="space-y-3">
+            <div
+              v-for="enc in recentEncounters"
+              :key="enc.id"
+              class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 hover:shadow-md transition-all cursor-pointer group"
+              @click="navigateToEncounter(enc.id)"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="flex items-center gap-3">
+                    <span class="font-semibold text-emphasis">Encounter #{{ enc.id }}</span>
+                    <span
+                      :class="[
+                        'px-2 py-0.5 rounded-full text-xs font-medium',
+                        enc.encounterStatus === 'Completed' ? 'bg-success/10 text-success' : enc.encounterStatus === 'Cancelled' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning',
+                      ]"
+                    >
+                      {{ enc.encounterStatus || 'InProgress' }}
+                    </span>
+                  </div>
+                  <p class="text-sm text-bodydark mt-1">
+                    {{ enc.visitDate ? new Date(enc.visitDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' }}
+                    <span v-if="enc.symptom">&bull; {{ enc.symptom.substring(0, 60) }}{{ enc.symptom.length > 60 ? '...' : '' }}</span>
+                  </p>
+                </div>
+                <span class="text-primary opacity-0 group-hover:opacity-100 transition-opacity text-lg">→</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Allergies Tab -->
+        <div v-if="currentTab === 'allergies'" class="lg:col-span-3">
+          <div class="flex justify-end mb-4">
+            <BaseButton variant="primary" size="sm" @click="navigateToAllergies">Manage Allergies</BaseButton>
+          </div>
+          <div v-if="clinicalLoading" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div v-for="i in 3" :key="i" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 animate-pulse h-24"></div>
+          </div>
+          <div v-else-if="!allergies.length" class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-12 text-center">
+            <div class="text-4xl mb-3">🛡️</div>
+            <p class="text-bodydark">No known allergies recorded.</p>
+            <BaseButton variant="primary" size="sm" class="mt-4" @click="navigateToAllergies">Record Allergy</BaseButton>
+          </div>
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div v-for="allergy in allergies" :key="allergy.id" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4">
+              <div class="flex items-start justify-between mb-2">
+                <p class="font-semibold text-emphasis">{{ allergy.allergen }}</p>
+                <span
+                  :class="[
+                    'px-2 py-0.5 rounded-full text-xs font-medium',
+                    allergy.severity === 'Severe' || allergy.severity === 'Life-Threatening'
+                      ? 'bg-danger/10 text-danger'
+                      : allergy.severity === 'Moderate'
+                        ? 'bg-warning/10 text-warning'
+                        : 'bg-success/10 text-success',
+                  ]"
+                >
+                  {{ allergy.severity }}
+                </span>
+              </div>
+              <p class="text-xs text-bodydark">{{ allergy.category }} &bull; {{ allergy.reaction || 'No reaction specified' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Diagnoses Tab -->
+        <div v-if="currentTab === 'diagnoses'" class="lg:col-span-3">
+          <div v-if="clinicalLoading" class="space-y-3">
+            <div v-for="i in 3" :key="i" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 animate-pulse h-12"></div>
+          </div>
+          <div v-else-if="!diagnoses.length" class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-12 text-center">
+            <div class="text-4xl mb-3">🔬</div>
+            <p class="text-bodydark">No diagnoses recorded. Add them inside an encounter.</p>
+          </div>
+          <div v-else class="space-y-3">
+            <div v-for="dx in diagnoses" :key="dx.id" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4">
+              <div class="flex items-center gap-3">
+                <span class="font-semibold text-emphasis">{{ dx.diseaseName }}</span>
+                <span v-if="dx.diagnosisCode" class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{{ dx.diagnosisCode }}</span>
+                <span class="text-xs text-bodydark border border-stroke dark:border-strokedark px-2 py-0.5 rounded-full">{{ dx.diagnosisType }}</span>
+                <span :class="['ml-auto text-xs font-medium', dx.status === 'Active' ? 'text-danger' : 'text-success']">{{ dx.status }}</span>
+              </div>
+              <p v-if="dx.notes" class="text-xs text-bodydark mt-1">{{ dx.notes }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prescriptions Tab -->
+        <div v-if="currentTab === 'prescriptions'" class="lg:col-span-3">
+          <div v-if="clinicalLoading" class="space-y-3">
+            <div v-for="i in 3" :key="i" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 animate-pulse h-12"></div>
+          </div>
+          <div v-else-if="!prescriptions.length" class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-12 text-center">
+            <div class="text-4xl mb-3">💊</div>
+            <p class="text-bodydark">No prescriptions recorded. Add them inside an encounter.</p>
+          </div>
+          <div v-else class="space-y-3">
+            <div v-for="rx in prescriptions" :key="rx.id" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <p class="text-xs text-bodydark">Medicine</p>
+                <p class="font-semibold text-emphasis">{{ rx.medicine }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-bodydark">Dose / Route</p>
+                <p class="text-emphasis text-sm">{{ rx.dose || '—' }} / {{ rx.route || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-bodydark">Frequency / Duration</p>
+                <p class="text-emphasis text-sm">{{ rx.frequency || '—' }} for {{ rx.duration || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-bodydark">Status</p>
+                <span :class="['text-sm font-medium', rx.status === 'Active' ? 'text-success' : 'text-bodydark']">{{ rx.status }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Medical History Tab -->
         <div v-if="currentTab === 'medical'" class="lg:col-span-3">
