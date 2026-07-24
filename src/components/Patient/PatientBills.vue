@@ -145,9 +145,21 @@
     return new Date(dateStr).toLocaleString();
   };
 
-  const formatPaymentMethod = (method: number) => {
-    return method === 0 ? 'Cash' : 'Card';
+  const paymentMethodLabels: Record<number, string> = {
+    0: 'Cash',
+    1: 'Card',
+    2: 'Insurance',
   };
+
+  const formatPaymentMethod = (method: number) => {
+    return paymentMethodLabels[method] ?? `Method ${method}`;
+  };
+
+  /** Returns true if ALL recorded payments for the current bill were via Insurance */
+  const isPaidByInsurance = computed(() => {
+    if (!paymentHistory.value.length) return false;
+    return paymentHistory.value.every((p: any) => (p.paymentMethod ?? p.PaymentMethod) === 2);
+  });
 
   const getBillTypeLabel = (billType: number) => {
     return billTypeLabels[billType] ?? `Type ${billType}`;
@@ -207,7 +219,14 @@
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
                 <h3 class="text-lg font-semibold text-emphasis">{{ getBillTypeLabel(bill.billType ?? bill.BillType) }}</h3>
-                <span v-if="bill.isPaid ?? bill.IsPaid" class="px-2 py-1 text-xs font-semibold rounded-full bg-meta-3/10 text-meta-3 border border-meta-3/20">Paid</span>
+                <template v-if="bill.isPaid ?? bill.IsPaid">
+                  <!-- Show Insurance-Paid badge when the selected bill's payments are all insurance -->
+                  <span
+                    v-if="selectedBill?.id === bill.id && isPaidByInsurance"
+                    class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30"
+                  >Insurance-Paid</span>
+                  <span v-else class="px-2 py-1 text-xs font-semibold rounded-full bg-meta-3/10 text-meta-3 border border-meta-3/20">Paid</span>
+                </template>
                 <span v-else class="px-2 py-1 text-xs font-semibold rounded-full bg-warning/10 text-warning dark:bg-warning/20 dark:text-warning-light">Pending</span>
               </div>
               <p v-if="bill.reason ?? bill.Reason" class="text-sm text-bodydark dark:text-bodydark1">{{ bill.reason ?? bill.Reason }}</p>
@@ -262,7 +281,14 @@
               <p class="text-sm text-bodydark dark:text-bodydark1">Type: {{ getBillTypeLabel(selectedBill.billType ?? selectedBill.BillType) }}</p>
             </div>
             <div class="text-right">
+              <!-- Insurance-Paid badge -->
               <span
+                v-if="(selectedBill.isPaid ?? selectedBill.IsPaid) && isPaidByInsurance"
+                class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border bg-blue-500/15 text-blue-400 border-blue-500/30"
+              >Insurance-Paid</span>
+              <!-- Regular Paid / Pending badge -->
+              <span
+                v-else
                 :class="[
                   'inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border',
                   (selectedBill.isPaid ?? selectedBill.IsPaid) ? 'bg-meta-3/15 text-meta-3 border-meta-3/30' : 'bg-warning/15 text-warning border-warning/30',

@@ -38,6 +38,7 @@
   const paymentMethodOptions = [
     { label: 'Cash', value: '0' },
     { label: 'Card', value: '1' },
+    { label: 'Insurance', value: '2' },
   ];
 
   watch(
