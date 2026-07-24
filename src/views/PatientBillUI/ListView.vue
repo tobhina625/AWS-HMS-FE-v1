@@ -432,7 +432,7 @@
         <div id="printable-invoice" class="p-8 space-y-6 print:p-0">
           <!-- Hospital Header (visible only in print) -->
           <div class="hidden print:flex flex-col items-center border-b pb-6 mb-6">
-            <h1 class="text-3xl font-bold tracking-wider">HEALTHCARE MANAGEMENT SYSTEM</h1>
+            <h1 class="text-3xl font-bold tracking-wider">HOSPITAL MANAGEMENT SYSTEM</h1>
             <p class="text-sm text-gray-500">Official Patient Invoice & Payment Receipt</p>
           </div>
 

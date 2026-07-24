@@ -1,12 +1,13 @@
 <script setup lang="ts">
   import ChevronRightIcon from '@/assets/images/SVGs/ChevronRightIcon.svg';
-  import DocumentIcon from '@/assets/images/SVGs/DocumentIcon.svg';
 
   import { ref, computed, watch } from 'vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import DynamicPagination from '@/components/UI/DynamicPagination.vue';
   import EmptyState from '@/components/UI/EmptyState.vue';
+  import PaymentModal from '@/components/Patient/PaymentModal.vue';
   import PatientBillsService from '@/services/PatientBill/Patientbill.services';
+  import PatientPaymentService from '@/services/PatientPayment/Patientpayment.services';
 
   const props = defineProps<{
     patientId: number;
@@ -17,10 +18,19 @@
   }>();
 
   const billService = new PatientBillsService();
+  const paymentService = new PatientPaymentService();
   const loading = ref(true);
   const bills = ref<any[]>([]);
   const selectedBill = ref<any>(null);
   const showDetails = ref(false);
+
+  // Payment history inside the invoice modal
+  const paymentHistory = ref<any[]>([]);
+  const loadingPayments = ref(false);
+
+  // Pay modal
+  const showPayModal = ref(false);
+  const billToPay = ref<any>(null);
 
   const pagination = ref({
     page: 0,
@@ -30,10 +40,10 @@
   });
 
   const billTypeLabels: Record<number, string> = {
-    0: 'Consultation',
+    0: 'Surgery',
     1: 'Lab Test',
-    2: 'Procedure',
-    3: 'Medication',
+    2: 'Treatment',
+    3: 'Admission',
     4: 'Other',
   };
 
@@ -64,14 +74,57 @@
     }
   };
 
-  const viewDetails = (bill: any) => {
+  const viewDetails = async (bill: any) => {
     selectedBill.value = bill;
     showDetails.value = true;
+    await fetchPaymentsForBill(bill.id);
+  };
+
+  const fetchPaymentsForBill = async (billId: number) => {
+    loadingPayments.value = true;
+    paymentHistory.value = [];
+    try {
+      const response = await paymentService.getPaymentsByBillId(billId);
+      paymentHistory.value = response?.data || response?.Data || [];
+    } catch (error) {
+      console.error('Error loading payments:', error);
+      paymentHistory.value = [];
+    } finally {
+      loadingPayments.value = false;
+    }
   };
 
   const closeDetails = () => {
     showDetails.value = false;
     selectedBill.value = null;
+    paymentHistory.value = [];
+  };
+
+  const handleOpenPayModal = () => {
+    if (!selectedBill.value) return;
+    billToPay.value = {
+      id: selectedBill.value.id,
+      remainingBalance: selectedBill.value.remainingBalance ?? selectedBill.value.RemainingBalance,
+      patient: selectedBill.value.patient ?? selectedBill.value.Patient,
+    };
+    showPayModal.value = true;
+  };
+
+  const handlePaymentSuccess = async () => {
+    await loadBills(pagination.value.page);
+    if (selectedBill.value) {
+      // Refresh the selected bill
+      const updatedResponse = await billService.getPatientBillsID(selectedBill.value.id);
+      const updatedBill = updatedResponse?.data || updatedResponse?.Data;
+      if (updatedBill) {
+        selectedBill.value = updatedBill;
+      }
+      await fetchPaymentsForBill(selectedBill.value.id);
+    }
+  };
+
+  const printInvoice = () => {
+    window.print();
   };
 
   const handlePageChange = (newPage: number) => {
@@ -85,6 +138,15 @@
       currency: 'PKR',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleString();
+  };
+
+  const formatPaymentMethod = (method: number) => {
+    return method === 0 ? 'Cash' : 'Card';
   };
 
   const getBillTypeLabel = (billType: number) => {
@@ -173,48 +235,169 @@
       />
     </div>
 
-    <!-- Details Modal -->
-    <div v-if="showDetails && selectedBill" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="closeDetails">
-      <div class="bg-surface rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-surface border-b border-stroke dark:border-strokedark p-6 flex items-center justify-between">
-          <h2 class="text-2xl font-bold text-emphasis">Bill Details</h2>
-          <BaseButton variant="ghost" @click="closeDetails" class="w-10 h-10 !p-0 rounded-full hover:bg-elevated flex items-center justify-center">
-            <DocumentIcon class="w-6 h-6" />
-          </BaseButton>
+    <!-- Full Invoice / Details Modal -->
+    <div
+      v-if="showDetails && selectedBill"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 print:bg-white print:p-0 print:absolute"
+      @click.self="closeDetails"
+    >
+      <div class="bg-surface rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-stroke dark:border-strokedark print:shadow-none print:border-none print:max-h-full print:bg-white print:text-black">
+
+        <!-- Modal Header (hidden in print) -->
+        <div class="sticky top-0 bg-surface border-b border-stroke dark:border-strokedark p-6 flex items-center justify-between print:hidden">
+          <h2 class="text-2xl font-bold text-emphasis">Invoice &amp; Bill Details</h2>
+          <button @click="closeDetails" class="text-bodydark dark:text-bodydark1 hover:text-emphasis text-3xl font-light">&times;</button>
         </div>
 
-        <div class="p-6 space-y-6">
-          <div class="bg-elevated rounded-xl p-4">
-            <h3 class="text-lg font-semibold text-emphasis mb-4">Bill Information</h3>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="text-xs text-bodydark dark:text-bodydark1">Bill Type</label>
-                <p class="text-sm font-medium text-emphasis">{{ getBillTypeLabel(selectedBill.billType ?? selectedBill.BillType) }}</p>
+        <!-- Invoice Body -->
+        <div id="printable-invoice" class="p-8 space-y-6 print:p-0">
+
+          <!-- Hospital Header (visible only in print) -->
+          <div class="hidden print:flex flex-col items-center border-b pb-6 mb-6">
+            <h1 class="text-3xl font-bold tracking-wider">HOSPITAL MANAGEMENT SYSTEM</h1>
+            <p class="text-sm text-gray-500">Official Patient Invoice &amp; Payment Receipt</p>
+          </div>
+
+          <!-- Invoice Title / Info -->
+          <div class="flex justify-between items-start border-b border-stroke dark:border-strokedark pb-6">
+            <div>
+              <h3 class="text-xl font-bold text-emphasis">Invoice #BILL-{{ selectedBill.id }}</h3>
+              <p class="text-sm text-bodydark dark:text-bodydark1">Reason: {{ selectedBill.reason ?? selectedBill.Reason ?? '—' }}</p>
+              <p class="text-sm text-bodydark dark:text-bodydark1">Type: {{ getBillTypeLabel(selectedBill.billType ?? selectedBill.BillType) }}</p>
+            </div>
+            <div class="text-right">
+              <span
+                :class="[
+                  'inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border',
+                  (selectedBill.isPaid ?? selectedBill.IsPaid)
+                    ? 'bg-meta-3/15 text-meta-3 border-meta-3/30'
+                    : 'bg-warning/15 text-warning border-warning/30',
+                ]"
+              >
+                {{ (selectedBill.isPaid ?? selectedBill.IsPaid) ? 'Paid' : 'Pending' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Patient & Billing Reference -->
+          <div class="grid grid-cols-2 gap-8 border-b border-stroke dark:border-strokedark pb-6">
+            <div>
+              <h4 class="text-xs font-bold text-bodydark dark:text-bodydark1 uppercase tracking-wider mb-2">Billed To:</h4>
+              <p class="text-base font-bold text-emphasis">
+                {{ (selectedBill.patient ?? selectedBill.Patient)
+                    ? `${(selectedBill.patient ?? selectedBill.Patient).firstName || ''} ${(selectedBill.patient ?? selectedBill.Patient).lastName || ''}`.trim()
+                    : 'N/A' }}
+              </p>
+              <p class="text-sm text-bodydark dark:text-bodydark1">
+                CNIC: {{ (selectedBill.patient ?? selectedBill.Patient)?.cnic || 'N/A' }}
+              </p>
+              <p class="text-sm text-bodydark dark:text-bodydark1" v-if="(selectedBill.patient ?? selectedBill.Patient)?.phone">
+                Phone: {{ (selectedBill.patient ?? selectedBill.Patient).phone }}
+              </p>
+              <p class="text-sm text-bodydark dark:text-bodydark1" v-if="(selectedBill.patient ?? selectedBill.Patient)?.address">
+                Address: {{ (selectedBill.patient ?? selectedBill.Patient).address }}
+              </p>
+            </div>
+            <div class="text-right">
+              <h4 class="text-xs font-bold text-bodydark dark:text-bodydark1 uppercase tracking-wider mb-2">Billing Reference:</h4>
+              <p class="text-sm text-emphasis" v-if="selectedBill.entityId ?? selectedBill.EntityId">
+                Entity Ref ID: #{{ selectedBill.entityId ?? selectedBill.EntityId }}
+              </p>
+              <p class="text-sm text-bodydark dark:text-bodydark1">
+                Invoice Date: {{ formatDate(selectedBill.createdAt || selectedBill.CreatedAt) }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Financial Breakdown -->
+          <div class="bg-slate-50 dark:bg-meta-4 rounded-xl p-6 space-y-4">
+            <h4 class="text-sm font-bold text-emphasis uppercase tracking-wider">Financial Summary</h4>
+            <div class="grid grid-cols-3 gap-6 text-center">
+              <div class="border-r border-stroke dark:border-strokedark last:border-none">
+                <p class="text-xs text-bodydark dark:text-bodydark1">Total Amount</p>
+                <p class="text-xl font-bold text-emphasis">{{ formatCurrency(selectedBill.totalAmount ?? selectedBill.TotalAmount) }}</p>
+              </div>
+              <div class="border-r border-stroke dark:border-strokedark last:border-none">
+                <p class="text-xs text-bodydark dark:text-bodydark1">Paid Amount</p>
+                <p class="text-xl font-bold text-meta-3">{{ formatCurrency(selectedBill.paidAmount ?? selectedBill.PaidAmount) }}</p>
               </div>
               <div>
-                <label class="text-xs text-bodydark dark:text-bodydark1">Status</label>
-                <p class="text-sm font-medium text-emphasis">{{ (selectedBill.isPaid ?? selectedBill.IsPaid) ? 'Paid' : 'Pending' }}</p>
-              </div>
-              <div>
-                <label class="text-xs text-bodydark dark:text-bodydark1">Total Amount</label>
-                <p class="text-sm font-medium text-emphasis">{{ formatCurrency(selectedBill.totalAmount ?? selectedBill.TotalAmount) }}</p>
-              </div>
-              <div>
-                <label class="text-xs text-bodydark dark:text-bodydark1">Paid Amount</label>
-                <p class="text-sm font-medium text-emphasis">{{ formatCurrency(selectedBill.paidAmount ?? selectedBill.PaidAmount) }}</p>
-              </div>
-              <div v-if="selectedBill.reason ?? selectedBill.Reason" class="col-span-2">
-                <label class="text-xs text-bodydark dark:text-bodydark1">Reason</label>
-                <p class="text-sm font-medium text-emphasis mt-1">{{ selectedBill.reason ?? selectedBill.Reason }}</p>
+                <p class="text-xs text-bodydark dark:text-bodydark1">Remaining Balance</p>
+                <p class="text-xl font-bold text-danger">{{ formatCurrency(selectedBill.remainingBalance ?? selectedBill.RemainingBalance) }}</p>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="sticky bottom-0 bg-surface border-t border-stroke dark:border-strokedark p-6 flex justify-end gap-3">
+          <!-- Payment Transaction History -->
+          <div class="space-y-4">
+            <h4 class="text-sm font-bold text-emphasis uppercase tracking-wider">Payment Transaction History</h4>
+
+            <div v-if="loadingPayments" class="text-center py-6 text-bodydark">Loading transactions...</div>
+
+            <div v-else-if="paymentHistory.length === 0" class="text-sm text-bodydark dark:text-bodydark1 bg-slate-50 dark:bg-meta-4 p-4 rounded-xl text-center">
+              No payments have been recorded for this bill yet.
+            </div>
+
+            <div v-else class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="border-b border-stroke dark:border-strokedark pb-2 text-bodydark">
+                    <th class="py-2">Transaction ID</th>
+                    <th class="py-2">Payment Date</th>
+                    <th class="py-2">Method</th>
+                    <th class="py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="payment in paymentHistory" :key="payment.id" class="border-b border-stroke/50 dark:border-strokedark/50 text-emphasis">
+                    <td class="py-2.5 font-mono">#PAY-{{ payment.id }}</td>
+                    <td class="py-2.5">{{ formatDate(payment.paymentDate) }}</td>
+                    <td class="py-2.5">{{ formatPaymentMethod(payment.paymentMethod) }}</td>
+                    <td class="py-2.5 text-right font-bold text-meta-3">{{ formatCurrency(payment.amount) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div><!-- end #printable-invoice -->
+
+        <!-- Footer Action Buttons (hidden in print) -->
+        <div class="sticky bottom-0 bg-surface border-t border-stroke dark:border-strokedark p-6 flex justify-between items-center print:hidden">
+          <div class="flex gap-2">
+            <BaseButton variant="outline" @click="printInvoice">🖨️ Print Invoice</BaseButton>
+            <BaseButton
+              v-if="(selectedBill.remainingBalance ?? selectedBill.RemainingBalance) > 0"
+              variant="primary"
+              @click="handleOpenPayModal"
+            >
+              Record Payment
+            </BaseButton>
+          </div>
           <BaseButton variant="outline" @click="closeDetails">Close</BaseButton>
         </div>
       </div>
     </div>
+
+    <!-- Payment Modal -->
+    <PaymentModal :show="showPayModal" :bill="billToPay" @close="showPayModal = false" @success="handlePaymentSuccess" />
   </div>
 </template>
+
+<style scoped>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #printable-invoice,
+    #printable-invoice * {
+      visibility: visible;
+    }
+    #printable-invoice {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+  }
+</style>
