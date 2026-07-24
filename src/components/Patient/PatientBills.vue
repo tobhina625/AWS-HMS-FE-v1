@@ -221,10 +221,9 @@
                 <h3 class="text-lg font-semibold text-emphasis">{{ getBillTypeLabel(bill.billType ?? bill.BillType) }}</h3>
                 <template v-if="bill.isPaid ?? bill.IsPaid">
                   <!-- Show Insurance-Paid badge when the selected bill's payments are all insurance -->
-                  <span
-                    v-if="selectedBill?.id === bill.id && isPaidByInsurance"
-                    class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30"
-                  >Insurance-Paid</span>
+                  <span v-if="selectedBill?.id === bill.id && isPaidByInsurance" class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                    Insurance-Paid
+                  </span>
                   <span v-else class="px-2 py-1 text-xs font-semibold rounded-full bg-meta-3/10 text-meta-3 border border-meta-3/20">Paid</span>
                 </template>
                 <span v-else class="px-2 py-1 text-xs font-semibold rounded-full bg-warning/10 text-warning dark:bg-warning/20 dark:text-warning-light">Pending</span>
@@ -285,7 +284,9 @@
               <span
                 v-if="(selectedBill.isPaid ?? selectedBill.IsPaid) && isPaidByInsurance"
                 class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border bg-blue-500/15 text-blue-400 border-blue-500/30"
-              >Insurance-Paid</span>
+              >
+                Insurance-Paid
+              </span>
               <!-- Regular Paid / Pending badge -->
               <span
                 v-else
