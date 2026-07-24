@@ -236,13 +236,10 @@
     </div>
 
     <!-- Full Invoice / Details Modal -->
-    <div
-      v-if="showDetails && selectedBill"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 print:bg-white print:p-0 print:absolute"
-      @click.self="closeDetails"
-    >
-      <div class="bg-surface rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-stroke dark:border-strokedark print:shadow-none print:border-none print:max-h-full print:bg-white print:text-black">
-
+    <div v-if="showDetails && selectedBill" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 print:bg-white print:p-0 print:absolute" @click.self="closeDetails">
+      <div
+        class="bg-surface rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-stroke dark:border-strokedark print:shadow-none print:border-none print:max-h-full print:bg-white print:text-black"
+      >
         <!-- Modal Header (hidden in print) -->
         <div class="sticky top-0 bg-surface border-b border-stroke dark:border-strokedark p-6 flex items-center justify-between print:hidden">
           <h2 class="text-2xl font-bold text-emphasis">Invoice &amp; Bill Details</h2>
@@ -251,7 +248,6 @@
 
         <!-- Invoice Body -->
         <div id="printable-invoice" class="p-8 space-y-6 print:p-0">
-
           <!-- Hospital Header (visible only in print) -->
           <div class="hidden print:flex flex-col items-center border-b pb-6 mb-6">
             <h1 class="text-3xl font-bold tracking-wider">HOSPITAL MANAGEMENT SYSTEM</h1>
@@ -269,9 +265,7 @@
               <span
                 :class="[
                   'inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border',
-                  (selectedBill.isPaid ?? selectedBill.IsPaid)
-                    ? 'bg-meta-3/15 text-meta-3 border-meta-3/30'
-                    : 'bg-warning/15 text-warning border-warning/30',
+                  (selectedBill.isPaid ?? selectedBill.IsPaid) ? 'bg-meta-3/15 text-meta-3 border-meta-3/30' : 'bg-warning/15 text-warning border-warning/30',
                 ]"
               >
                 {{ (selectedBill.isPaid ?? selectedBill.IsPaid) ? 'Paid' : 'Pending' }}
@@ -284,28 +278,22 @@
             <div>
               <h4 class="text-xs font-bold text-bodydark dark:text-bodydark1 uppercase tracking-wider mb-2">Billed To:</h4>
               <p class="text-base font-bold text-emphasis">
-                {{ (selectedBill.patient ?? selectedBill.Patient)
+                {{
+                  (selectedBill.patient ?? selectedBill.Patient)
                     ? `${(selectedBill.patient ?? selectedBill.Patient).firstName || ''} ${(selectedBill.patient ?? selectedBill.Patient).lastName || ''}`.trim()
-                    : 'N/A' }}
+                    : 'N/A'
+                }}
               </p>
-              <p class="text-sm text-bodydark dark:text-bodydark1">
-                CNIC: {{ (selectedBill.patient ?? selectedBill.Patient)?.cnic || 'N/A' }}
-              </p>
-              <p class="text-sm text-bodydark dark:text-bodydark1" v-if="(selectedBill.patient ?? selectedBill.Patient)?.phone">
-                Phone: {{ (selectedBill.patient ?? selectedBill.Patient).phone }}
-              </p>
+              <p class="text-sm text-bodydark dark:text-bodydark1">CNIC: {{ (selectedBill.patient ?? selectedBill.Patient)?.cnic || 'N/A' }}</p>
+              <p class="text-sm text-bodydark dark:text-bodydark1" v-if="(selectedBill.patient ?? selectedBill.Patient)?.phone">Phone: {{ (selectedBill.patient ?? selectedBill.Patient).phone }}</p>
               <p class="text-sm text-bodydark dark:text-bodydark1" v-if="(selectedBill.patient ?? selectedBill.Patient)?.address">
                 Address: {{ (selectedBill.patient ?? selectedBill.Patient).address }}
               </p>
             </div>
             <div class="text-right">
               <h4 class="text-xs font-bold text-bodydark dark:text-bodydark1 uppercase tracking-wider mb-2">Billing Reference:</h4>
-              <p class="text-sm text-emphasis" v-if="selectedBill.entityId ?? selectedBill.EntityId">
-                Entity Ref ID: #{{ selectedBill.entityId ?? selectedBill.EntityId }}
-              </p>
-              <p class="text-sm text-bodydark dark:text-bodydark1">
-                Invoice Date: {{ formatDate(selectedBill.createdAt || selectedBill.CreatedAt) }}
-              </p>
+              <p class="text-sm text-emphasis" v-if="selectedBill.entityId ?? selectedBill.EntityId">Entity Ref ID: #{{ selectedBill.entityId ?? selectedBill.EntityId }}</p>
+              <p class="text-sm text-bodydark dark:text-bodydark1">Invoice Date: {{ formatDate(selectedBill.createdAt || selectedBill.CreatedAt) }}</p>
             </div>
           </div>
 
@@ -359,20 +347,14 @@
               </table>
             </div>
           </div>
-
-        </div><!-- end #printable-invoice -->
+        </div>
+        <!-- end #printable-invoice -->
 
         <!-- Footer Action Buttons (hidden in print) -->
         <div class="sticky bottom-0 bg-surface border-t border-stroke dark:border-strokedark p-6 flex justify-between items-center print:hidden">
           <div class="flex gap-2">
             <BaseButton variant="outline" @click="printInvoice">🖨️ Print Invoice</BaseButton>
-            <BaseButton
-              v-if="(selectedBill.remainingBalance ?? selectedBill.RemainingBalance) > 0"
-              variant="primary"
-              @click="handleOpenPayModal"
-            >
-              Record Payment
-            </BaseButton>
+            <BaseButton v-if="(selectedBill.remainingBalance ?? selectedBill.RemainingBalance) > 0" variant="primary" @click="handleOpenPayModal">Record Payment</BaseButton>
           </div>
           <BaseButton variant="outline" @click="closeDetails">Close</BaseButton>
         </div>
