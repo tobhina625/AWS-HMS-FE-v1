@@ -250,7 +250,10 @@
   };
 
   const formatPaymentMethod = (method: number) => {
-    return method === 0 ? 'Cash' : 'Card';
+    if (method === 0) return 'Cash';
+    if (method === 1) return 'Card';
+    if (method === 2) return 'Insurance';
+    return `Method ${method}`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -261,8 +264,14 @@
   // Filter columns for DynamicTable
   const tableColumns = ['patientName', 'patientCnic', 'billTypeLabel', 'reason', 'totalAmount', 'paidAmount', 'remainingBalance', 'status'];
 
+  const isPaidByInsurance = computed(() => {
+    if (!paymentHistory.value.length) return false;
+    return paymentHistory.value.every((p: any) => (p.paymentMethod ?? p.PaymentMethod) === 2);
+  });
+
   const statusColorMap = {
     Paid: 'bg-meta-3/15 text-meta-3 border-meta-3/30',
+    'Insurance-Paid': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
     Pending: 'bg-warning/15 text-warning border-warning/30',
   };
 
@@ -443,11 +452,20 @@
               <p class="text-sm text-bodydark dark:text-bodydark1">Reason: {{ selectedBillDetails.reason }}</p>
               <p class="text-sm text-bodydark dark:text-bodydark1">Type: {{ selectedBillDetails.billTypeLabel }}</p>
             </div>
-            <div class="text-right">
+          <div class="text-right">
+              <!-- Insurance-Paid badge -->
               <span
+                v-if="(selectedBillDetails.isPaid ?? selectedBillDetails.IsPaid) && isPaidByInsurance"
+                class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border bg-blue-500/15 text-blue-400 border-blue-500/30"
+              >
+                Insurance-Paid
+              </span>
+              <!-- Regular Paid / Pending badge -->
+              <span
+                v-else
                 :class="[
                   'inline-block px-3 py-1 rounded-full text-xs font-bold uppercase border',
-                  selectedBillDetails.isPaid ? 'bg-meta-3/15 text-meta-3 border-meta-3/30' : 'bg-warning/15 text-warning border-warning/30',
+                  (selectedBillDetails.isPaid ?? selectedBillDetails.IsPaid) ? 'bg-meta-3/15 text-meta-3 border-meta-3/30' : 'bg-warning/15 text-warning border-warning/30',
                 ]"
               >
                 {{ selectedBillDetails.status }}
