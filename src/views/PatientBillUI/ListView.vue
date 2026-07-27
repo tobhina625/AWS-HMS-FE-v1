@@ -452,7 +452,7 @@
               <p class="text-sm text-bodydark dark:text-bodydark1">Reason: {{ selectedBillDetails.reason }}</p>
               <p class="text-sm text-bodydark dark:text-bodydark1">Type: {{ selectedBillDetails.billTypeLabel }}</p>
             </div>
-          <div class="text-right">
+            <div class="text-right">
               <!-- Insurance-Paid badge -->
               <span
                 v-if="(selectedBillDetails.isPaid ?? selectedBillDetails.IsPaid) && isPaidByInsurance"
