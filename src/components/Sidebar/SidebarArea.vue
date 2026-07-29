@@ -34,7 +34,6 @@
 
   const target = ref(null);
   const sidebarStore = useSidebarStore();
-  // const { canViewModule, canListModule, loadUserPermissions } = usePermissions();
   const { canViewModule, loadUserPermissions } = usePermissions();
   const { hasRole } = useAuth();
 
@@ -50,15 +49,10 @@
         { icon: AppointmentSVG, label: 'Appointments', route: '/appointments' },
       ],
     },
-
     {
       name: 'CLINICAL',
       menuItems: [
-        {
-          icon: PatientSVG,
-          label: 'Patients',
-          route: '/patients',
-        },
+        { icon: PatientSVG, label: 'Patients', route: '/patients' },
         { icon: WardSVG, label: 'Wards', route: '/wards' },
         { icon: OperationSVG, label: 'Operation Theatre', route: '/operation-theatre' },
         { icon: SurgerySVG, label: 'Surgery', route: '/surgery' },
@@ -72,7 +66,6 @@
         { icon: HistorySVG, label: 'Patient History', route: '/patienthistoryforpatient' },
       ],
     },
-
     {
       name: 'ADMINISTRATION',
       menuItems: [
@@ -97,16 +90,15 @@
         },
       ],
     },
-
     {
       name: 'FINANCE',
       menuItems: [
+        { icon: BillingSVG, label: 'Invoices', route: '/invoices' },
         { icon: BillingSVG, label: 'Patient Bill', route: '/patient-bill' },
         { icon: BriefcaseIcon, label: 'Vendors', route: '/vendors' },
         { icon: ClipboardListIcon, label: 'Purchase Orders', route: '/purchase-orders' },
       ],
     },
-
     {
       name: 'OTHERS',
       menuItems: [
@@ -116,7 +108,6 @@
     },
   ]);
 
-  // Map route paths to module names as returned by the login API permissions
   const routeToModuleMap: Record<string, string> = {
     '/': 'Dashboard',
     '/appointments': 'Appointments',
@@ -155,33 +146,23 @@
   };
 
   const checkItemPermission = (item: any): boolean => {
-    // Always show Dashboard, Profile, and Settings for all users
     if (item.route === '/' || item.route === '/profile' || item.route === '/settings') {
       return true;
     }
-
-    // Admin users have full access
     const isUserAdmin = hasRole('Admin') || hasRole('SuperAdmin') || hasRole('System Administrator') || hasRole('Hospital Administrator');
     if (isUserAdmin) {
       return true;
     }
-
-    // If item has children, show it only if at least one child is accessible
     if (item.children && item.children.length > 0) {
       return item.children.some((child: any) => checkItemPermission(child));
     }
-
-    // Check isList / isView permission for the module
     if (item.route) {
       const moduleName = routeToModuleMap[item.route];
       if (moduleName) {
-        // canViewModule checks isList || isView — if both false the item is hidden
         return canViewModule(moduleName);
       }
-      // Route not in map → allow (sub-route of an already accessible area)
       return true;
     }
-
     return false;
   };
 
@@ -222,32 +203,25 @@
     }"
     ref="target"
   >
-    <!-- SIDEBAR HEADER -->
     <div class="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
       <router-link to="/">
         <img :src="'/src/assets/images/SVGs/logo.svg'" alt="Logo" />
       </router-link>
-
       <BaseButton variant="ghost" size="sm" class="!p-1 lg:hidden text-light" @click="sidebarStore.isSidebarOpen = false">
         <ChevronLeftArrowIcon class="w-5 h-[18px]" />
       </BaseButton>
     </div>
-    <!-- SIDEBAR HEADER -->
-
     <div class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
-      <!-- Sidebar Menu -->
       <nav class="py-4 px-4 lg:px-6">
         <template v-for="menuGroup in menuGroups" :key="menuGroup.name">
           <div>
             <h3 class="mt-4 mb-1 ml-4 text-[10px] font-semibold tracking-widest text-white/50 uppercase">{{ menuGroup.name }}</h3>
-
             <ul class="mb-2 flex flex-col gap-0.5">
               <SidebarItem v-for="(menuItem, index) in menuGroup.menuItems" :item="menuItem" :key="index" :index="index" />
             </ul>
           </div>
         </template>
       </nav>
-      <!-- Sidebar Menu -->
     </div>
   </aside>
 </template>
