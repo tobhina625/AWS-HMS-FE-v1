@@ -9,17 +9,12 @@
   import EmptyState from '@/components/UI/EmptyState.vue';
   import GridViewCard from '@/components/UI/GridViewCard.vue';
   import InvoiceService from '@/services/Invoice/Invoice.services';
-  import { usePermissions } from '@/composables/usePermissions';
   import useAlert from '@/plugins/alert/useAlert';
-  import { useConfirm } from '@/composables/useConfirm';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import { InvoiceStatusMap, InvoiceStatusColorMap, InvoiceLineTypeMap, PaymentMethodMap } from '@/services/Invoice/Invoice.dto';
 
   const { showAlert } = useAlert();
-  const { confirm } = useConfirm();
-  const { canDeleteFromModule } = usePermissions();
   const pageTitle = ref('Invoice Management');
-  const canDelete = computed(() => canDeleteFromModule('Billing'));
   const invoiceService = new InvoiceService();
   const loading = ref(false);
   const viewMode = ref<'grid' | 'table'>('table');
@@ -141,8 +136,12 @@
       selectedInvoice.value = response?.data || response?.Data || response;
       showDetailModal.value = true;
     } catch (error) {
+      console.error('Error fetching invoice details:', error);
       showAlert('error', 'Failed to load invoice details.', 'Error');
     }
+    // catch (error) {
+    //   showAlert('error', 'Failed to load invoice details.', 'Error');
+    // }
   };
 
   const handleVoid = async () => {

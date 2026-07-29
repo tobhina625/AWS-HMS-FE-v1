@@ -1,5 +1,4 @@
 import GenericService from '../g-service';
-import type { IAddInvoice, IInvoice } from './Invoice.dto';
 
 class InvoiceService {
   private readonly _genericService: GenericService;
