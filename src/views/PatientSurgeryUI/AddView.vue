@@ -68,11 +68,12 @@
       admissions.value = content
         .filter((item: any) => !item.isDeleted)
         .map((item: any) => {
-          const patientName = item.patientHistory?.patientName || 'Unknown';
+          const patient = item.patient;
+          const patientName = patient ? `${patient.firstName || ''} ${patient.lastName || ''}`.trim() : 'Unknown';
           const admissionDate = item.admissionDate ? new Date(item.admissionDate).toLocaleDateString() : '-';
           return {
             id: item.id,
-            name: `Patient: ${patientName} (${admissionDate})`,
+            name: `Patient: ${patientName || 'Unknown'} (${admissionDate})`,
           };
         });
     } catch {
@@ -113,7 +114,12 @@
       if (response.isSuccess) {
         showAlert('success', 'Patient surgery added to system registry.', 'Success');
         router.push('/patient-surgeries');
+      } else {
+        showAlert('error', response.error || 'Failed to add patient surgery.', 'Error');
       }
+    } catch (error: any) {
+      const message = error?.response?.data?.error || error?.message || 'An unexpected error occurred while adding the patient surgery.';
+      showAlert('error', message, 'Error');
     } finally {
       isSubmitting.value = false;
     }

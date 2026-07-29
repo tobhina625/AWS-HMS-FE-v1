@@ -50,6 +50,35 @@
             </ul>
           </div>
 
+          <!-- Surgeries / Procedures -->
+          <div v-if="visit.surgeries?.length">
+            <strong>Surgeries / Procedures:</strong>
+            <div class="space-y-2 mt-1">
+              <div v-for="(surgery, sIndex) in visit.surgeries" :key="sIndex" class="pl-5 border-l-2 border-primary/30 py-1">
+                <p>
+                  <strong>Surgery:</strong>
+                  {{ surgery.name }}
+                </p>
+                <p>
+                  <strong>Theatre:</strong>
+                  {{ surgery.theatre }}
+                </p>
+                <p v-if="surgery.surgeryTime">
+                  <strong>Start:</strong>
+                  {{ formatDate(surgery.surgeryTime) }}
+                </p>
+                <p v-if="surgery.endTime">
+                  <strong>End:</strong>
+                  {{ formatDate(surgery.endTime) }}
+                </p>
+                <p v-if="surgery.notes">
+                  <strong>Notes:</strong>
+                  {{ surgery.notes }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- Admission Advice -->
           <div>
             <p>
@@ -239,6 +268,17 @@
               ]
             : [],
           labTests: [],
+          surgeries: history.admissions
+            ? history.admissions.flatMap((admission) =>
+                (admission.patientSurgeries || []).map((ps) => ({
+                  name: ps.surgery?.name || `Surgery #${ps.id}`,
+                  theatre: ps.operationTheatre?.name || '-',
+                  surgeryTime: ps.surgeryTime,
+                  endTime: ps.endTime,
+                  notes: ps.notes,
+                }))
+              )
+            : [],
           admissionAdvice: {
             status: history.adviseAdmission ? 'Yes' : 'No',
             reason: history.adviseAdmission ? 'Medical recommendation' : '',
