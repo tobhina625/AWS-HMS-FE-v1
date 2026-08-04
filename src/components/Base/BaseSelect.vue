@@ -148,10 +148,7 @@
       @click="!disabled && toggleDropdown()"
       @keydown="!disabled && handleKeydown($event)"
       class="relative flex items-center w-full rounded-lg border bg-transparent py-3 px-4 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 dark:bg-form-input"
-      :class="[
-        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-        error ? 'border-meta-1' : isOpen ? 'border-primary dark:border-primary' : 'border-stroke dark:border-form-strokedark'
-      ]"
+      :class="[disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer', error ? 'border-meta-1' : isOpen ? 'border-primary dark:border-primary' : 'border-stroke dark:border-form-strokedark']"
     >
       <span v-if="selectedOption" class="text-emphasis">{{ selectedOption[displayKey] }}</span>
       <span v-else class="text-gray-400 dark:text-gray-500">{{ placeholder || 'Select an option…' }}</span>

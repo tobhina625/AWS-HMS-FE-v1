@@ -156,10 +156,10 @@
       console.log('Completing surgery with schedule ID:', scheduleId);
       const response = await theatreService.completeSurgery(scheduleId);
       console.log('Complete surgery response:', response);
-      
+
       // Check for success - handle both camelCase and PascalCase response formats
       const isSuccess = response?.isSuccess ?? (response as any)?.IsSuccess ?? response?.success ?? (response as any)?.Success;
-      
+
       if (isSuccess) {
         stopTimer();
         showAlert('success', 'Surgery completed successfully. Theater status reset to Available.', 'Success');
