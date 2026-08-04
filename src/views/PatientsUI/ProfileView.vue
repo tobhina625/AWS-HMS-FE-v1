@@ -19,6 +19,7 @@
   import PatientMedicalHistory from '@/components/Patient/PatientMedicalHistory.vue';
   import PatientAppointments from '@/components/Patient/PatientAppointments.vue';
   import PatientBills from '@/components/Patient/PatientBills.vue';
+  import PatientServicesTab from '@/components/Patient/PatientServicesTab.vue';
   import PatientHistoryModal from '@/components/PatientHistory/PatientHistoryModal.vue';
   import PatientHistoryServices from '@/services/PatientHistory/PatientHistory.services';
   import PatientsServices from '@/services/Patient/patient.services';
@@ -68,6 +69,7 @@
     cnic: '',
     gender: '',
     address: '',
+    emailAddress: '',
     nationality: '',
     passportNumber: '',
     guardianCNIC: '',
@@ -104,6 +106,7 @@
           cnic: data.cnic || '',
           gender: typeof data.gender === 'number' ? (data.gender === 0 ? 'Male' : data.gender === 1 ? 'Female' : 'Other') : data.gender || '',
           address: data.address || '',
+          emailAddress: data.emailAddress || '',
           nationality: data.nationality || '',
           passportNumber: data.passportNumber || '',
           guardianCNIC: data.guardianCNIC || '',
@@ -384,6 +387,16 @@
                   Patient Bills
                 </div>
               </BaseButton>
+              <BaseButton
+                variant="ghost"
+                @click="currentTab = 'patientServices'"
+                :class="[
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
+                  currentTab === 'patientServices' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
+                ]"
+              >
+                <div class="flex items-center gap-2">🏥 Patient Services</div>
+              </BaseButton>
             </nav>
           </div>
         </div>
@@ -643,6 +656,11 @@
         <!-- Patient Bills Tab -->
         <div v-if="currentTab === 'bills'" class="lg:col-span-3">
           <PatientBills :patientId="patientDetails.id" @add-new="handleAddPatientBill" />
+        </div>
+
+        <!-- Patient Services Tab -->
+        <div v-if="currentTab === 'patientServices'" class="lg:col-span-3">
+          <PatientServicesTab :patientId="patientDetails.id" />
         </div>
       </div>
     </div>

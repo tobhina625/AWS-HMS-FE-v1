@@ -145,9 +145,9 @@ class OperationTheatreService {
   }
 
   // Start surgery
-  async startSurgery(scheduleId: number): Promise<any> {
+  async startSurgery(scheduleId: number, surgeonId: number): Promise<any> {
     try {
-      const response = await this._genericService.post(`api/operation-theatres/schedules/${scheduleId}/start`, {});
+      const response = await this._genericService.post(`api/operation-theatres/schedules/${scheduleId}/start`, { surgeonId });
       return response;
     } catch (error) {
       console.error('Error starting surgery:', error);

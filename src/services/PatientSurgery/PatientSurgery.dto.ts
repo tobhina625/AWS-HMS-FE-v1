@@ -2,6 +2,8 @@ export interface IPatientSurgery {
   id: number;
   surgeryTime: string;
   endTime: string;
+  duration: number;
+  status: string;
   notes: string;
   surgeryId: number;
   operationTheatreId: number;
@@ -22,6 +24,8 @@ export interface IPatientSurgery {
 export interface IAddPatientSurgery {
   surgeryTime: string;
   endTime: string;
+  duration?: number;
+  status?: string;
   notes: string;
   surgeryId: number;
   operationTheatreId: number;

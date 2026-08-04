@@ -29,6 +29,17 @@ class EmployeesServices {
     }
   }
 
+  async getEmployeesBySpecializationType(specializationType: number, otherFilters?: string): Promise<any> {
+    try {
+      const urlParam = otherFilters ? `specializationType=${specializationType}&${otherFilters}` : `specializationType=${specializationType}`;
+      const response = await this._genericService.get('api/employees/by-specialization-type', urlParam);
+      return response;
+    } catch (error) {
+      console.error('Error Employees List:', error);
+      throw error;
+    }
+  }
+
   async getEmployeesByDesignation(designationId: number, otherFilters?: string): Promise<any> {
     try {
       const urlParam = otherFilters ? `id=${designationId}&${otherFilters}` : `id=${designationId}`;

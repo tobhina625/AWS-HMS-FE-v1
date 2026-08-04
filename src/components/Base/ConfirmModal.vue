@@ -14,6 +14,8 @@
     confirmText?: string;
     cancelText?: string;
     variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning';
+    modalClass?: string;
+    backdropClass?: string;
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -21,6 +23,8 @@
     confirmText: 'Confirm',
     cancelText: 'Cancel',
     variant: 'danger',
+    modalClass: '',
+    backdropClass: '',
   });
 
   const emit = defineEmits<{
@@ -97,7 +101,7 @@
 </script>
 
 <template>
-  <BaseModal :show="show" :title="title" size="sm" @close="emit('cancel')">
+  <BaseModal :show="show" :title="title" size="sm" @close="emit('cancel')" :modal-class="modalClass" :backdrop-class="backdropClass">
     <div class="flex flex-col items-center text-center space-y-4">
       <!-- Icon -->
       <div class="w-16 h-16 rounded-full flex items-center justify-center" :class="iconBgClass">

@@ -60,6 +60,16 @@ class AdmissionServices {
     }
   }
 
+  async getAdmissionsByPatientId(patientId: number): Promise<any> {
+    try {
+      const response = await this._genericService.get(`api/admissions/by-patient/${patientId}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching admissions by patient:', error);
+      throw error;
+    }
+  }
+
   async addAdmission(data: IAddAdmission): Promise<any> {
     try {
       const response = await this._genericService.post('api/admissions/add', data);

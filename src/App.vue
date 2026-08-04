@@ -37,6 +37,8 @@
     :confirmText="confirmOptions.confirmText"
     :cancelText="confirmOptions.cancelText"
     :variant="confirmOptions.variant"
+    :modal-class="'z-[100000]'"
+    :backdrop-class="'z-[99999]'"
     @confirm="handleConfirm"
     @cancel="handleCancel"
   />

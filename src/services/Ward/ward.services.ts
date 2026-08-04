@@ -139,6 +139,16 @@ class WardServices {
     }
   }
 
+  async getBedByPatientId(patientId: number): Promise<any> {
+    try {
+      const response = await this._genericService.get(`api/wards/beds/by-patient/${patientId}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching bed by patient:', error);
+      throw error;
+    }
+  }
+
   async addBulkBeds(wardId: number, beds: any[]): Promise<any> {
     try {
       const response = await this._genericService.post(`api/wards/${wardId}/beds/bulk`, beds);

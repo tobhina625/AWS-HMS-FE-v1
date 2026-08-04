@@ -5,9 +5,13 @@
   import BreadcrumbDefault from '@/components/Breadcrumbs/BreadcrumbDefault.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import BaseCard from '@/components/Base/BaseCard.vue';
+  import BaseSelect from '@/components/Base/BaseSelect.vue';
   import StatusBadge from '@/components/UI/StatusBadge.vue';
+  import StartSurgeryModal from '@/components/OperationTheatre/StartSurgeryModal.vue';
   import OperationTheatreService from '@/services/OperationTheatre/OperationTheatre.services';
+  import PatientSurgeryServices from '@/services/PatientSurgery/PatientSurgery.services';
   import type { IOperationTheatre, ITheatreSchedule } from '@/services/OperationTheatre/OperationTheatre.dto';
+  import type { IPatientSurgery } from '@/services/PatientSurgery/PatientSurgery.dto';
   import useAlert from '@/plugins/alert/useAlert';
   import { useConfirm } from '@/composables/useConfirm';
   import { usePermissions } from '@/composables/usePermissions';
@@ -31,6 +35,7 @@
   const { confirm } = useConfirm();
   const { canDeleteFromModule } = usePermissions();
   const theatreService = new OperationTheatreService();
+  const patientSurgeryService = new PatientSurgeryServices();
 
   const pageTitle = ref('Operation Theatre Profile');
   const currentTab = ref('about');
@@ -39,6 +44,34 @@
   const theatreDetails = ref<IOperationTheatre | null>(null);
   const schedules = ref<ITheatreSchedule[]>([]);
   const schedulesLoading = ref(false);
+
+  // Start Surgery Modal state
+  const showStartModal = ref(false);
+  const selectedSchedule = ref<ITheatreSchedule | null>(null);
+  const scheduleActionLoading = ref<number | null>(null);
+
+  // Compute busy surgeon IDs (surgeons already in an Ongoing surgery)
+  const busySurgeonIds = computed(() => {
+    return schedules.value
+      .filter((s) => {
+        const status = (s.status || '').toLowerCase();
+        return status === 'inprogress' || status === 'ongoing';
+      })
+      .map((s) => s.surgeonId)
+      .filter((id): id is number => id != null && id > 0);
+  });
+
+  // Surgeries tab state
+  const theatreSurgeries = ref<IPatientSurgery[]>([]);
+  const surgeriesLoading = ref(false);
+  const updatingStatusId = ref<number | null>(null);
+
+  const statusOptions = [
+    { id: 'Scheduled', name: 'Scheduled' },
+    { id: 'Ongoing', name: 'Ongoing' },
+    { id: 'Finished', name: 'Finished' },
+    { id: 'Cancelled', name: 'Cancelled' },
+  ];
 
   const canDelete = computed(() => canDeleteFromModule('Operation Theatre'));
 
@@ -59,6 +92,45 @@
       dateStyle: 'medium',
       timeStyle: 'short',
     });
+  };
+
+  const formatDuration = (minutes: number) => {
+    if (!minutes) return '-';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins} minutes`;
+  };
+
+  const surgeryStatusClass = (status: string) => {
+    switch (status) {
+      case 'Scheduled':
+        return 'bg-primary/10 text-primary';
+      case 'Ongoing':
+        return 'bg-warning/10 text-warning';
+      case 'Finished':
+        return 'bg-success/10 text-success';
+      case 'Cancelled':
+        return 'bg-danger/10 text-danger';
+      default:
+        return 'bg-muted/10 text-muted';
+    }
+  };
+
+  const getScheduleStatusClass = (status: string) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'scheduled') return 'bg-primary/10 text-primary';
+    if (s === 'inprogress') return 'bg-warning/10 text-warning';
+    if (s === 'completed') return 'bg-success/10 text-success';
+    if (s === 'cancelled') return 'bg-danger/10 text-danger';
+    if (s === 'delayed') return 'bg-warning/10 text-warning';
+    return 'bg-elevated text-bodydark';
+  };
+
+  const formatScheduleStatus = (status: string) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'inprogress') return 'Ongoing';
+    return status || 'Scheduled';
   };
 
   const loadTheatreDetails = async () => {
@@ -90,6 +162,101 @@
       schedules.value = [];
     } finally {
       schedulesLoading.value = false;
+    }
+  };
+
+  const loadSurgeries = async () => {
+    if (!theatreId.value) return;
+    surgeriesLoading.value = true;
+    try {
+      const response = await patientSurgeryService.getSurgeriesByTheatre(theatreId.value);
+      const content = response?.content || response?.Content || [];
+      theatreSurgeries.value = content.filter((item: any) => !item.isDeleted);
+    } catch (error) {
+      console.error('Error loading surgeries:', error);
+      theatreSurgeries.value = [];
+    } finally {
+      surgeriesLoading.value = false;
+    }
+  };
+
+  // Start Surgery - opens the modal
+  const handleStartSurgery = (schedule: ITheatreSchedule) => {
+    selectedSchedule.value = schedule;
+    showStartModal.value = true;
+  };
+
+  // Handle surgery started event from modal
+  const handleSurgeryStarted = async () => {
+    showStartModal.value = false;
+    await loadSchedules();
+    // Update the selected schedule to the refreshed one
+    if (selectedSchedule.value) {
+      const updated = schedules.value.find((s) => s.id === selectedSchedule.value?.id);
+      if (updated) {
+        selectedSchedule.value = updated;
+        showStartModal.value = true; // Reopen modal in running state
+      }
+    }
+  };
+
+  // Handle surgery completed event from modal
+  const handleSurgeryCompleted = async () => {
+    showStartModal.value = false;
+    selectedSchedule.value = null;
+    await loadSchedules();
+    await loadTheatreDetails(); // Refresh theatre status
+  };
+
+  // Handle complete surgery from the list (opens modal in running state)
+  const handleCompleteSurgery = (schedule: ITheatreSchedule) => {
+    selectedSchedule.value = schedule;
+    showStartModal.value = true;
+  };
+
+  // Handle cancel schedule
+  const handleCancelSchedule = async (scheduleId: number) => {
+    const confirmed = await confirm({
+      title: 'Cancel Surgery',
+      message: 'Are you sure you want to cancel this surgery? This will also update the patient surgery status to Cancelled.',
+      confirmText: 'Cancel Surgery',
+      cancelText: 'Keep',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    scheduleActionLoading.value = scheduleId;
+    try {
+      const response = await theatreService.cancelSchedule(scheduleId, 'Cancelled from Operation Theatre');
+      if (response?.isSuccess ?? (response as any)?.IsSuccess) {
+        showAlert('success', 'Surgery cancelled successfully.', 'Success');
+        await loadSchedules();
+      } else {
+        showAlert('error', response?.error || 'Failed to cancel surgery.', 'Error');
+      }
+    } catch (error: any) {
+      const message = error?.response?.data?.error || error?.message || 'Failed to cancel surgery.';
+      showAlert('error', message, 'Error');
+    } finally {
+      scheduleActionLoading.value = null;
+    }
+  };
+
+  const updateSurgeryStatus = async (surgeryId: number, newStatus: string) => {
+    updatingStatusId.value = surgeryId;
+    try {
+      const response = await patientSurgeryService.updateSurgeryStatus(surgeryId, newStatus);
+      if (response.isSuccess) {
+        showAlert('success', `Surgery status updated to ${newStatus}`, 'Success');
+        await loadSurgeries();
+      } else {
+        showAlert('error', response.error || 'Failed to update surgery status.', 'Error');
+      }
+    } catch (error: any) {
+      const message = error?.response?.data?.error || error?.message || 'Failed to update surgery status.';
+      showAlert('error', message, 'Error');
+    } finally {
+      updatingStatusId.value = null;
     }
   };
 
@@ -132,6 +299,9 @@
     currentTab.value = tab;
     if (tab === 'schedules') {
       loadSchedules();
+    }
+    if (tab === 'surgeries') {
+      loadSurgeries();
     }
   };
 
@@ -245,6 +415,19 @@
                 <div class="flex items-center gap-2">
                   <CalendarIcon class="w-5 h-5" />
                   Schedules
+                </div>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
+                @click="setTab('surgeries')"
+                :class="[
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors',
+                  currentTab === 'surgeries' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
+                ]"
+              >
+                <div class="flex items-center gap-2">
+                  <CheckCircleIcon class="w-5 h-5" />
+                  Surgeries
                 </div>
               </BaseButton>
               <BaseButton
@@ -405,23 +588,112 @@
 
             <div v-else-if="schedules.length === 0" class="text-center py-12 text-muted">
               <CalendarIcon class="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No schedules found for this theatre.</p>
-              <BaseButton variant="outline" size="sm" class="mt-4" @click="handleViewSchedule">View Schedule</BaseButton>
+              <p>No active schedules found for this theatre.</p>
+              <p class="text-xs mt-2">Only Scheduled and Ongoing surgeries are shown here.</p>
+              <BaseButton variant="outline" size="sm" class="mt-4" @click="handleViewSchedule">View Full Schedule</BaseButton>
             </div>
 
             <div v-else class="space-y-4">
-              <div
-                v-for="schedule in schedules"
-                :key="schedule.id"
-                class="flex items-center justify-between p-4 bg-elevated rounded-xl border border-stroke dark:border-strokedark hover:border-primary/30 transition-colors"
-              >
-                <div class="flex-1">
-                  <p class="font-semibold text-emphasis">{{ schedule.surgeryName }}</p>
-                  <p v-if="schedule.patientName" class="text-sm text-bodydark dark:text-bodydark1">Patient: {{ schedule.patientName }}</p>
-                  <p v-if="schedule.surgeonName" class="text-sm text-bodydark dark:text-bodydark1">Surgeon: {{ schedule.surgeonName }}</p>
-                  <div class="flex items-center gap-4 mt-2 text-xs text-muted">
-                    <span>{{ formatDateTime(schedule.scheduledStartTime) }} - {{ formatDateTime(schedule.scheduledEndTime) }}</span>
-                    <StatusBadge :status="schedule.status" size="sm" />
+              <div v-for="schedule in schedules" :key="schedule.id" class="p-4 bg-elevated rounded-xl border border-stroke dark:border-strokedark hover:border-primary/30 transition-colors">
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                      <p class="font-semibold text-emphasis">{{ schedule.surgeryName }}</p>
+                      <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', getScheduleStatusClass(schedule.status)]">
+                        {{ formatScheduleStatus(schedule.status) }}
+                      </span>
+                    </div>
+                    <p v-if="schedule.patientName" class="text-sm text-bodydark dark:text-bodydark1">Patient: {{ schedule.patientName }}</p>
+                    <p v-if="schedule.surgeonName" class="text-sm text-bodydark dark:text-bodydark1">Surgeon: {{ schedule.surgeonName }}</p>
+                    <div class="flex items-center gap-4 mt-2 text-xs text-muted">
+                      <span>{{ formatDateTime(schedule.scheduledStartTime) }} - {{ formatDateTime(schedule.scheduledEndTime) }}</span>
+                    </div>
+                    <p v-if="schedule.notes" class="text-xs text-bodydark mt-2 italic">{{ schedule.notes }}</p>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex flex-col gap-2 min-w-fit">
+                    <!-- Start button: only for Scheduled status -->
+                    <BaseButton v-if="schedule.status === 'Scheduled'" variant="primary" size="sm" :disabled="scheduleActionLoading === schedule.id" @click="handleStartSurgery(schedule)">
+                      {{ scheduleActionLoading === schedule.id ? '...' : 'Start' }}
+                    </BaseButton>
+
+                    <!-- Complete button: only for InProgress status (opens modal with timer) -->
+                    <BaseButton
+                      v-if="schedule.status === 'InProgress' || schedule.status === 'Inprogress'"
+                      variant="primary"
+                      size="sm"
+                      :disabled="scheduleActionLoading === schedule.id"
+                      @click="handleCompleteSurgery(schedule)"
+                      class="!bg-success hover:!bg-success/90"
+                    >
+                      {{ scheduleActionLoading === schedule.id ? '...' : 'Complete' }}
+                    </BaseButton>
+
+                    <!-- Cancel button: only for Scheduled status (hidden once Ongoing) -->
+                    <BaseButton v-if="schedule.status === 'Scheduled'" variant="danger" size="sm" :disabled="scheduleActionLoading === schedule.id" @click="handleCancelSchedule(schedule.id)">
+                      Cancel
+                    </BaseButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </BaseCard>
+        </div>
+
+        <!-- Surgeries Tab -->
+        <div v-if="currentTab === 'surgeries'" class="lg:col-span-3">
+          <BaseCard>
+            <template #header>
+              <h3 class="text-lg font-semibold text-emphasis">Scheduled Surgeries</h3>
+            </template>
+
+            <div v-if="surgeriesLoading" class="py-12 text-center text-muted">
+              <ClockIcon class="w-12 h-12 mx-auto mb-4 animate-pulse" />
+              <p>Loading surgeries...</p>
+            </div>
+
+            <div v-else-if="theatreSurgeries.length === 0" class="text-center py-12 text-muted">
+              <CheckCircleIcon class="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No surgeries scheduled for this theatre.</p>
+            </div>
+
+            <div v-else class="space-y-4">
+              <div v-for="surgery in theatreSurgeries" :key="surgery.id" class="bg-elevated rounded-xl border border-stroke dark:border-strokedark p-4 hover:border-primary/30 transition-colors">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                      <p class="font-semibold text-emphasis">{{ surgery.surgery?.name || 'Surgery' }}</p>
+                      <span class="px-2 py-0.5 text-xs font-semibold rounded-full" :class="surgeryStatusClass(surgery.status)">
+                        {{ surgery.status || 'Scheduled' }}
+                      </span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-bodydark dark:text-bodydark1">
+                      <div>
+                        <span class="font-medium">Start:</span>
+                        {{ formatDateTime(surgery.surgeryTime) }}
+                      </div>
+                      <div>
+                        <span class="font-medium">End:</span>
+                        {{ formatDateTime(surgery.endTime) }}
+                      </div>
+                      <div>
+                        <span class="font-medium">Duration:</span>
+                        {{ formatDuration(surgery.duration) }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ml-4 min-w-[140px]">
+                    <BaseSelect
+                      v-model="surgery.status"
+                      label="Status"
+                      :options="statusOptions"
+                      placeholder="Change status..."
+                      display-key="name"
+                      value-key="id"
+                      :disabled="updatingStatusId === surgery.id"
+                      @change="updateSurgeryStatus(surgery.id, $event)"
+                    />
                   </div>
                 </div>
               </div>
@@ -477,5 +749,18 @@
       <p class="text-bodydark dark:text-bodydark1 mb-6">The operation theatre you're looking for does not exist or has been removed.</p>
       <BaseButton variant="primary" @click="handleBack">Back to List</BaseButton>
     </div>
+
+    <!-- Start Surgery Modal -->
+    <StartSurgeryModal
+      :show="showStartModal"
+      :schedule="selectedSchedule"
+      :busy-surgeon-ids="busySurgeonIds"
+      @close="
+        showStartModal = false;
+        selectedSchedule = null;
+      "
+      @started="handleSurgeryStarted"
+      @completed="handleSurgeryCompleted"
+    />
   </DefaultLayout>
 </template>

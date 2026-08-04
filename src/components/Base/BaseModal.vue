@@ -7,9 +7,14 @@
     show: boolean;
     title?: string;
     size?: 'sm' | 'md' | 'lg' | 'xl';
+    modalClass?: string;
+    backdropClass?: string;
   }
 
-  const props = defineProps<Props>();
+  const props = withDefaults(defineProps<Props>(), {
+    modalClass: '',
+    backdropClass: '',
+  });
   const emit = defineEmits(['close']);
 
   const closeOnEsc = (e: KeyboardEvent) => {
@@ -37,7 +42,7 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="show" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div v-if="show" class="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" :class="[backdropClass]">
         <Transition
           enter-active-class="transition duration-300 ease-out"
           enter-from-class="opacity-0 scale-95 translate-y-4"
@@ -46,7 +51,7 @@
           leave-from-class="opacity-100 scale-100 translate-y-0"
           leave-to-class="opacity-0 scale-95 translate-y-4"
         >
-          <div v-show="show" class="bg-surface w-full shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]" :class="sizes[size || 'md']">
+          <div v-show="show" class="bg-surface w-full shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]" :class="[sizes[size || 'md'], modalClass]">
             <!-- Header -->
             <div class="px-8 py-6 border-b border-gray-100 dark:border-strokedark flex items-center justify-between">
               <h3 v-if="title" class="text-2xl font-black text-emphasis tracking-tight">{{ title }}</h3>

@@ -61,7 +61,7 @@ class InvoiceService {
 
   async issueInvoice(id: number): Promise<any> {
     try {
-      const response = await this._genericService.put(`api/invoices/${id}/issue`, {});
+      const response = await this._genericService.put(`api/invoices/issue/${id}`, {});
       return response;
     } catch (error) {
       console.error('Error issuing invoice:', error);

@@ -83,6 +83,7 @@ export interface ITheatreSchedule {
   notes?: string;
   preOperativeNotes?: string;
   postOperativeNotes?: string;
+  patientSurgeryId?: number;
 }
 
 // Add Schedule DTO

@@ -39,6 +39,16 @@ class PatientSurgeryServices {
     }
   }
 
+  async getPatientSurgeriesByPatientId(patientId: number, page: number = 0, size: number = 100): Promise<any> {
+    try {
+      const response = await this._genericService.get(`api/patient-surgeries/by-patient/${patientId}`, `page=${page}&size=${size}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching patient surgeries by patient:', error);
+      throw error;
+    }
+  }
+
   async addPatientSurgery(data: IAddPatientSurgery): Promise<any> {
     try {
       const response = await this._genericService.post('api/patient-surgeries/add', data);
@@ -55,6 +65,26 @@ class PatientSurgeryServices {
       return response;
     } catch (error) {
       console.error('Error updating patient surgery:', error);
+      throw error;
+    }
+  }
+
+  async updateSurgeryStatus(id: number, status: string): Promise<any> {
+    try {
+      const response = await this._genericService.put(`api/patient-surgeries/${id}/status`, status);
+      return response;
+    } catch (error) {
+      console.error('Error updating surgery status:', error);
+      throw error;
+    }
+  }
+
+  async getSurgeriesByTheatre(theatreId: number, page: number = 0, size: number = 100): Promise<any> {
+    try {
+      const response = await this._genericService.get(`api/patient-surgeries/by-theatre/${theatreId}`, `page=${page}&size=${size}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching surgeries by theatre:', error);
       throw error;
     }
   }

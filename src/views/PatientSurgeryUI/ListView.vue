@@ -22,11 +22,13 @@
   const getPatientSurgeryFields = (surgery: IPatientSurgery) => [
     { label: 'Surgery', value: surgery.surgery?.name || '-' },
     { label: 'Theatre', value: surgery.operationTheatre?.name || '-' },
+    { label: 'Status', value: surgery.status || 'Scheduled' },
+    { label: 'Duration', value: surgery.duration ? `${surgery.duration} min` : '-' },
     { label: 'Start Time', value: new Date(surgery.surgeryTime).toLocaleString() },
     { label: 'End Time', value: new Date(surgery.endTime).toLocaleString() },
   ];
 
-  const patientSurgeryColumns = ['surgery.name', 'operationTheatre.name', 'surgeryTime', 'endTime', 'notes'];
+  const patientSurgeryColumns = ['surgery.name', 'operationTheatre.name', 'status', 'duration', 'surgeryTime', 'endTime', 'notes'];
 
   const transformPatientSurgeryData = (item: any): IPatientSurgery => ({
     ...item,
@@ -66,10 +68,6 @@
     router.push(`/patient-surgeries/edit/${surgery.id}`);
   };
 
-  const handleAddNew = () => {
-    router.push('/patient-surgeries/add');
-  };
-
   watch(viewMode, async () => {
     listFilters.value.page = 0;
     await fetchData(transformPatientSurgeryData);
@@ -98,22 +96,14 @@
           v-model="viewMode"
           v-model:date-filter="listFilters.dateFilter"
           :showDateFilter="true"
-          :showAdd="true"
+          :showAdd="false"
           placeholder="Search patient surgeries..."
-          add-button-route="patient-surgeries/add"
           @search="getSearchTerm"
         />
       </template>
 
       <template #table>
-        <EmptyState
-          v-if="isEmpty"
-          title="No Patient Surgeries Found"
-          description="Get started by adding your first patient surgery record."
-          icon="default"
-          action-label="Add First Surgery"
-          @action="handleAddNew"
-        />
+        <EmptyState v-if="isEmpty" title="No Patient Surgeries Found" description="Patient surgeries can be created from the Patient Profile page." icon="default" />
 
         <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
           <GridViewCard

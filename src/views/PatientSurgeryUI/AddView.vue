@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted, computed } from 'vue';
   import { useRouter } from 'vue-router';
   import useAlert from '@/plugins/alert/useAlert';
   import { useFormValidation } from '@/composables/useFormValidation';
@@ -30,11 +30,29 @@
   const formData = ref({
     surgeryTime: '',
     endTime: '',
+    duration: 0,
+    status: 'Scheduled',
     notes: '',
     surgeryId: 0,
     operationTheatreId: 0,
     admissionId: 0,
   });
+
+  // Auto-calculate duration from end - start time
+  const calculatedDuration = computed(() => {
+    if (!formData.value.surgeryTime || !formData.value.endTime) return 0;
+    const start = new Date(formData.value.surgeryTime);
+    const end = new Date(formData.value.endTime);
+    if (end <= start) return 0;
+    return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+  });
+
+  const statusOptions = [
+    { id: 'Scheduled', name: 'Scheduled' },
+    { id: 'Ongoing', name: 'Ongoing' },
+    { id: 'Finished', name: 'Finished' },
+    { id: 'Cancelled', name: 'Cancelled' },
+  ];
 
   const loadSurgeries = async () => {
     try {
@@ -94,6 +112,7 @@
     const isValid = validateForm(formData.value, {
       surgeryTime: [rules.required()],
       endTime: [rules.required()],
+      duration: [rules.required()],
       surgeryId: [rules.requiredPositiveId('Please select a surgery')],
       operationTheatreId: [rules.requiredPositiveId('Please select an operation theatre')],
       admissionId: [rules.requiredPositiveId('Please select an admission')],
@@ -106,6 +125,8 @@
       const response = await patientSurgeryService.addPatientSurgery({
         surgeryTime: formData.value.surgeryTime,
         endTime: formData.value.endTime,
+        duration: calculatedDuration.value || Number(formData.value.duration),
+        status: formData.value.status || 'Scheduled',
         notes: formData.value.notes,
         surgeryId: Number(formData.value.surgeryId),
         operationTheatreId: Number(formData.value.operationTheatreId),
@@ -151,6 +172,24 @@
         :error-message="errors.endTime"
         field-required
         @change="validateField('endTime', formData.endTime, [rules.required()])"
+      />
+
+      <div>
+        <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Duration (auto-calculated)</label>
+        <div class="rounded-lg border border-stroke dark:border-strokedark bg-elevated py-3 px-4 text-sm font-medium text-emphasis">
+          {{ calculatedDuration > 0 ? `${calculatedDuration} minutes` : 'Select start and end time' }}
+        </div>
+      </div>
+
+      <BaseSelect
+        label="Status"
+        v-model="formData.status"
+        :options="statusOptions"
+        placeholder="Select status..."
+        :error="!!errors.status"
+        :error-message="errors.status"
+        display-key="name"
+        value-key="id"
       />
 
       <BaseSelect
