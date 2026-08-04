@@ -66,7 +66,7 @@ const routes = [
     path: '/',
     name: 'Dashboard',
     component: DashboardView,
-    meta: { title: 'Dashboard', requiredAuth: true },
+    meta: { title: 'Dashboard', requiresAuth: true },
   },
   {
     path: '/encounters/:id',
@@ -162,7 +162,7 @@ const routes = [
     path: '/surgery',
     name: 'surgery',
     component: SurgeryListView,
-    meta: { title: 'Surgeries', requiredAuth: true },
+    meta: { title: 'Surgeries', requiresAuth: true },
   },
   {
     path: '/surgery/add',
@@ -186,7 +186,7 @@ const routes = [
     path: '/disease',
     name: 'diseases',
     component: DiseaseListView,
-    meta: { title: 'Diseases', requiredAuth: true },
+    meta: { title: 'Diseases', requiresAuth: true },
   },
   {
     path: '/disease/add',
@@ -204,7 +204,7 @@ const routes = [
     path: '/patients',
     name: 'Patients',
     component: PatientListView,
-    meta: { title: 'Patients', requiredAuth: true },
+    meta: { title: 'Patients', requiresAuth: true },
   },
   {
     path: '/patients/add',
@@ -228,7 +228,7 @@ const routes = [
     path: '/wards',
     name: 'Wards',
     component: WardListView,
-    meta: { title: 'Wards', requiredAuth: true },
+    meta: { title: 'Wards', requiresAuth: true },
   },
   {
     path: '/wards/add',
@@ -294,7 +294,7 @@ const routes = [
     path: '/operation-theatre',
     name: 'OperationTheatre',
     component: OperationTheatreListView,
-    meta: { title: 'Operation Theatre', requiredAuth: true },
+    meta: { title: 'Operation Theatre', requiresAuth: true },
   },
   {
     path: '/operation-theatre/add',
@@ -318,7 +318,7 @@ const routes = [
     path: '/departments',
     name: 'departments',
     component: DepartmentsListView,
-    meta: { title: 'Departments', requiredAuth: true },
+    meta: { title: 'Departments', requiresAuth: true },
   },
   {
     path: '/departments/add',
@@ -342,13 +342,13 @@ const routes = [
     path: '/patient-bill',
     name: 'patientbill',
     component: PatientUIListView,
-    meta: { title: 'Patient Bill', requiredAuth: true },
+    meta: { title: 'Patient Bill', requiresAuth: true },
   },
   {
     path: '/employees',
     name: 'Employees',
     component: EmployeeListView,
-    meta: { title: 'Employees', requiredAuth: true },
+    meta: { title: 'Employees', requiresAuth: true },
   },
   {
     path: '/patient-bills/add',
@@ -384,7 +384,7 @@ const routes = [
     path: '/settings',
     name: 'settings',
     component: SettingsView,
-    meta: { title: 'Settings', requiredAuth: true },
+    meta: { title: 'Settings', requiresAuth: true },
   },
   {
     path: '/signin',
