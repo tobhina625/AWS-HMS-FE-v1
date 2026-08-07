@@ -10,7 +10,7 @@ class PatientAllergyService {
 
   async getByPatientId(patientId: number): Promise<IPatientAllergy[]> {
     try {
-      const response = await this._genericService.get(`api/patient-allergies/by-patient/${patientId}`);
+      const response = await this._genericService.get(`api/patient-allergies/patient/${patientId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching patient allergies:', error);

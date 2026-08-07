@@ -10,7 +10,7 @@ class PatientDiagnosisService {
 
   async getByPatientId(patientId: number): Promise<IPatientDiagnosis[]> {
     try {
-      const response = await this._genericService.get(`api/patient-diagnoses/by-patient/${patientId}`);
+      const response = await this._genericService.get(`api/patient-diagnoses/patient/${patientId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching patient diagnoses:', error);

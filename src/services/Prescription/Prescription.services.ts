@@ -10,7 +10,7 @@ class PrescriptionService {
 
   async getByPatientId(patientId: number): Promise<IPrescription[]> {
     try {
-      const response = await this._genericService.get(`api/prescriptions/by-patient/${patientId}`);
+      const response = await this._genericService.get(`api/prescriptions/patient/${patientId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching patient prescriptions:', error);
