@@ -64,7 +64,8 @@
   const dxForm = ref<IPatientDiagnosis>({
     patientId: 0,
     patientHistoryId: 0,
-    diseaseName: '', diseaseId: undefined,
+    diseaseName: '',
+    diseaseId: undefined,
     diagnosisType: 'Primary',
     status: 'Active',
   });
@@ -132,10 +133,7 @@
 
   const loadOptions = async () => {
     try {
-      const [diseaseRes, labTestRes] = await Promise.all([
-        diseaseService.getDiseases('page=0&size=100'),
-        labTestService.getLabTests('page=0&size=100'),
-      ]);
+      const [diseaseRes, labTestRes] = await Promise.all([diseaseService.getDiseases('page=0&size=100'), labTestService.getLabTests('page=0&size=100')]);
       diseases.value = (diseaseRes as any)?.content || (diseaseRes as any)?.data?.content || [];
       labTests.value = (labTestRes as any)?.content || (labTestRes as any)?.data?.content || [];
     } catch (e) {
@@ -654,7 +652,6 @@
                 <option :value="0" disabled>Select a lab test</option>
                 <option v-for="t in labTests" :key="t.id" :value="t.id">{{ t.name }}</option>
               </select>
-
             </div>
             <div>
               <label class="block text-sm font-medium text-emphasis mb-1">Notes</label>
