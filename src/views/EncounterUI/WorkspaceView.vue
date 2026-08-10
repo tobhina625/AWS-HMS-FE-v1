@@ -9,8 +9,12 @@
   import PatientDiagnosisService from '@/services/PatientDiagnosis/PatientDiagnosis.services';
   import PrescriptionService from '@/services/Prescription/Prescription.services';
   import PatientLabsService from '@/services/PatientLabs/PatientLabs.services';
+  import DiseasesServices from '@/services/Disease/Disease.services';
+  import LabTestServices from '@/services/LabTest/LabTest.services';
   import type { IPatientDiagnosis } from '@/services/PatientDiagnosis/PatientDiagnosis.interface';
   import type { IPrescription } from '@/services/Prescription/Prescription.interface';
+  import type { IDisease } from '@/services/Disease/Disease.dto';
+  import type { ILabTest } from '@/services/LabTest/LabTest.dto';
   import useAlert from '@/plugins/alert/useAlert';
   import PatientsServices from '@/services/Patient/patient.services';
 
@@ -23,6 +27,8 @@
   const prescriptionService = new PrescriptionService();
   const labService = new PatientLabsService();
   const patientService = new PatientsServices();
+  const diseaseService = new DiseasesServices();
+  const labTestService = new LabTestServices();
 
   const encounterId = ref<number>(0);
   const patientId = ref<number>(0);
@@ -35,6 +41,8 @@
   const diagnoses = ref<IPatientDiagnosis[]>([]);
   const prescriptions = ref<IPrescription[]>([]);
   const labOrders = ref<any[]>([]);
+  const diseases = ref<IDisease[]>([]);
+  const labTests = ref<ILabTest[]>([]);
 
   // Vitals form
   const vitalsForm = ref({
@@ -56,7 +64,7 @@
   const dxForm = ref<IPatientDiagnosis>({
     patientId: 0,
     patientHistoryId: 0,
-    diseaseName: '',
+    diseaseName: '', diseaseId: undefined,
     diagnosisType: 'Primary',
     status: 'Active',
   });
@@ -86,9 +94,8 @@
       encounterId.value = Number(route.params.id);
       const enc = await historyService.getPatientHistoryWithDetails(encounterId.value, 'patientLabs');
       encounter.value = enc?.data || enc;
-
       if (encounter.value) {
-        patientId.value = encounter.value.patientId;
+        patientId.value = encounter.value.patient.id;
         vitalsForm.value = {
           bloodPressure: encounter.value.bloodPressure || '',
           heartRate: encounter.value.heartRate || '',
@@ -123,6 +130,24 @@
     }
   };
 
+  const loadOptions = async () => {
+    try {
+      const [diseaseRes, labTestRes] = await Promise.all([
+        diseaseService.getDiseases('page=0&size=100'),
+        labTestService.getLabTests('page=0&size=100'),
+      ]);
+      diseases.value = (diseaseRes as any)?.content || (diseaseRes as any)?.data?.content || [];
+      labTests.value = (labTestRes as any)?.content || (labTestRes as any)?.data?.content || [];
+    } catch (e) {
+      console.error('Failed to load catalog options:', e);
+    }
+  };
+
+  const onDiseaseChange = () => {
+    const d = diseases.value.find((x) => x.id === dxForm.value.diseaseId);
+    dxForm.value.diseaseName = d?.name || '';
+  };
+
   const saveVitals = async () => {
     saving.value = true;
     try {
@@ -146,16 +171,23 @@
   };
 
   const addDiagnosis = async () => {
-    if (!dxForm.value.diseaseName) return;
+    if (!dxForm.value.diseaseId) return;
     try {
       await diagnosisService.create({ ...dxForm.value, patientId: patientId.value, patientHistoryId: encounterId.value });
       showAlert('success', 'Diagnosis added.', 'Success');
       showDxModal.value = false;
-      dxForm.value = { patientId: patientId.value, patientHistoryId: encounterId.value, diseaseName: '', diagnosisType: 'Primary', status: 'Active' };
+      dxForm.value = { patientId: patientId.value, patientHistoryId: encounterId.value, diseaseName: '', diseaseId: undefined, diagnosisType: 'Primary', status: 'Active' };
+    } catch (error) {
+      console.error('Add diagnosis failed:', error);
+      showAlert('error', 'Failed to add diagnosis.', 'Error');
+      return;
+    }
+    // Refresh the list separately - a failed reload must not mask a successful add.
+    try {
       const dxData = await diagnosisService.getByEncounterId(encounterId.value);
       diagnoses.value = Array.isArray(dxData) ? dxData : dxData?.data || [];
-    } catch {
-      showAlert('error', 'Failed to add diagnosis.', 'Error');
+    } catch (e) {
+      console.error('Failed to refresh diagnoses:', e);
     }
   };
 
@@ -166,10 +198,17 @@
       showAlert('success', 'Prescription added.', 'Success');
       showRxModal.value = false;
       rxForm.value = { patientId: patientId.value, patientHistoryId: encounterId.value, medicine: '', dose: '', route: 'Oral', frequency: '', duration: '', instructions: '', status: 'Active' };
+    } catch (error) {
+      console.error('Add prescription failed:', error);
+      showAlert('error', 'Failed to add prescription.', 'Error');
+      return;
+    }
+    // Refresh the list separately - a failed reload must not mask a successful add.
+    try {
       const rxData = await prescriptionService.getByEncounterId(encounterId.value);
       prescriptions.value = Array.isArray(rxData) ? rxData : rxData?.data || [];
-    } catch {
-      showAlert('error', 'Failed to add prescription.', 'Error');
+    } catch (e) {
+      console.error('Failed to refresh prescriptions:', e);
     }
   };
 
@@ -179,15 +218,22 @@
       await labService.createLabOrder({ ...labForm.value, patientId: patientId.value, patientHistoryId: encounterId.value });
       showAlert('success', 'Lab order created.', 'Success');
       showLabModal.value = false;
+    } catch (error) {
+      console.error('Create lab order failed:', error);
+      showAlert('error', 'Failed to create lab order.', 'Error');
+      return;
+    }
+    // Refresh the list separately - a failed reload must not mask a successful add.
+    try {
       const labData = await labService.getByEncounterId(encounterId.value);
       labOrders.value = Array.isArray(labData) ? labData : labData?.data || [];
-    } catch {
-      showAlert('error', 'Failed to create lab order.', 'Error');
+    } catch (e) {
+      console.error('Failed to refresh lab orders:', e);
     }
   };
 
   const openDxModal = () => {
-    dxForm.value = { patientId: patientId.value, patientHistoryId: encounterId.value, diseaseName: '', diagnosisType: 'Primary', status: 'Active' };
+    dxForm.value = { patientId: patientId.value, patientHistoryId: encounterId.value, diseaseName: '', diseaseId: undefined, diagnosisType: 'Primary', status: 'Active' };
     showDxModal.value = true;
   };
 
@@ -203,7 +249,10 @@
     { id: 'labs', label: 'Lab Orders', icon: '🧪' },
   ];
 
-  onMounted(loadData);
+  onMounted(() => {
+    loadData();
+    loadOptions();
+  });
 </script>
 
 <template>
@@ -443,15 +492,17 @@
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-emphasis mb-1">
-                Disease Name
+                Disease
                 <span class="text-danger">*</span>
               </label>
-              <input
-                v-model="dxForm.diseaseName"
-                type="text"
-                placeholder="e.g. Hypertension, Type 2 Diabetes"
+              <select
+                v-model="dxForm.diseaseId"
+                @change="onDiseaseChange"
                 class="w-full border border-stroke dark:border-strokedark rounded-lg px-4 py-2.5 bg-transparent text-emphasis focus:outline-none focus:border-primary"
-              />
+              >
+                <option :value="undefined" disabled>Select a disease</option>
+                <option v-for="d in diseases" :key="d.id" :value="d.id">{{ d.name }}</option>
+              </select>
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -593,16 +644,17 @@
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-emphasis mb-1">
-                Lab Test ID
+                Lab Test
                 <span class="text-danger">*</span>
               </label>
-              <input
+              <select
                 v-model.number="labForm.labTestId"
-                type="number"
-                placeholder="Enter Lab Test ID"
                 class="w-full border border-stroke dark:border-strokedark rounded-lg px-4 py-2.5 bg-transparent text-emphasis focus:outline-none focus:border-primary"
-              />
-              <p class="text-xs text-bodydark mt-1">Go to Lab Tests module to find the test ID.</p>
+              >
+                <option :value="0" disabled>Select a lab test</option>
+                <option v-for="t in labTests" :key="t.id" :value="t.id">{{ t.name }}</option>
+              </select>
+
             </div>
             <div>
               <label class="block text-sm font-medium text-emphasis mb-1">Notes</label>

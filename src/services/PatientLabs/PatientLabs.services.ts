@@ -30,8 +30,10 @@ class PatientLabsService {
 
   async getByEncounterId(encounterId: number): Promise<IPatientLabs[]> {
     try {
-      const response = await this._genericService.get(`api/patient-labs/by-encounter/${encounterId}`);
-      return response.data;
+      // The backend exposes GetAll with a historyId filter (there is no /by-encounter route).
+      const response = await this._genericService.get(`api/patient-labs?historyId=${encounterId}&size=100`);
+      const data = response as any;
+      return Array.isArray(data) ? data : data?.content || data?.data || [];
     } catch (error) {
       console.error('Error fetching encounter lab orders:', error);
       throw error;

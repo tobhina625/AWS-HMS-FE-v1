@@ -20,8 +20,10 @@ class PrescriptionService {
 
   async getByEncounterId(encounterId: number): Promise<IPrescription[]> {
     try {
-      const response = await this._genericService.get(`api/prescriptions/by-encounter/${encounterId}`);
-      return response.data;
+      // The backend exposes GetAll with a historyId filter (there is no /by-encounter route).
+      const response = await this._genericService.get(`api/prescriptions?historyId=${encounterId}&size=100`);
+      const data = response as any;
+      return Array.isArray(data) ? data : data?.content || data?.data || [];
     } catch (error) {
       console.error('Error fetching encounter prescriptions:', error);
       throw error;
@@ -40,7 +42,7 @@ class PrescriptionService {
 
   async create(data: IPrescription): Promise<IPrescription> {
     try {
-      const response = await this._genericService.post('api/prescriptions', data);
+      const response = await this._genericService.post('api/prescriptions/add', data);
       return response.data;
     } catch (error) {
       console.error('Error creating prescription:', error);

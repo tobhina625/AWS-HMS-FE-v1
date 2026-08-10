@@ -11,7 +11,7 @@
   import PhoneIcon from '@/assets/images/SVGs/PhoneIcon.svg';
   import UserIcon from '@/assets/images/SVGs/UserIcon.svg';
 
-  import { ref, onMounted, computed } from 'vue';
+  import { ref, onMounted, computed, watch } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import DefaultLayout from '@/layouts/DefaultLayout.vue';
   import BreadcrumbDefault from '@/components/Breadcrumbs/BreadcrumbDefault.vue';
@@ -26,6 +26,8 @@
   import PatientAllergyService from '@/services/PatientAllergy/PatientAllergy.services';
   import PatientDiagnosisService from '@/services/PatientDiagnosis/PatientDiagnosis.services';
   import PrescriptionService from '@/services/Prescription/Prescription.services';
+  import PatientLabsService from '@/services/PatientLabs/PatientLabs.services';
+  import type { IPatientLabs } from '@/services/PatientLabs/PatientLabs.interface';
   import type { IPatient } from '@/services/Patient/patient.interface';
   import useAlert from '@/plugins/alert/useAlert';
   import { useConfirm } from '@/composables/useConfirm';
@@ -43,15 +45,25 @@
   const allergyService = new PatientAllergyService();
   const diagnosisService = new PatientDiagnosisService();
   const prescriptionService = new PrescriptionService();
+  const labService = new PatientLabsService();
   const canDelete = computed(() => canDeleteFromModule('Patients'));
   const showHistoryModal = ref(false);
   const medicalHistoryKey = ref(0);
+  const showAddDiagnosisModal = ref(false);
+  const savingDiagnosis = ref(false);
+  const newDiagnosisForm = ref({
+    diseaseName: '',
+    diagnosisType: 'Primary',
+    status: 'Active',
+    notes: '',
+  });
 
   // Clinical summary data
   const allergies = ref<any[]>([]);
   const recentEncounters = ref<any[]>([]);
   const diagnoses = ref<any[]>([]);
   const prescriptions = ref<any[]>([]);
+  const patientLabs = ref<IPatientLabs[]>([]);
   const clinicalLoading = ref(false);
 
   const pageTitle = ref('Patient Profile');
@@ -174,20 +186,57 @@
     router.push({ path: '/appointments/add', query: { patientId: patientId.value } });
   };
 
+  const saveNewDiagnosis = async () => {
+    if (!newDiagnosisForm.value.diseaseName.trim()) {
+      showAlert('error', 'Please enter a disease / condition name.', 'Missing field');
+      return;
+    }
+    savingDiagnosis.value = true;
+    try {
+      await diagnosisService.create({
+        patientId: patientDetails.value.id,
+        diseaseName: newDiagnosisForm.value.diseaseName,
+        diagnosisType: newDiagnosisForm.value.diagnosisType,
+        status: newDiagnosisForm.value.status,
+        notes: newDiagnosisForm.value.notes,
+      });
+      showAlert('success', 'Diagnosis added successfully.', 'Success');
+      showAddDiagnosisModal.value = false;
+      newDiagnosisForm.value = { diseaseName: '', diagnosisType: 'Primary', status: 'Active', notes: '' };
+      if (patientDetails.value.id) loadClinicalData(patientDetails.value.id);
+    } catch {
+      showAlert('error', 'An error occurred while adding the diagnosis.', 'Error');
+    } finally {
+      savingDiagnosis.value = false;
+    }
+  };
+
+  // Accept either a plain array or a wrapper object ({ data | content | items }) so a
+  // single rejected / malformed request can never silently blank a tab.
+  const normalizeList = (value: any): any[] => {
+    if (Array.isArray(value)) return value;
+    if (value && Array.isArray(value.data)) return value.data;
+    if (value && Array.isArray(value.content)) return value.content;
+    if (value && Array.isArray(value.items)) return value.items;
+    return [];
+  };
+
   const loadClinicalData = async (id: number) => {
     clinicalLoading.value = true;
     try {
-      const [allergyRes, diagnosisRes, rxRes, encounterRes] = await Promise.allSettled([
+      const [allergyRes, diagnosisRes, rxRes, labRes, encounterRes] = await Promise.allSettled([
         allergyService.getByPatientId(id),
         diagnosisService.getByPatientId(id),
         prescriptionService.getByPatientId(id),
-        patientHistoryService.getPatientHistoryByPatientId(id, 0, 5),
+        labService.getByPatientId(id),
+        patientHistoryService.getPatientHistoryByPatientId(id, 0, 100),
       ]);
-      allergies.value = allergyRes.status === 'fulfilled' ? allergyRes.value || [] : [];
-      diagnoses.value = diagnosisRes.status === 'fulfilled' ? diagnosisRes.value || [] : [];
-      prescriptions.value = rxRes.status === 'fulfilled' ? rxRes.value || [] : [];
+      allergies.value = allergyRes.status === 'fulfilled' ? normalizeList(allergyRes.value) : [];
+      diagnoses.value = diagnosisRes.status === 'fulfilled' ? normalizeList(diagnosisRes.value) : [];
+      prescriptions.value = rxRes.status === 'fulfilled' ? normalizeList(rxRes.value) : [];
+      patientLabs.value = labRes.status === 'fulfilled' ? normalizeList(labRes.value) : [];
       const encData = encounterRes.status === 'fulfilled' ? encounterRes.value : null;
-      recentEncounters.value = encData?.data?.items || encData?.data || encData?.items || [];
+      recentEncounters.value = normalizeList(encData?.content ?? encData);
     } catch {
       // silently fail — clinical data is supplementary
     } finally {
@@ -207,6 +256,14 @@
     await loadCnicConfig();
     await loadPatientDetails();
     if (patientDetails.value.id) {
+      loadClinicalData(patientDetails.value.id);
+    }
+  });
+
+  // Re-fetch clinical data when the user opens one of these tabs, so records
+  // added inside an Encounter appear without a full page reload.
+  watch(currentTab, (tab) => {
+    if (['encounters', 'allergies', 'diagnoses', 'prescriptions', 'labTests'].includes(tab) && patientDetails.value.id) {
       loadClinicalData(patientDetails.value.id);
     }
   });
@@ -328,6 +385,7 @@
                   </span>
                 </div>
               </BaseButton>
+
               <BaseButton
                 variant="ghost"
                 @click="currentTab = 'diagnoses'"
@@ -347,6 +405,16 @@
                 ]"
               >
                 <div class="flex items-center gap-2">💊 Prescriptions</div>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
+                @click="currentTab = 'labTests'"
+                :class="[
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
+                  currentTab === 'labTests' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
+                ]"
+              >
+                <div class="flex items-center gap-2">🧪 Lab Tests</div>
               </BaseButton>
               <BaseButton
                 variant="ghost"
@@ -586,6 +654,9 @@
 
         <!-- Diagnoses Tab -->
         <div v-if="currentTab === 'diagnoses'" class="lg:col-span-3">
+          <div class="flex justify-end mb-4">
+            <BaseButton variant="primary" size="sm" @click="showAddDiagnosisModal = true">Add New Diagnosis</BaseButton>
+          </div>
           <div v-if="clinicalLoading" class="space-y-3">
             <div v-for="i in 3" :key="i" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 animate-pulse h-12"></div>
           </div>
@@ -637,6 +708,36 @@
           </div>
         </div>
 
+        <!-- Lab Tests Tab -->
+        <div v-if="currentTab === 'labTests'" class="lg:col-span-3">
+          <div v-if="clinicalLoading" class="space-y-3">
+            <div v-for="i in 3" :key="i" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 animate-pulse h-12"></div>
+          </div>
+          <div v-else-if="!patientLabs.length" class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-12 text-center">
+            <div class="text-4xl mb-3">🧪</div>
+            <p class="text-bodydark">No lab tests recorded for this patient.</p>
+          </div>
+          <div v-else class="space-y-3">
+            <div v-for="lab in patientLabs" :key="lab.id" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <p class="text-xs text-bodydark">Lab Test</p>
+                <p class="font-semibold text-emphasis">{{ lab.labTestName || 'Lab Test #' + lab.labTestId }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-bodydark">Status</p>
+                <span :class="['text-sm font-medium', lab.status === 'Completed' ? 'text-success' : lab.status === 'InProgress' ? 'text-warning' : 'text-primary']">{{ lab.status }}</span>
+              </div>
+              <div>
+                <p class="text-xs text-bodydark">Notes</p>
+                <p class="text-emphasis text-sm">{{ lab.details || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-bodydark">Reported</p>
+                <p class="text-emphasis text-sm">{{ lab.reportTime ? new Date(lab.reportTime).toLocaleDateString() : '—' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- Medical History Tab -->
         <div v-if="currentTab === 'medical'" class="lg:col-span-3">
           <div class="flex justify-end mb-4">
@@ -664,5 +765,67 @@
         </div>
       </div>
     </div>
+
+    <!-- Add New Diagnosis Modal -->
+    <Teleport to="body">
+      <div v-if="showAddDiagnosisModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAddDiagnosisModal = false"></div>
+        <div class="relative bg-white dark:bg-boxdark rounded-2xl shadow-2xl w-full max-w-lg p-6">
+          <h3 class="text-xl font-bold text-emphasis mb-5">Add New Diagnosis</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-emphasis mb-1">
+                Condition / Disease Name
+                <span class="text-danger">*</span>
+              </label>
+              <input
+                v-model="newDiagnosisForm.diseaseName"
+                type="text"
+                placeholder="e.g. Hypertension"
+                class="w-full border border-stroke dark:border-strokedark rounded-lg px-4 py-2.5 bg-transparent text-emphasis focus:outline-none focus:border-primary"
+              />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-emphasis mb-1">Type</label>
+                <select
+                  v-model="newDiagnosisForm.diagnosisType"
+                  class="w-full border border-stroke dark:border-strokedark rounded-lg px-4 py-2.5 bg-transparent text-emphasis focus:outline-none focus:border-primary"
+                >
+                  <option>Primary</option>
+                  <option>Secondary</option>
+                  <option>Working</option>
+                  <option>Final</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-emphasis mb-1">Status</label>
+                <select
+                  v-model="newDiagnosisForm.status"
+                  class="w-full border border-stroke dark:border-strokedark rounded-lg px-4 py-2.5 bg-transparent text-emphasis focus:outline-none focus:border-primary"
+                >
+                  <option>Active</option>
+                  <option>Resolved</option>
+                  <option>Chronic</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-emphasis mb-1">Notes</label>
+              <input
+                v-model="newDiagnosisForm.notes"
+                type="text"
+                placeholder="Additional notes (optional)"
+                class="w-full border border-stroke dark:border-strokedark rounded-lg px-4 py-2.5 bg-transparent text-emphasis focus:outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <BaseButton variant="outline" class="flex-1" @click="showAddDiagnosisModal = false">Cancel</BaseButton>
+            <BaseButton variant="primary" class="flex-1" :loading="savingDiagnosis" @click="saveNewDiagnosis">Save Diagnosis</BaseButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </DefaultLayout>
 </template>
