@@ -23,7 +23,11 @@
     busySurgeonIds: () => [],
   });
 
-  const emit = defineEmits(['close', 'started', 'completed']);
+  const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'started'): void;
+  (e: 'completed', timelapse: number): void;
+}>();
 
   const { showAlert } = useAlert();
   const { confirm } = useConfirm();
@@ -161,9 +165,11 @@
       const isSuccess = response?.isSuccess ?? (response as any)?.IsSuccess ?? response?.success ?? (response as any)?.Success;
 
       if (isSuccess) {
+        computeElapsed();
+        const timelapse = elapsedSeconds.value;
         stopTimer();
         showAlert('success', 'Surgery completed successfully. Theater status reset to Available.', 'Success');
-        emit('completed');
+        emit('completed', timelapse);
       } else {
         const errorMsg = response?.error || response?.message || response?.Error || response?.Message || 'Failed to complete surgery.';
         showAlert('error', errorMsg, 'Error');

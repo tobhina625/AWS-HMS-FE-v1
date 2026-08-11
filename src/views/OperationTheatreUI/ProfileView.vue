@@ -94,6 +94,20 @@
     });
   };
 
+  // Format a timelapse (in seconds) as hh:mm:ss (or mm:ss when under an hour)
+  const formatTimelapse = (seconds: number) => {
+    if (!seconds) return '-';
+    const total = Math.floor(seconds);
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    if (hours > 0) {
+      return pad(hours) + ':' + pad(minutes) + ':' + pad(secs);
+    }
+    return pad(minutes) + ':' + pad(secs);
+  };
+
   const formatDuration = (minutes: number) => {
     if (!minutes) return '-';
     const hours = Math.floor(minutes / 60);
@@ -201,11 +215,21 @@
   };
 
   // Handle surgery completed event from modal
-  const handleSurgeryCompleted = async () => {
+  const handleSurgeryCompleted = async (timelapseSeconds?: number) => {
+    const completedPatientSurgeryId = selectedSchedule.value?.patientSurgeryId;
     showStartModal.value = false;
     selectedSchedule.value = null;
     await loadSchedules();
+    await loadSurgeries();
     await loadTheatreDetails(); // Refresh theatre status
+
+    // Reflect the timelapse captured by the modal on the matching surgery row
+    if (timelapseSeconds != null && timelapseSeconds > 0 && completedPatientSurgeryId) {
+      const surgery = theatreSurgeries.value.find((s) => s.id === completedPatientSurgeryId);
+      if (surgery) {
+        surgery.timeTakenSeconds = timelapseSeconds;
+      }
+    }
   };
 
   // Handle complete surgery from the list (opens modal in running state)
@@ -668,7 +692,7 @@
                         {{ surgery.status || 'Scheduled' }}
                       </span>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-bodydark dark:text-bodydark1">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm text-bodydark dark:text-bodydark1">
                       <div>
                         <span class="font-medium">Start:</span>
                         {{ formatDateTime(surgery.surgeryTime) }}
@@ -680,6 +704,10 @@
                       <div>
                         <span class="font-medium">Duration:</span>
                         {{ formatDuration(surgery.duration) }}
+                      </div>
+                      <div>
+                        <span class="font-medium">Time taken:</span>
+                        {{ surgery.timeTakenSeconds ? formatTimelapse(surgery.timeTakenSeconds) : formatDuration(surgery.duration) }}
                       </div>
                     </div>
                   </div>
