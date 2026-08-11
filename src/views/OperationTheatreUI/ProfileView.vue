@@ -94,18 +94,13 @@
     });
   };
 
-  // Format a timelapse (in seconds) as hh:mm:ss (or mm:ss when under an hour)
+  // Format a duration (in seconds) as "1h 30m" style — same as formatDuration
   const formatTimelapse = (seconds: number) => {
     if (!seconds) return '-';
-    const total = Math.floor(seconds);
-    const hours = Math.floor(total / 3600);
-    const minutes = Math.floor((total % 3600) / 60);
-    const secs = total % 60;
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    if (hours > 0) {
-      return pad(hours) + ':' + pad(minutes) + ':' + pad(secs);
-    }
-    return pad(minutes) + ':' + pad(secs);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes} minutes`;
   };
 
   const formatDuration = (minutes: number) => {
@@ -227,7 +222,7 @@
     if (timelapseSeconds != null && timelapseSeconds > 0 && completedPatientSurgeryId) {
       const surgery = theatreSurgeries.value.find((s) => s.id === completedPatientSurgeryId);
       if (surgery) {
-        surgery.timeTakenSeconds = timelapseSeconds;
+        surgery.actualTimeTakenSeconds = timelapseSeconds;
       }
     }
   };
@@ -707,7 +702,7 @@
                       </div>
                       <div>
                         <span class="font-medium">Time taken:</span>
-                        {{ surgery.timeTakenSeconds ? formatTimelapse(surgery.timeTakenSeconds) : formatDuration(surgery.duration) }}
+                        {{ surgery.actualTimeTakenSeconds != null ? formatTimelapse(surgery.actualTimeTakenSeconds) : formatDuration(surgery.duration) }}
                       </div>
                     </div>
                   </div>

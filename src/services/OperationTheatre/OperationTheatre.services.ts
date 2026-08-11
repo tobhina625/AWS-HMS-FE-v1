@@ -156,9 +156,10 @@ class OperationTheatreService {
   }
 
   // Complete surgery
-  async completeSurgery(scheduleId: number): Promise<any> {
+  async completeSurgery(scheduleId: number, timeTakenSeconds?: number | null): Promise<any> {
     try {
-      const response = await this._genericService.post(`api/operation-theatres/schedules/${scheduleId}/complete`, {});
+      const body = timeTakenSeconds != null ? { elapsedSeconds: timeTakenSeconds } : {};
+      const response = await this._genericService.post(`api/operation-theatres/schedules/${scheduleId}/complete`, body);
       return response;
     } catch (error) {
       console.error('Error completing surgery:', error);

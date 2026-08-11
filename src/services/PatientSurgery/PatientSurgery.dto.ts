@@ -3,7 +3,7 @@ export interface IPatientSurgery {
   surgeryTime: string;
   endTime: string;
   duration: number;
-  timeTakenSeconds?: number;
+  actualTimeTakenSeconds?: number;
   status: string;
   notes: string;
   surgeryId: number;

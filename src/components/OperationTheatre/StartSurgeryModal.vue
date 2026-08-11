@@ -158,15 +158,16 @@
     actionLoading.value = true;
     try {
       console.log('Completing surgery with schedule ID:', scheduleId);
-      const response = await theatreService.completeSurgery(scheduleId);
+      // Capture the elapsed time BEFORE completing so it can be persisted to the backend
+      computeElapsed();
+      const timelapse = elapsedSeconds.value;
+      const response = await theatreService.completeSurgery(scheduleId, timelapse);
       console.log('Complete surgery response:', response);
 
       // Check for success - handle both camelCase and PascalCase response formats
       const isSuccess = response?.isSuccess ?? (response as any)?.IsSuccess ?? response?.success ?? (response as any)?.Success;
 
       if (isSuccess) {
-        computeElapsed();
-        const timelapse = elapsedSeconds.value;
         stopTimer();
         showAlert('success', 'Surgery completed successfully. Theater status reset to Available.', 'Success');
         emit('completed', timelapse);
