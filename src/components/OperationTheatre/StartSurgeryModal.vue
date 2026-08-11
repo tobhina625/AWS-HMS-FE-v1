@@ -24,10 +24,10 @@
   });
 
   const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'started'): void;
-  (e: 'completed', timelapse: number): void;
-}>();
+    (e: 'close'): void;
+    (e: 'started'): void;
+    (e: 'completed', timelapse: number): void;
+  }>();
 
   const { showAlert } = useAlert();
   const { confirm } = useConfirm();
