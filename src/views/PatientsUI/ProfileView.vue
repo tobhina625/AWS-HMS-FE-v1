@@ -28,6 +28,8 @@
   import PrescriptionService from '@/services/Prescription/Prescription.services';
   import PatientLabsService from '@/services/PatientLabs/PatientLabs.services';
   import type { IPatientLabs } from '@/services/PatientLabs/PatientLabs.interface';
+  import { useLabReport } from '@/composables/useLabReport';
+  import DownloadIcon from '@/assets/images/SVGs/DownloadIcon.svg';
   import type { IPatient } from '@/services/Patient/patient.interface';
   import useAlert from '@/plugins/alert/useAlert';
   import { useConfirm } from '@/composables/useConfirm';
@@ -46,6 +48,7 @@
   const diagnosisService = new PatientDiagnosisService();
   const prescriptionService = new PrescriptionService();
   const labService = new PatientLabsService();
+  const { downloadPdfReport } = useLabReport();
   const canDelete = computed(() => canDeleteFromModule('Patients'));
   const showHistoryModal = ref(false);
   const medicalHistoryKey = ref(0);
@@ -757,8 +760,20 @@
                 <p class="text-xs text-bodydark">Reported</p>
                 <p class="text-emphasis text-sm">{{ lab.reportTime ? new Date(lab.reportTime).toLocaleDateString() : '—' }}</p>
               </div>
+              <!-- Per-card action: download report for completed orders -->
+              <div v-if="lab.status === 'Completed' && lab.report?.length" class="col-span-2 md:col-span-4 flex justify-start pt-1">
+                <button
+                  @click="downloadPdfReport(lab)"
+                  title="Download Report"
+                  class="inline-flex items-center gap-2 text-sm font-medium text-success border border-success/40 rounded-lg px-4 py-2 hover:bg-success hover:text-white transition-colors"
+                >
+                  <DownloadIcon class="w-4 h-4" />
+                  Download Report
+                </button>
+              </div>
             </div>
-            <!-- Footer link -->
+
+            <!-- Footer link (below the list) -->
             <div class="flex justify-end pt-2">
               <button
                 @click="navigateToLabOrders"

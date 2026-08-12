@@ -1,5 +1,6 @@
-<script setup>
-  import { computed } from 'vue';
+<script setup lang="ts">
+  import { computed, useSlots } from 'vue';
+import type { PropType } from 'vue';
   import { useRoute } from 'vue-router';
   import { usePermissions } from '@/composables/usePermissions';
   import EditPageIcon from '@/assets/images/SVGs/Edit.svg';
@@ -11,16 +12,16 @@
   import BaseCheckbox from '@/components/Base/BaseCheckbox.vue';
 
   const props = defineProps({
-    data: {
-      type: Array,
+        data: {
+      type: Array as unknown as any[],
       required: true,
     },
     moduleName: {
       type: String,
       default: '',
     },
-    columns: {
-      type: Array,
+        columns: {
+      type: Array as unknown as any[] | null,
       default: null,
     },
     showEdit: {
@@ -47,16 +48,16 @@
       type: Boolean,
       default: false,
     },
-    selectedIds: {
-      type: Array,
+        selectedIds: {
+      type: Array as unknown as any[],
       default: () => [],
     },
     itemKey: {
       type: String,
       default: 'id',
     },
-    statusColorMap: {
-      type: Object,
+        statusColorMap: {
+      type: Object as PropType<Record<string, string> | null>,
       default: null,
     },
   });
@@ -66,7 +67,7 @@
   const route = useRoute();
   const { canEditModule, canViewModule, canDeleteFromModule } = usePermissions();
 
-  const deriveModuleName = (path) => {
+    const deriveModuleName = (path: string) => {
     const normalized = path.toLowerCase();
 
     if (normalized.includes('/patient-bills') || normalized.includes('/patient-bill')) return 'Patient Bills';
@@ -112,8 +113,9 @@
     return props.showDelete && (!resolvedModuleName.value || canDeleteFromModule(resolvedModuleName.value));
   });
 
+  const slots = useSlots();
   const hasActions = computed(() => {
-    return effectiveShowEdit.value || effectiveShowDelete.value || effectiveShowDetails.value || props.showHistory || props.showPermission;
+        return effectiveShowEdit.value || effectiveShowDelete.value || effectiveShowDetails.value || props.showHistory || props.showPermission || !!slots.actions;
   });
 
   const headers = computed(() => {
@@ -136,11 +138,11 @@
     return props.data.every((item) => props.selectedIds.includes(item[props.itemKey]));
   });
 
-  function formatHeader(key) {
+    function formatHeader(key: string) {
     return key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
   }
 
-  function formatCellValue(value) {
+    function formatCellValue(value: any) {
     if (value === null || value === undefined) return '-';
     if (typeof value === 'object' && value !== null) {
       // Handle nested objects (like department: { id, name })
@@ -149,19 +151,19 @@
     return value;
   }
 
-  function handleSelectAll(checked) {
+    function handleSelectAll(checked: boolean) {
     emit('selectAll', checked);
   }
 
-  function handleSelect(itemId) {
+    function handleSelect(itemId: any) {
     emit('select', itemId);
   }
 
-  function isSelected(item) {
+    function isSelected(item: any) {
     return props.selectedIds.includes(item[props.itemKey]);
   }
 
-  function getStatusBadgeClass(key, item) {
+    function getStatusBadgeClass(key: string, item: any) {
     if (!props.statusColorMap) return 'bg-meta-3/20 text-meta-3 border border-meta-3/40 dark:bg-meta-3/30 dark:border-meta-3/50';
     const value = formatCellValue(item[key]);
     return props.statusColorMap[value] || 'bg-meta-3/20 text-meta-3 border border-meta-3/40 dark:bg-meta-3/30 dark:border-meta-3/50';
@@ -208,50 +210,53 @@
             </td>
             <td v-if="hasActions" class="py-5 px-6 whitespace-nowrap">
               <div class="flex items-center justify-end gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity duration-300">
-                <div
-                  v-if="showHistory"
-                  @click="emit('history', item)"
-                  title="History"
-                  class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
-                >
-                  <HistoryPageIcon class="w-5 h-5 transition-colors duration-200" />
-                </div>
+                <slot v-if="$slots.actions" name="actions" :item="item" :index="index" />
+                <template v-else>
+                  <div
+                    v-if="showHistory"
+                    @click="emit('history', item)"
+                    title="History"
+                    class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
+                  >
+                    <HistoryPageIcon class="w-5 h-5 transition-colors duration-200" />
+                  </div>
 
-                <div
-                  v-if="effectiveShowDetails"
-                  @click="emit('detail', item)"
-                  title="Details"
-                  class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
-                >
-                  <DetailPageIcon class="w-5 h-5 transition-colors duration-200" />
-                </div>
+                  <div
+                    v-if="effectiveShowDetails"
+                    @click="emit('detail', item)"
+                    title="Details"
+                    class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
+                  >
+                    <DetailPageIcon class="w-5 h-5 transition-colors duration-200" />
+                  </div>
 
-                <div
-                  v-if="effectiveShowEdit"
-                  @click="emit('edit', item)"
-                  title="Edit"
-                  class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
-                >
-                  <EditPageIcon class="w-5 h-5 transition-colors duration-200" />
-                </div>
+                  <div
+                    v-if="effectiveShowEdit"
+                    @click="emit('edit', item)"
+                    title="Edit"
+                    class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
+                  >
+                    <EditPageIcon class="w-5 h-5 transition-colors duration-200" />
+                  </div>
 
-                <div
-                  v-if="effectiveShowDelete"
-                  @click="emit('delete', item)"
-                  title="Delete"
-                  class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
-                >
-                  <DeletePageIcon class="w-5 h-5 transition-colors duration-200" />
-                </div>
+                  <div
+                    v-if="effectiveShowDelete"
+                    @click="emit('delete', item)"
+                    title="Delete"
+                    class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
+                  >
+                    <DeletePageIcon class="w-5 h-5 transition-colors duration-200" />
+                  </div>
 
-                <div
-                  v-if="showPermission"
-                  @click="emit('permission', item)"
-                  title="Permissions"
-                  class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
-                >
-                  <PermissionIcon class="w-5 h-5 transition-colors duration-200" />
-                </div>
+                  <div
+                    v-if="showPermission"
+                    @click="emit('permission', item)"
+                    title="Permissions"
+                    class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
+                  >
+                    <PermissionIcon class="w-5 h-5 transition-colors duration-200" />
+                  </div>
+                </template>
               </div>
             </td>
           </tr>

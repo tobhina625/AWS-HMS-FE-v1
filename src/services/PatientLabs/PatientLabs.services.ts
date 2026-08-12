@@ -65,7 +65,7 @@ class PatientLabsService {
 
   async updateLabResult(data: IUpdateLabResult): Promise<IPatientLabs> {
     try {
-      const response = await this._genericService.put('api/patient-labs/result', data);
+      const response = await this._genericService.put(`api/patient-labs/${data.patientLabsId}/result`, data);
       return response as IPatientLabs;
     } catch (error) {
       console.error('Error updating lab result:', error);

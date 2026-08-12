@@ -11,11 +11,19 @@
   import PatientLabsService from '@/services/PatientLabs/PatientLabs.services';
   import type { IPatientLabs, IUpdateLabResult } from '@/services/PatientLabs/PatientLabs.interface';
   import useAlert from '@/plugins/alert/useAlert';
+  import { usePermissions } from '@/composables/usePermissions';
+  import { useLabReport } from '@/composables/useLabReport';
+  import DetailPageIcon from '@/assets/images/SVGs/View.svg';
+  import DownloadIcon from '@/assets/images/SVGs/DownloadIcon.svg';
 
   const { showAlert } = useAlert();
+  const { canViewModule } = usePermissions();
+  const { downloadPdfReport } = useLabReport();
   const labService = new PatientLabsService();
   const route = useRoute();
   const router = useRouter();
+
+  const canViewLabOrders = computed(() => canViewModule('Lab Orders'));
 
   // ── Patient-filter mode (coming from patient profile) ──────────────────────
   const patientIdFilter = computed(() => {
@@ -189,8 +197,10 @@
       showAlert('success', 'Lab result submitted successfully.', 'Success');
       showResultModal.value = false;
       await loadOrders();
-    } catch {
-      showAlert('error', 'Failed to submit lab result.', 'Error');
+    } catch (err: any) {
+      console.error('Submit lab result error:', err);
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message || err?.message || '';
+      showAlert('error', serverMsg ? `Failed to submit lab result: ${serverMsg}` : 'Failed to submit lab result.', 'Error');
     } finally {
       submitting.value = false;
     }
@@ -260,16 +270,29 @@
         <EmptyState v-if="isEmpty" title="No Lab Orders Found" description="No lab orders match the current filters. Try adjusting the search, status or date." icon="data" />
 
         <!-- Table -->
-        <DynamicTable
-          v-else
-          :data="paginatedOrders"
-          :columns="labOrderColumns"
-          :status-color-map="statusColorMap"
-          module-name="Lab Orders"
-          item-key="id"
-          @detail="openResultModal"
-          :show-details="true"
-        />
+        <DynamicTable v-else :data="paginatedOrders" :columns="labOrderColumns" :status-color-map="statusColorMap" module-name="Lab Orders" item-key="id">
+          <template #actions="{ item }">
+            <!-- Completed with results: download report -->
+            <div
+              v-if="item.status === 'Completed' && item.report?.length"
+              @click="downloadPdfReport(item)"
+              title="Download Report"
+              class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-success dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
+            >
+              <DownloadIcon class="w-5 h-5 transition-colors duration-200" />
+            </div>
+
+            <!-- Otherwise: open the result entry modal (subject to view permission) -->
+            <div
+              v-else-if="canViewLabOrders"
+              @click="openResultModal(item)"
+              title="Enter Result"
+              class="p-2 rounded-xl cursor-pointer text-gray-500 hover:bg-elevated hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 w-8 h-8 flex items-center justify-center"
+            >
+              <DetailPageIcon class="w-5 h-5 transition-colors duration-200" />
+            </div>
+          </template>
+        </DynamicTable>
       </template>
 
       <!-- Pagination -->
