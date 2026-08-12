@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { computed, useSlots } from 'vue';
-import type { PropType } from 'vue';
+  import type { PropType } from 'vue';
   import { useRoute } from 'vue-router';
   import { usePermissions } from '@/composables/usePermissions';
   import EditPageIcon from '@/assets/images/SVGs/Edit.svg';
@@ -12,7 +12,7 @@ import type { PropType } from 'vue';
   import BaseCheckbox from '@/components/Base/BaseCheckbox.vue';
 
   const props = defineProps({
-        data: {
+    data: {
       type: Array as unknown as any[],
       required: true,
     },
@@ -20,7 +20,7 @@ import type { PropType } from 'vue';
       type: String,
       default: '',
     },
-        columns: {
+    columns: {
       type: Array as unknown as any[] | null,
       default: null,
     },
@@ -48,7 +48,7 @@ import type { PropType } from 'vue';
       type: Boolean,
       default: false,
     },
-        selectedIds: {
+    selectedIds: {
       type: Array as unknown as any[],
       default: () => [],
     },
@@ -56,7 +56,7 @@ import type { PropType } from 'vue';
       type: String,
       default: 'id',
     },
-        statusColorMap: {
+    statusColorMap: {
       type: Object as PropType<Record<string, string> | null>,
       default: null,
     },
@@ -67,7 +67,7 @@ import type { PropType } from 'vue';
   const route = useRoute();
   const { canEditModule, canViewModule, canDeleteFromModule } = usePermissions();
 
-    const deriveModuleName = (path: string) => {
+  const deriveModuleName = (path: string) => {
     const normalized = path.toLowerCase();
 
     if (normalized.includes('/patient-bills') || normalized.includes('/patient-bill')) return 'Patient Bills';
@@ -115,7 +115,7 @@ import type { PropType } from 'vue';
 
   const slots = useSlots();
   const hasActions = computed(() => {
-        return effectiveShowEdit.value || effectiveShowDelete.value || effectiveShowDetails.value || props.showHistory || props.showPermission || !!slots.actions;
+    return effectiveShowEdit.value || effectiveShowDelete.value || effectiveShowDetails.value || props.showHistory || props.showPermission || !!slots.actions;
   });
 
   const headers = computed(() => {
@@ -138,11 +138,11 @@ import type { PropType } from 'vue';
     return props.data.every((item) => props.selectedIds.includes(item[props.itemKey]));
   });
 
-    function formatHeader(key: string) {
+  function formatHeader(key: string) {
     return key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
   }
 
-    function formatCellValue(value: any) {
+  function formatCellValue(value: any) {
     if (value === null || value === undefined) return '-';
     if (typeof value === 'object' && value !== null) {
       // Handle nested objects (like department: { id, name })
@@ -151,19 +151,19 @@ import type { PropType } from 'vue';
     return value;
   }
 
-    function handleSelectAll(checked: boolean) {
+  function handleSelectAll(checked: boolean) {
     emit('selectAll', checked);
   }
 
-    function handleSelect(itemId: any) {
+  function handleSelect(itemId: any) {
     emit('select', itemId);
   }
 
-    function isSelected(item: any) {
+  function isSelected(item: any) {
     return props.selectedIds.includes(item[props.itemKey]);
   }
 
-    function getStatusBadgeClass(key: string, item: any) {
+  function getStatusBadgeClass(key: string, item: any) {
     if (!props.statusColorMap) return 'bg-meta-3/20 text-meta-3 border border-meta-3/40 dark:bg-meta-3/30 dark:border-meta-3/50';
     const value = formatCellValue(item[key]);
     return props.statusColorMap[value] || 'bg-meta-3/20 text-meta-3 border border-meta-3/40 dark:bg-meta-3/30 dark:border-meta-3/50';
