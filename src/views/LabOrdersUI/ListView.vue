@@ -22,9 +22,7 @@
     const val = route.query.patientId;
     return val ? Number(val) : null;
   });
-  const patientNameFilter = computed(() =>
-    orders.value.find((o) => o.patientId === patientIdFilter.value)?.patientName ?? null,
-  );
+  const patientNameFilter = computed(() => orders.value.find((o) => o.patientId === patientIdFilter.value)?.patientName ?? null);
 
   // ── Core data ───────────────────────────────────────────────────────────────
   const orders = ref<IPatientLabs[]>([]);
@@ -62,23 +60,27 @@
   };
 
   // ── Columns shown in DynamicTable ────────────────────────────────────────────
-  const labOrderColumns = patientIdFilter.value
-    ? ['labTestName', 'status', 'details', 'reportTime', 'createdAt']
-    : ['patientName', 'labTestName', 'status', 'details', 'branchName', 'createdAt'];
+  const labOrderColumns = patientIdFilter.value ? ['labTestName', 'status', 'details', 'reportTime', 'createdAt'] : ['patientName', 'labTestName', 'status', 'details', 'branchName', 'createdAt'];
 
   // ── Date helpers ─────────────────────────────────────────────────────────────
-  const startOfDay = (d: Date) => { d.setHours(0, 0, 0, 0); return d; };
+  const startOfDay = (d: Date) => {
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
 
   const dateRangeForFilter = computed<{ from: Date | null; to: Date | null }>(() => {
     if (!dateFilter.value) return { from: null, to: null };
     const t = startOfDay(new Date());
     if (dateFilter.value === 'today') {
-      const to = new Date(t); to.setHours(23, 59, 59, 999);
+      const to = new Date(t);
+      to.setHours(23, 59, 59, 999);
       return { from: t, to };
     }
     if (dateFilter.value === 'yesterday') {
-      const from = new Date(t); from.setDate(from.getDate() - 1);
-      const to = new Date(from); to.setHours(23, 59, 59, 999);
+      const from = new Date(t);
+      from.setDate(from.getDate() - 1);
+      const to = new Date(from);
+      to.setHours(23, 59, 59, 999);
       return { from, to };
     }
     return { from: null, to: null };
@@ -125,7 +127,9 @@
     currentPage.value = 0;
   };
 
-  const handlePageChange = (page: number) => { currentPage.value = page; };
+  const handlePageChange = (page: number) => {
+    currentPage.value = page;
+  };
 
   // ── Data loading ─────────────────────────────────────────────────────────────
   const toArray = (raw: any): IPatientLabs[] => {
@@ -197,23 +201,14 @@
 
 <template>
   <DefaultLayout>
-    <ListViewTemplate
-      :title="patientIdFilter ? 'Patient Lab Orders' : 'Lab Orders'"
-      :breadcrumb-title="patientIdFilter ? '🧪 Lab Orders – Patient View' : 'Lab Orders'"
-      :loading="loading"
-    >
+    <ListViewTemplate :title="patientIdFilter ? 'Patient Lab Orders' : 'Lab Orders'" :breadcrumb-title="patientIdFilter ? '🧪 Lab Orders – Patient View' : 'Lab Orders'" :loading="loading">
       <!-- Subtitle -->
       <template #subtitle>
         <span v-if="patientIdFilter">
           All lab orders for
-          <strong>{{ patientNameFilter || ('Patient #' + patientIdFilter) }}</strong>
+          <strong>{{ patientNameFilter || 'Patient #' + patientIdFilter }}</strong>
           — old and new.
-          <button
-            @click="router.push('/patients/' + patientIdFilter)"
-            class="ml-2 text-primary underline hover:no-underline text-sm font-medium"
-          >
-            ← Back to Patient Profile
-          </button>
+          <button @click="router.push('/patients/' + patientIdFilter)" class="ml-2 text-primary underline hover:no-underline text-sm font-medium">← Back to Patient Profile</button>
         </span>
         <span v-else>Manage, filter and enter results for all patient lab orders.</span>
       </template>
@@ -252,24 +247,17 @@
       <!-- Table slot -->
       <template #table>
         <!-- Patient-filter banner -->
-        <div
-          v-if="patientIdFilter"
-          class="flex items-center gap-3 bg-primary/10 border-b border-primary/20 px-6 py-3"
-        >
+        <div v-if="patientIdFilter" class="flex items-center gap-3 bg-primary/10 border-b border-primary/20 px-6 py-3">
           <span class="text-lg">🧪</span>
           <p class="text-sm font-medium text-primary flex-1">
-            Filtered to: <strong>{{ patientNameFilter || ('Patient #' + patientIdFilter) }}</strong>
+            Filtered to:
+            <strong>{{ patientNameFilter || 'Patient #' + patientIdFilter }}</strong>
             &nbsp;·&nbsp; {{ totalElements }} order(s) found
           </p>
         </div>
 
         <!-- Empty state -->
-        <EmptyState
-          v-if="isEmpty"
-          title="No Lab Orders Found"
-          description="No lab orders match the current filters. Try adjusting the search, status or date."
-          icon="data"
-        />
+        <EmptyState v-if="isEmpty" title="No Lab Orders Found" description="No lab orders match the current filters. Try adjusting the search, status or date." icon="data" />
 
         <!-- Table -->
         <DynamicTable
@@ -339,12 +327,7 @@
             <div>
               <div class="flex items-center justify-between mb-3">
                 <label class="text-sm font-semibold text-emphasis">Test Entries</label>
-                <button
-                  @click="addTestEntry"
-                  class="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 font-medium transition-colors"
-                >
-                  + Add Entry
-                </button>
+                <button @click="addTestEntry" class="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 font-medium transition-colors">+ Add Entry</button>
               </div>
 
               <div v-if="!resultForm.testEntries?.length" class="text-center py-8 bg-elevated rounded-lg">
@@ -352,11 +335,7 @@
               </div>
 
               <div class="space-y-3">
-                <div
-                  v-for="(entry, idx) in resultForm.testEntries"
-                  :key="idx"
-                  class="grid grid-cols-12 gap-3 items-center p-3 bg-elevated rounded-lg"
-                >
+                <div v-for="(entry, idx) in resultForm.testEntries" :key="idx" class="grid grid-cols-12 gap-3 items-center p-3 bg-elevated rounded-lg">
                   <div class="col-span-4">
                     <input
                       v-model="entry.entity"
@@ -388,9 +367,7 @@
                       placeholder="Result"
                       :class="[
                         'w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary bg-white dark:bg-boxdark text-emphasis',
-                        entry.recordedValue < entry.normalMinValue || entry.recordedValue > entry.normalMaxValue
-                          ? 'border-danger/60'
-                          : 'border-stroke dark:border-strokedark',
+                        entry.recordedValue < entry.normalMinValue || entry.recordedValue > entry.normalMaxValue ? 'border-danger/60' : 'border-stroke dark:border-strokedark',
                       ]"
                     />
                   </div>
