@@ -252,6 +252,10 @@
     router.push({ path: '/patient-allergies', query: { patientId: patientId.value } });
   };
 
+  const navigateToLabOrders = () => {
+    router.push({ path: '/lab-orders', query: { patientId: patientId.value } });
+  };
+
   onMounted(async () => {
     await loadCnicConfig();
     await loadPatientDetails();
@@ -710,12 +714,30 @@
 
         <!-- Lab Tests Tab -->
         <div v-if="currentTab === 'labTests'" class="lg:col-span-3">
+          <!-- Action bar -->
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-sm text-bodydark">Showing recent lab tests ordered for this patient.</p>
+            <button
+              @click="navigateToLabOrders"
+              class="inline-flex items-center gap-2 text-sm font-medium text-primary border border-primary/40 rounded-lg px-4 py-2 hover:bg-primary hover:text-white transition-colors"
+            >
+              🧪 View All Lab Orders
+              <span class="text-base">→</span>
+            </button>
+          </div>
           <div v-if="clinicalLoading" class="space-y-3">
             <div v-for="i in 3" :key="i" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 animate-pulse h-12"></div>
           </div>
           <div v-else-if="!patientLabs.length" class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-12 text-center">
             <div class="text-4xl mb-3">🧪</div>
-            <p class="text-bodydark">No lab tests recorded for this patient.</p>
+            <p class="text-bodydark mb-4">No lab tests recorded for this patient.</p>
+            <button
+              @click="navigateToLabOrders"
+              class="inline-flex items-center gap-2 text-sm font-medium text-primary border border-primary/40 rounded-lg px-4 py-2 hover:bg-primary hover:text-white transition-colors"
+            >
+              🧪 Go to Lab Orders
+              <span>→</span>
+            </button>
           </div>
           <div v-else class="space-y-3">
             <div v-for="lab in patientLabs" :key="lab.id" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -735,6 +757,15 @@
                 <p class="text-xs text-bodydark">Reported</p>
                 <p class="text-emphasis text-sm">{{ lab.reportTime ? new Date(lab.reportTime).toLocaleDateString() : '—' }}</p>
               </div>
+            </div>
+            <!-- Footer link -->
+            <div class="flex justify-end pt-2">
+              <button
+                @click="navigateToLabOrders"
+                class="inline-flex items-center gap-2 text-sm font-medium text-primary border border-primary/40 rounded-lg px-4 py-2 hover:bg-primary hover:text-white transition-colors"
+              >
+                View Full Lab Order History →
+              </button>
             </div>
           </div>
         </div>

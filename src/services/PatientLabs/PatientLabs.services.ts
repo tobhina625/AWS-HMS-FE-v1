@@ -10,8 +10,10 @@ class PatientLabsService {
 
   async getAll(status: string = '', branchId: number = 0, page: number = 0, size: number = 10): Promise<any> {
     try {
+      // g-service.makeRequest already resolves with response.data (the API body),
+      // so we return it directly — no extra .data unwrap needed.
       const response = await this._genericService.get(`api/patient-labs?status=${status}&branchId=${branchId}&page=${page}&size=${size}`);
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error fetching lab orders:', error);
       throw error;
@@ -20,8 +22,9 @@ class PatientLabsService {
 
   async getByPatientId(patientId: number): Promise<IPatientLabs[]> {
     try {
+      // g-service already resolves with response.data — return directly.
       const response = await this._genericService.get(`api/patient-labs/patient/${patientId}`);
-      return response.data;
+      return response as IPatientLabs[];
     } catch (error) {
       console.error('Error fetching patient lab orders:', error);
       throw error;
@@ -43,7 +46,7 @@ class PatientLabsService {
   async getById(id: number): Promise<IPatientLabs> {
     try {
       const response = await this._genericService.get(`api/patient-labs/${id}`);
-      return response.data;
+      return response as IPatientLabs;
     } catch (error) {
       console.error('Error fetching lab order details:', error);
       throw error;
@@ -53,7 +56,7 @@ class PatientLabsService {
   async createLabOrder(data: ICreateLabOrder): Promise<IPatientLabs> {
     try {
       const response = await this._genericService.post('api/patient-labs/order', data);
-      return response.data;
+      return response as IPatientLabs;
     } catch (error) {
       console.error('Error creating lab order:', error);
       throw error;
@@ -63,7 +66,7 @@ class PatientLabsService {
   async updateLabResult(data: IUpdateLabResult): Promise<IPatientLabs> {
     try {
       const response = await this._genericService.put('api/patient-labs/result', data);
-      return response.data;
+      return response as IPatientLabs;
     } catch (error) {
       console.error('Error updating lab result:', error);
       throw error;

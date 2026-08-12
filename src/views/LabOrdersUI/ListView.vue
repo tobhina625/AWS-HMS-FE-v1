@@ -1,20 +1,47 @@
 <script setup lang="ts">
   import { ref, onMounted, computed } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
   import DefaultLayout from '@/layouts/DefaultLayout.vue';
-  import BreadcrumbDefault from '@/components/Breadcrumbs/BreadcrumbDefault.vue';
+  import ListViewTemplate from '@/components/Templates/ListViewTemplate.vue';
+  import SearchWithViewToggle from '@/components/UI/SearchWithViewToggle.vue';
+  import DynamicTable from '@/components/UI/DynamicTable.vue';
+  import DynamicPagination from '@/components/UI/DynamicPagination.vue';
+  import EmptyState from '@/components/UI/EmptyState.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import PatientLabsService from '@/services/PatientLabs/PatientLabs.services';
-  // import type { IPatientLabs, IUpdateLabResult, ILabTestEntry } from '@/services/PatientLabs/PatientLabs.interface';
   import type { IPatientLabs, IUpdateLabResult } from '@/services/PatientLabs/PatientLabs.interface';
   import useAlert from '@/plugins/alert/useAlert';
 
   const { showAlert } = useAlert();
   const labService = new PatientLabsService();
+  const route = useRoute();
+  const router = useRouter();
 
+  // ── Patient-filter mode (coming from patient profile) ──────────────────────
+  const patientIdFilter = computed(() => {
+    const val = route.query.patientId;
+    return val ? Number(val) : null;
+  });
+  const patientNameFilter = computed(() =>
+    orders.value.find((o) => o.patientId === patientIdFilter.value)?.patientName ?? null,
+  );
+
+  // ── Core data ───────────────────────────────────────────────────────────────
   const orders = ref<IPatientLabs[]>([]);
   const loading = ref(true);
+
+  // ── Filters ─────────────────────────────────────────────────────────────────
   const filterStatus = ref('');
   const searchQuery = ref('');
+
+  // Date preset aligned with SearchWithViewToggle options
+  const dateFilter = ref<'today' | 'yesterday' | ''>('');
+
+  // ── Pagination ───────────────────────────────────────────────────────────────
+  const PAGE_SIZE = 10;
+  const currentPage = ref(0);
+
+  // ── Modal state ─────────────────────────────────────────────────────────────
   const selectedOrder = ref<IPatientLabs | null>(null);
   const showResultModal = ref(false);
   const submitting = ref(false);
@@ -26,33 +53,108 @@
     testEntries: [],
   });
 
-  const statusColors: Record<string, string> = {
-    Ordered: 'bg-primary/10 text-primary border-primary/20',
-    InProgress: 'bg-warning/10 text-warning border-warning/20',
-    Completed: 'bg-success/10 text-success border-success/20',
-    Cancelled: 'bg-danger/10 text-danger border-danger/20',
+  // ── Status colour map for DynamicTable ───────────────────────────────────────
+  const statusColorMap: Record<string, string> = {
+    Ordered: 'bg-primary/10 text-primary border border-primary/20',
+    InProgress: 'bg-warning/10 text-warning border border-warning/20',
+    Completed: 'bg-success/10 text-success border border-success/20',
+    Cancelled: 'bg-danger/10 text-danger border border-danger/20',
   };
 
+  // ── Columns shown in DynamicTable ────────────────────────────────────────────
+  const labOrderColumns = patientIdFilter.value
+    ? ['labTestName', 'status', 'details', 'reportTime', 'createdAt']
+    : ['patientName', 'labTestName', 'status', 'details', 'branchName', 'createdAt'];
+
+  // ── Date helpers ─────────────────────────────────────────────────────────────
+  const startOfDay = (d: Date) => { d.setHours(0, 0, 0, 0); return d; };
+
+  const dateRangeForFilter = computed<{ from: Date | null; to: Date | null }>(() => {
+    if (!dateFilter.value) return { from: null, to: null };
+    const t = startOfDay(new Date());
+    if (dateFilter.value === 'today') {
+      const to = new Date(t); to.setHours(23, 59, 59, 999);
+      return { from: t, to };
+    }
+    if (dateFilter.value === 'yesterday') {
+      const from = new Date(t); from.setDate(from.getDate() - 1);
+      const to = new Date(from); to.setHours(23, 59, 59, 999);
+      return { from, to };
+    }
+    return { from: null, to: null };
+  });
+
+  // ── Computed: client-side filtered list ─────────────────────────────────────
   const filteredOrders = computed(() => {
+    const { from, to } = dateRangeForFilter.value;
     return orders.value.filter((o) => {
-      const matchesStatus = !filterStatus.value || o.status === filterStatus.value;
-      const matchesSearch = !searchQuery.value || o.patientName?.toLowerCase().includes(searchQuery.value.toLowerCase()) || o.labTestName?.toLowerCase().includes(searchQuery.value.toLowerCase());
-      return matchesStatus && matchesSearch;
+      if (filterStatus.value && o.status !== filterStatus.value) return false;
+      if (searchQuery.value) {
+        const q = searchQuery.value.toLowerCase();
+        if (!(o.patientName?.toLowerCase().includes(q) || o.labTestName?.toLowerCase().includes(q))) return false;
+      }
+      if (from || to) {
+        const d = o.createdAt ? new Date(o.createdAt) : null;
+        if (!d) return false;
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+      }
+      return true;
     });
   });
+
+  // ── Computed: paginated slice for the current page ───────────────────────────
+  const paginatedOrders = computed(() => {
+    const start = currentPage.value * PAGE_SIZE;
+    return filteredOrders.value.slice(start, start + PAGE_SIZE);
+  });
+
+  const totalPages = computed(() => Math.ceil(filteredOrders.value.length / PAGE_SIZE));
+  const totalElements = computed(() => filteredOrders.value.length);
+  const isEmpty = computed(() => !loading.value && filteredOrders.value.length === 0);
+  const hasData = computed(() => filteredOrders.value.length > 0);
+
+  // ── Search handler ───────────────────────────────────────────────────────────
+  const handleSearch = (term: string) => {
+    searchQuery.value = term;
+    currentPage.value = 0;
+  };
+
+  const handleDateFilter = (val: 'today' | 'yesterday' | '') => {
+    dateFilter.value = val;
+    currentPage.value = 0;
+  };
+
+  const handlePageChange = (page: number) => { currentPage.value = page; };
+
+  // ── Data loading ─────────────────────────────────────────────────────────────
+  const toArray = (raw: any): IPatientLabs[] => {
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.content)) return raw.content;
+    if (Array.isArray(raw?.items)) return raw.items;
+    if (Array.isArray(raw?.data)) return raw.data;
+    return [];
+  };
 
   const loadOrders = async () => {
     loading.value = true;
     try {
-      const data = await labService.getAll(filterStatus.value, 0, 0, 200);
-      orders.value = Array.isArray(data) ? data : data?.items || [];
-    } catch {
+      if (patientIdFilter.value) {
+        const raw = await labService.getByPatientId(patientIdFilter.value);
+        orders.value = toArray(raw);
+      } else {
+        const raw = await labService.getAll('', 0, 0, 200);
+        orders.value = toArray(raw);
+      }
+    } catch (err) {
+      console.error('Lab orders fetch error:', err);
       showAlert('error', 'Failed to load lab orders.', 'Error');
     } finally {
       loading.value = false;
     }
   };
 
+  // ── Result modal ─────────────────────────────────────────────────────────────
   const openResultModal = (order: IPatientLabs) => {
     selectedOrder.value = order;
     resultForm.value = {
@@ -90,121 +192,113 @@
     }
   };
 
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return 'N/A';
-    return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  };
-
   onMounted(loadOrders);
 </script>
 
 <template>
   <DefaultLayout>
-    <BreadcrumbDefault pageTitle="Lab Orders" />
+    <ListViewTemplate
+      :title="patientIdFilter ? 'Patient Lab Orders' : 'Lab Orders'"
+      :breadcrumb-title="patientIdFilter ? '🧪 Lab Orders – Patient View' : 'Lab Orders'"
+      :loading="loading"
+    >
+      <!-- Subtitle -->
+      <template #subtitle>
+        <span v-if="patientIdFilter">
+          All lab orders for
+          <strong>{{ patientNameFilter || ('Patient #' + patientIdFilter) }}</strong>
+          — old and new.
+          <button
+            @click="router.push('/patients/' + patientIdFilter)"
+            class="ml-2 text-primary underline hover:no-underline text-sm font-medium"
+          >
+            ← Back to Patient Profile
+          </button>
+        </span>
+        <span v-else>Manage, filter and enter results for all patient lab orders.</span>
+      </template>
 
-    <div class="mt-6 space-y-6">
-      <!-- Header & Filters -->
-      <div class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-5">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div class="flex-1">
-            <h2 class="text-xl font-bold text-emphasis">Lab Order Worklist</h2>
-            <p class="text-sm text-bodydark dark:text-bodydark1 mt-1">{{ filteredOrders.length }} order(s) found</p>
-          </div>
-          <div class="flex flex-wrap gap-3">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search patient or test..."
-              class="border border-stroke dark:border-strokedark rounded-lg px-4 py-2 text-sm bg-transparent text-emphasis focus:outline-none focus:border-primary w-56"
-            />
-            <select
-              v-model="filterStatus"
-              @change="loadOrders"
-              class="border border-stroke dark:border-strokedark rounded-lg px-4 py-2 text-sm bg-transparent text-emphasis focus:outline-none focus:border-primary"
-            >
-              <option value="">All Status</option>
-              <option value="Ordered">Ordered</option>
-              <option value="InProgress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-            <BaseButton variant="outline" @click="loadOrders" :loading="loading">Refresh</BaseButton>
-          </div>
+      <!-- Search / date filter bar -->
+      <template #search>
+        <div class="flex w-full items-center gap-4 flex-wrap">
+          <SearchWithViewToggle
+            :model-value="'table'"
+            :show-date-filter="true"
+            :date-filter="dateFilter"
+            placeholder="Search patient or test name..."
+            :show-add="false"
+            class="flex-1"
+            @search="handleSearch"
+            @update:date-filter="handleDateFilter"
+          />
+
+          <!-- Status filter -->
+          <select
+            v-model="filterStatus"
+            @change="currentPage = 0"
+            class="border border-stroke dark:border-strokedark rounded-lg px-4 py-2 text-sm bg-transparent text-emphasis focus:outline-none focus:border-primary"
+          >
+            <option value="">All Status</option>
+            <option value="Ordered">Ordered</option>
+            <option value="InProgress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+
+          <BaseButton variant="outline" size="sm" @click="loadOrders" :loading="loading">Refresh</BaseButton>
         </div>
-      </div>
+      </template>
 
-      <!-- Loading skeleton -->
-      <div v-if="loading" class="space-y-3">
-        <div v-for="i in 5" :key="i" class="bg-surface rounded-xl border border-stroke dark:border-strokedark p-4 animate-pulse flex gap-4">
-          <div class="w-12 h-12 bg-elevated rounded-full"></div>
-          <div class="flex-1 space-y-2">
-            <div class="h-4 bg-elevated rounded w-1/3"></div>
-            <div class="h-3 bg-elevated rounded w-1/2"></div>
-          </div>
-          <div class="w-20 h-8 bg-elevated rounded-full"></div>
+      <!-- Table slot -->
+      <template #table>
+        <!-- Patient-filter banner -->
+        <div
+          v-if="patientIdFilter"
+          class="flex items-center gap-3 bg-primary/10 border-b border-primary/20 px-6 py-3"
+        >
+          <span class="text-lg">🧪</span>
+          <p class="text-sm font-medium text-primary flex-1">
+            Filtered to: <strong>{{ patientNameFilter || ('Patient #' + patientIdFilter) }}</strong>
+            &nbsp;·&nbsp; {{ totalElements }} order(s) found
+          </p>
         </div>
-      </div>
 
-      <!-- Empty state -->
-      <div v-else-if="!filteredOrders.length" class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-16 text-center">
-        <div class="text-6xl mb-4">🧪</div>
-        <h3 class="text-lg font-semibold text-emphasis mb-2">No Lab Orders Found</h3>
-        <p class="text-bodydark dark:text-bodydark1">No lab orders match the current filters.</p>
-      </div>
+        <!-- Empty state -->
+        <EmptyState
+          v-if="isEmpty"
+          title="No Lab Orders Found"
+          description="No lab orders match the current filters. Try adjusting the search, status or date."
+          icon="data"
+        />
 
-      <!-- Orders Table -->
-      <div v-else class="bg-surface rounded-2xl border border-stroke dark:border-strokedark overflow-hidden">
-        <table class="w-full text-sm">
-          <thead class="bg-elevated border-b border-stroke dark:border-strokedark">
-            <tr>
-              <th class="px-5 py-4 text-left font-semibold text-emphasis">#</th>
-              <th class="px-5 py-4 text-left font-semibold text-emphasis">Patient</th>
-              <th class="px-5 py-4 text-left font-semibold text-emphasis">Test</th>
-              <th class="px-5 py-4 text-left font-semibold text-emphasis">Ordered</th>
-              <th class="px-5 py-4 text-left font-semibold text-emphasis">Status</th>
-              <th class="px-5 py-4 text-left font-semibold text-emphasis">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-stroke dark:divide-strokedark">
-            <tr v-for="(order, idx) in filteredOrders" :key="order.id" class="hover:bg-elevated/50 transition-colors">
-              <td class="px-5 py-4 text-bodydark">{{ idx + 1 }}</td>
-              <td class="px-5 py-4">
-                <div class="font-medium text-emphasis">{{ order.patientName || 'Patient #' + order.patientId }}</div>
-              </td>
-              <td class="px-5 py-4">
-                <div class="font-medium text-emphasis">{{ order.labTestName || 'Lab Test #' + order.labTestId }}</div>
-                <div v-if="order.details" class="text-xs text-bodydark mt-0.5 truncate max-w-xs">{{ order.details }}</div>
-              </td>
-              <td class="px-5 py-4 text-bodydark">{{ formatDate(order.createdAt) }}</td>
-              <td class="px-5 py-4">
-                <span :class="['px-3 py-1 rounded-full text-xs font-medium border', statusColors[order.status] || 'bg-elevated text-bodydark']">
-                  {{ order.status }}
-                </span>
-              </td>
-              <td class="px-5 py-4">
-                <button
-                  v-if="order.status === 'Ordered' || order.status === 'InProgress'"
-                  @click="openResultModal(order)"
-                  class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors"
-                >
-                  Enter Results
-                </button>
-                <button
-                  v-else-if="order.status === 'Completed'"
-                  @click="openResultModal(order)"
-                  class="px-3 py-1.5 rounded-lg bg-elevated text-bodydark text-xs font-medium hover:bg-elevated/80 transition-colors"
-                >
-                  View Results
-                </button>
-                <span v-else class="text-bodydark text-xs">—</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <!-- Table -->
+        <DynamicTable
+          v-else
+          :data="paginatedOrders"
+          :columns="labOrderColumns"
+          :status-color-map="statusColorMap"
+          module-name="Lab Orders"
+          item-key="id"
+          @detail="openResultModal"
+          :show-details="true"
+        />
+      </template>
 
-    <!-- Result Entry Modal -->
+      <!-- Pagination -->
+      <template #pagination>
+        <DynamicPagination
+          v-if="hasData"
+          :current-page="currentPage"
+          :total-pages="totalPages"
+          :total-elements="totalElements"
+          :items-per-page="PAGE_SIZE"
+          :start-index="currentPage"
+          @change-page="handlePageChange"
+        />
+      </template>
+    </ListViewTemplate>
+
+    <!-- ── Result Entry / View Modal ──────────────────────────────────────── -->
     <Teleport to="body">
       <div v-if="showResultModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showResultModal = false"></div>
@@ -245,7 +339,12 @@
             <div>
               <div class="flex items-center justify-between mb-3">
                 <label class="text-sm font-semibold text-emphasis">Test Entries</label>
-                <button @click="addTestEntry" class="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 font-medium transition-colors">+ Add Entry</button>
+                <button
+                  @click="addTestEntry"
+                  class="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 font-medium transition-colors"
+                >
+                  + Add Entry
+                </button>
               </div>
 
               <div v-if="!resultForm.testEntries?.length" class="text-center py-8 bg-elevated rounded-lg">
@@ -253,7 +352,11 @@
               </div>
 
               <div class="space-y-3">
-                <div v-for="(entry, idx) in resultForm.testEntries" :key="idx" class="grid grid-cols-12 gap-3 items-center p-3 bg-elevated rounded-lg">
+                <div
+                  v-for="(entry, idx) in resultForm.testEntries"
+                  :key="idx"
+                  class="grid grid-cols-12 gap-3 items-center p-3 bg-elevated rounded-lg"
+                >
                   <div class="col-span-4">
                     <input
                       v-model="entry.entity"
@@ -285,7 +388,9 @@
                       placeholder="Result"
                       :class="[
                         'w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary bg-white dark:bg-boxdark text-emphasis',
-                        entry.recordedValue < entry.normalMinValue || entry.recordedValue > entry.normalMaxValue ? 'border-danger/60' : 'border-stroke dark:border-strokedark',
+                        entry.recordedValue < entry.normalMinValue || entry.recordedValue > entry.normalMaxValue
+                          ? 'border-danger/60'
+                          : 'border-stroke dark:border-strokedark',
                       ]"
                     />
                   </div>
@@ -294,6 +399,7 @@
                   </div>
                 </div>
               </div>
+
               <div class="flex gap-2 mt-2 text-xs text-bodydark">
                 <span class="font-medium">Columns:</span>
                 <span>Parameter | Min | Max | Result</span>
