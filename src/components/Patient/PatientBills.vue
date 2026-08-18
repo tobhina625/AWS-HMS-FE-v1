@@ -228,7 +228,11 @@
                 </template>
                 <span v-else class="px-2 py-1 text-xs font-semibold rounded-full bg-warning/10 text-warning dark:bg-warning/20 dark:text-warning-light">Pending</span>
               </div>
-              <p v-if="bill.reason ?? bill.Reason" class="text-sm text-bodydark dark:text-bodydark1">{{ bill.reason ?? bill.Reason }}</p>
+              <p v-if="bill.reason ?? bill.Reason" class="text-sm text-bodydark dark:text-bodydark1">
+                <span v-for="(line, i) in String(bill.reason ?? bill.Reason).split('|')" :key="i" class="block">
+                  {{ line.trim() }}
+                </span>
+              </p>
             </div>
             <div class="flex items-center gap-4">
               <span class="text-lg font-bold text-emphasis">{{ formatCurrency(bill.totalAmount ?? bill.TotalAmount) }}</span>

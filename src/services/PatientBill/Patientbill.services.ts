@@ -73,6 +73,21 @@ class PatientBillsService {
     }
   }
 
+  /**
+   * Appends a charge to the single consolidated admission bill (creates it on
+   * demand). All charges for an admission accumulate on ONE bill instead of
+   * creating separate bills per charge.
+   */
+  async addChargeToAdmissionBill(admissionId: number, data: { reason: string; totalAmount: number }): Promise<any> {
+    try {
+      const response = await this._genericService.post(`api/patient-bills/by-admission/${admissionId}/add-charge`, data);
+      return response;
+    } catch (error) {
+      console.error('Error adding charge to admission bill:', error);
+      throw error;
+    }
+  }
+
   // Update existing patient bill
   async updatePatientBill(data: IPatientBills): Promise<any> {
     try {

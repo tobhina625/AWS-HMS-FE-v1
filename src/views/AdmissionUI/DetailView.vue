@@ -8,6 +8,9 @@
   import PatientBillsService from '@/services/PatientBill/Patientbill.services';
   import TreatmentServices from '@/services/Treatment/Treatment.services';
   import PatientSurgeryServices from '@/services/PatientSurgery/PatientSurgery.services';
+  import WardServices from '@/services/Ward/ward.services';
+  import SurgeryService from '@/services/Surgery/Surgery.services';
+  import OperationTheatreService from '@/services/OperationTheatre/OperationTheatre.services';
   import useAlert from '@/plugins/alert/useAlert';
   import { STATUS_OPTIONS } from '@/constants/statusOptions';
 
@@ -28,6 +31,9 @@
   const patientBillService = new PatientBillsService();
   const treatmentService = new TreatmentServices();
   const surgeryService = new PatientSurgeryServices();
+  const wardService = new WardServices();
+  const surgeryCatalogService = new SurgeryService();
+  const operationTheatreService = new OperationTheatreService();
 
   const loading = ref(true);
   const currentTab = ref('overview');
@@ -43,6 +49,43 @@
   const newBill = ref({
     reason: '',
     totalAmount: 0,
+  });
+
+  // Add Treatment form state
+  const showAddTreatmentForm = ref(false);
+  const newTreatment = ref({
+    wardId: 0,
+    bedNumber: 0,
+    temperature: 0,
+    temperatureUnit: 'C',
+    pulseRate: 0,
+    respirationRate: 0,
+    systolic: 0,
+    diastolic: 0,
+  });
+  const treatmentWards = ref<{ id: number; name: string }[]>([]);
+  const treatmentWardsLoading = ref(false);
+  const addingTreatment = ref(false);
+
+  // Add Surgery form state
+  const showAddSurgeryForm = ref(false);
+  const newSurgery = ref({
+    surgeryId: 0,
+    operationTheatreId: 0,
+    surgeryTime: '',
+    endTime: '',
+    notes: '',
+  });
+  const surgeryOptions = ref<{ id: number; name: string }[]>([]);
+  const theatreOptions = ref<{ id: number; name: string }[]>([]);
+  const addingSurgery = ref(false);
+
+  const calculatedSurgeryDuration = computed(() => {
+    if (!newSurgery.value.surgeryTime || !newSurgery.value.endTime) return 0;
+    const start = new Date(newSurgery.value.surgeryTime);
+    const end = new Date(newSurgery.value.endTime);
+    if (end <= start) return 0;
+    return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
   });
 
   const statusOptions = computed(() => STATUS_OPTIONS.ADMISSION || []);
@@ -181,18 +224,17 @@
     billsLoading.value = true;
     try {
       const response: any = await patientBillService.getPatientBillsByAdmissionId(Number(admissionId.value), 0, 100);
-      if (response?.Data) {
-        bills.value = response.Data.map((bill: any) => ({
-          id: bill.Id,
-          billType: bill.BillType,
-          reason: bill.Reason,
-          entityId: bill.EntityId,
-          totalAmount: bill.TotalAmount,
-          isPaid: bill.IsPaid,
-          paidAmount: bill.PaidAmount,
-          remainingBalance: bill.RemainingBalance,
-        }));
-      }
+      const content = response?.content || response?.Content || response?.data || response?.Data || [];
+      bills.value = (Array.isArray(content) ? content : []).map((bill: any) => ({
+        id: bill.id,
+        billType: bill.billType,
+        reason: bill.reason,
+        entityId: bill.entityId,
+        totalAmount: bill.totalAmount,
+        isPaid: bill.isPaid,
+        paidAmount: bill.paidAmount,
+        remainingBalance: bill.remainingBalance,
+      }));
     } catch (error) {
       console.error('Error loading bills:', error);
     } finally {
@@ -204,20 +246,19 @@
     treatmentsLoading.value = true;
     try {
       const response: any = await treatmentService.getTreatmentsByAdmissionId(Number(admissionId.value), 0, 100);
-      if (response?.Data) {
-        treatments.value = response.Data.map((treatment: any) => ({
-          id: treatment.Id,
-          bedNumber: treatment.BedNumber,
-          wardId: treatment.WardId,
-          ward: treatment.Ward
-            ? {
-                id: treatment.Ward.Id,
-                name: treatment.Ward.Name,
-              }
-            : null,
-          admissionId: treatment.AdmissionId,
-        }));
-      }
+      const content = response?.content || response?.Content || response?.data || response?.Data || [];
+      treatments.value = (Array.isArray(content) ? content : []).map((treatment: any) => ({
+        id: treatment.id,
+        bedNumber: treatment.bedNumber,
+        wardId: treatment.wardId,
+        ward: treatment.ward
+          ? {
+              id: treatment.ward.id,
+              name: treatment.ward.name,
+            }
+          : null,
+        admissionId: treatment.admissionId,
+      }));
     } catch (error) {
       console.error('Error loading treatments:', error);
     } finally {
@@ -229,27 +270,26 @@
     surgeriesLoading.value = true;
     try {
       const response: any = await surgeryService.getPatientSurgeriesByAdmissionId(Number(admissionId.value), 0, 100);
-      if (response?.Data) {
-        surgeries.value = response.Data.map((surgery: any) => ({
-          id: surgery.Id,
-          surgeryTime: surgery.SurgeryTime,
-          endTime: surgery.EndTime,
-          notes: surgery.Notes,
-          surgery: surgery.Surgery
-            ? {
-                id: surgery.Surgery.Id,
-                name: surgery.Surgery.Name,
-                cost: surgery.Surgery.Cost,
-              }
-            : null,
-          operationTheatre: surgery.OperationTheatre
-            ? {
-                id: surgery.OperationTheatre.Id,
-                name: surgery.OperationTheatre.Name,
-              }
-            : null,
-        }));
-      }
+      const content = response?.content || response?.Content || response?.data || response?.Data || [];
+      surgeries.value = (Array.isArray(content) ? content : []).map((surgery: any) => ({
+        id: surgery.id,
+        surgeryTime: surgery.surgeryTime,
+        endTime: surgery.endTime,
+        notes: surgery.notes,
+        surgery: surgery.surgery
+          ? {
+              id: surgery.surgery.id,
+              name: surgery.surgery.name,
+              cost: surgery.surgery.cost,
+            }
+          : null,
+        operationTheatre: surgery.operationTheatre
+          ? {
+              id: surgery.operationTheatre.id,
+              name: surgery.operationTheatre.name,
+            }
+          : null,
+      }));
     } catch (error) {
       console.error('Error loading surgeries:', error);
     } finally {
@@ -264,21 +304,13 @@
     }
 
     try {
-      const billData = {
-        billType: 3,
+      // Append to the single consolidated admission bill so all charges for this
+      // admission accumulate on ONE bill (charge history) instead of separate bills.
+      await patientBillService.addChargeToAdmissionBill(Number(admissionId.value), {
         reason: newBill.value.reason,
-        entityId: Number(admissionId.value),
         totalAmount: newBill.value.totalAmount,
-        isPaid: false,
-        paidAmount: 0,
-        remainingBalance: newBill.value.totalAmount,
-        patient: {
-          id: admission.value.patientId,
-        },
-      };
-
-      await patientBillService.addPatientBills(billData);
-      showAlert('success', 'Bill added successfully', 'Success');
+      });
+      showAlert('success', 'Charge added to admission bill', 'Success');
 
       newBill.value = { reason: '', totalAmount: 0 };
       showAddBillForm.value = false;
@@ -286,7 +318,140 @@
       await loadBills();
       await loadAdmissionDetails();
     } catch {
-      showAlert('error', 'Failed to add bill', 'Error');
+      showAlert('error', 'Failed to add charge', 'Error');
+    }
+  };
+
+  const loadTreatmentWards = async () => {
+    treatmentWardsLoading.value = true;
+    try {
+      const response: any = await wardService.getWards('size=1000&page=0&isDeleted=false');
+      const content = response?.content || response?.Content || [];
+      treatmentWards.value = Array.isArray(content) ? content.filter((item: any) => !item.isDeleted).map((item: any) => ({ id: item.id, name: item.name || `Ward #${item.id}` })) : [];
+    } catch (error) {
+      console.error('Error loading wards:', error);
+      treatmentWards.value = [];
+    } finally {
+      treatmentWardsLoading.value = false;
+    }
+  };
+
+  const handleAddTreatment = async () => {
+    if (!newTreatment.value.wardId || !newTreatment.value.bedNumber) {
+      showAlert('error', 'Please select a ward and provide a bed number', 'Validation Error');
+      return;
+    }
+
+    addingTreatment.value = true;
+    try {
+      const vitalStatsOnAdmission = {
+        temperature: Number(newTreatment.value.temperature) || 0,
+        temperatureUnit: 'C',
+        respirationRate: Number(newTreatment.value.respirationRate) || 0,
+        pulseRate: Number(newTreatment.value.pulseRate) || 0,
+        bloodPressure: {
+          systolicPressure: Number(newTreatment.value.systolic) || 0,
+          diastolicPressure: Number(newTreatment.value.diastolic) || 0,
+        },
+      };
+
+      const response = await treatmentService.addTreatment({
+        admissionId: Number(admissionId.value),
+        wardId: Number(newTreatment.value.wardId),
+        bedNumber: Number(newTreatment.value.bedNumber),
+        vitalStatsOnAdmission,
+      });
+
+      if (response?.isSuccess !== false) {
+        showAlert('success', 'Treatment added successfully', 'Success');
+        newTreatment.value = {
+          wardId: 0,
+          bedNumber: 0,
+          temperature: 0,
+          temperatureUnit: 'C',
+          pulseRate: 0,
+          respirationRate: 0,
+          systolic: 0,
+          diastolic: 0,
+        };
+        showAddTreatmentForm.value = false;
+        await loadTreatments();
+      } else {
+        showAlert('error', response?.error || 'Failed to add treatment', 'Error');
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Failed to add treatment';
+      showAlert('error', msg, 'Error');
+    } finally {
+      addingTreatment.value = false;
+    }
+  };
+
+  const loadSurgeryOptions = async () => {
+    try {
+      const response: any = await surgeryCatalogService.getSurgeries('size=1000&page=0&isDeleted=false');
+      const content = response?.content || response?.Content || [];
+      surgeryOptions.value = Array.isArray(content) ? content.filter((item: any) => !item.isDeleted).map((item: any) => ({ id: item.id, name: item.name || `Surgery #${item.id}` })) : [];
+    } catch (error) {
+      console.error('Error loading surgeries:', error);
+      surgeryOptions.value = [];
+    }
+  };
+
+  const loadTheatreOptions = async () => {
+    try {
+      const response: any = await operationTheatreService.getOperationTheatres('size=1000&page=0&isDeleted=false');
+      const content = response?.content || response?.Content || [];
+      theatreOptions.value = Array.isArray(content)
+        ? content
+            .filter((item: any) => !item.isDeleted)
+            .map((item: any) => ({
+              id: item.id,
+              name: item.location ? `${item.name} - ${item.location}` : item.name || `Theatre #${item.id}`,
+            }))
+        : [];
+    } catch (error) {
+      console.error('Error loading operation theatres:', error);
+      theatreOptions.value = [];
+    }
+  };
+
+  const handleAddSurgery = async () => {
+    if (!newSurgery.value.surgeryId || !newSurgery.value.operationTheatreId) {
+      showAlert('error', 'Please select a surgery and an operation theatre', 'Validation Error');
+      return;
+    }
+    if (!newSurgery.value.surgeryTime || !newSurgery.value.endTime) {
+      showAlert('error', 'Please provide surgery start and end times', 'Validation Error');
+      return;
+    }
+
+    addingSurgery.value = true;
+    try {
+      const response = await surgeryService.addPatientSurgery({
+        admissionId: Number(admissionId.value),
+        surgeryId: Number(newSurgery.value.surgeryId),
+        operationTheatreId: Number(newSurgery.value.operationTheatreId),
+        surgeryTime: new Date(newSurgery.value.surgeryTime).toISOString(),
+        endTime: new Date(newSurgery.value.endTime).toISOString(),
+        duration: calculatedSurgeryDuration.value,
+        status: 'Scheduled',
+        notes: newSurgery.value.notes || '',
+      });
+
+      if (response?.isSuccess !== false) {
+        showAlert('success', 'Surgery scheduled successfully', 'Success');
+        newSurgery.value = { surgeryId: 0, operationTheatreId: 0, surgeryTime: '', endTime: '', notes: '' };
+        showAddSurgeryForm.value = false;
+        await loadSurgeries();
+      } else {
+        showAlert('error', response?.error || 'Failed to schedule surgery', 'Error');
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Failed to schedule surgery';
+      showAlert('error', msg, 'Error');
+    } finally {
+      addingSurgery.value = false;
     }
   };
 
@@ -342,7 +507,7 @@
 
   const goToPatientProfile = () => {
     if (admission.value?.patientId) {
-      router.push(`/patients/${admission.value.patientId}`);
+      router.push(`/patients/profile/${admission.value.patientId}`);
     }
   };
 
@@ -358,18 +523,20 @@
 
   onMounted(async () => {
     await loadAdmissionDetails();
-    if (currentTab.value === 'charges') {
-      await loadBills();
-    }
+    // Eagerly load all related data so every tab shows content immediately
+    // (bills were only loaded when the charges tab was active on mount).
+    await Promise.all([loadBills(), loadTreatments(), loadSurgeries()]);
+    // Load dropdown data used by the Add Treatment / Add Surgery forms.
+    await Promise.all([loadTreatmentWards(), loadSurgeryOptions(), loadTheatreOptions()]);
   });
 
   const onTabChange = async (tab: string) => {
     currentTab.value = tab;
-    if (tab === 'charges' && bills.value.length === 0) {
+    if (tab === 'charges') {
       await loadBills();
-    } else if (tab === 'treatments' && treatments.value.length === 0) {
+    } else if (tab === 'treatments') {
       await loadTreatments();
-    } else if (tab === 'surgeries' && surgeries.value.length === 0) {
+    } else if (tab === 'surgeries') {
       await loadSurgeries();
     }
   };
@@ -653,7 +820,11 @@
                         <span class="text-sm font-medium text-emphasis">{{ getBillTypeLabel(bill.billType) }}</span>
                       </td>
                       <td class="py-4 px-6">
-                        <span class="text-sm text-emphasis">{{ bill.reason }}</span>
+                        <div class="space-y-1">
+                          <span v-for="(line, i) in String(bill.reason || '').split('|')" :key="i" class="block text-sm text-emphasis">
+                            {{ line.trim() }}
+                          </span>
+                        </div>
                       </td>
                       <td class="py-4 px-6 text-right">
                         <span class="text-sm font-semibold text-emphasis">${{ bill.totalAmount.toLocaleString() }}</span>
@@ -683,7 +854,7 @@
                   <span class="text-lg font-semibold text-emphasis">Total Charges:</span>
                   <span class="text-2xl font-bold text-primary">${{ calculatedTotal.toLocaleString() }}</span>
                 </div>
-                <p class="text-xs text-bodydark dark:text-bodydark1 mt-2">{{ bills.length }} billing item(s)</p>
+                <p class="text-xs text-bodydark dark:text-bodydark1 mt-2">{{ bills.length }} consolidated bill{{ bills.length === 1 ? '' : 's' }} for this admission</p>
               </div>
             </div>
           </div>
@@ -692,8 +863,97 @@
 
       <div v-if="currentTab === 'treatments'" class="bg-surface rounded-2xl shadow-sm border border-stroke dark:border-strokedark">
         <div class="p-6 border-b border-stroke dark:border-strokedark">
-          <h2 class="text-xl font-semibold text-emphasis">Treatments</h2>
-          <p class="text-sm text-bodydark dark:text-bodydark1 mt-1">Treatment records for this admission</p>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-semibold text-emphasis">Treatments</h2>
+              <p class="text-sm text-bodydark dark:text-bodydark1 mt-1">Treatment records for this admission</p>
+            </div>
+            <BaseButton variant="primary" size="md" @click="showAddTreatmentForm = !showAddTreatmentForm">
+              <PlusIcon class="w-4 h-4 mr-2" />
+              Add Treatment
+            </BaseButton>
+          </div>
+        </div>
+
+        <div v-if="showAddTreatmentForm" class="p-6 bg-elevated/50 border-b border-stroke dark:border-strokedark">
+          <h3 class="text-lg font-semibold text-emphasis mb-4">Record New Treatment</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Ward</label>
+              <select
+                v-model="newTreatment.wardId"
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              >
+                <option :value="0" disabled>Select ward...</option>
+                <option v-for="ward in treatmentWards" :key="ward.id" :value="ward.id">{{ ward.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Bed Number</label>
+              <input
+                v-model.number="newTreatment.bedNumber"
+                type="number"
+                min="1"
+                placeholder="e.g., 1"
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Temperature (°C)</label>
+              <input
+                v-model.number="newTreatment.temperature"
+                type="number"
+                min="0"
+                step="0.1"
+                placeholder="e.g., 37.0"
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Pulse Rate (bpm)</label>
+              <input
+                v-model.number="newTreatment.pulseRate"
+                type="number"
+                min="0"
+                placeholder="e.g., 72"
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Respiration Rate (breaths/min)</label>
+              <input
+                v-model.number="newTreatment.respirationRate"
+                type="number"
+                min="0"
+                placeholder="e.g., 16"
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Blood Pressure (SYS/DIA)</label>
+              <div class="flex items-center gap-2">
+                <input
+                  v-model.number="newTreatment.systolic"
+                  type="number"
+                  min="0"
+                  placeholder="SYS"
+                  class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+                />
+                <span class="text-bodydark dark:text-bodydark1 font-bold">/</span>
+                <input
+                  v-model.number="newTreatment.diastolic"
+                  type="number"
+                  min="0"
+                  placeholder="DIA"
+                  class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-4">
+            <BaseButton variant="primary" size="md" @click="handleAddTreatment">Save Treatment</BaseButton>
+            <BaseButton variant="outline" size="md" @click="showAddTreatmentForm = false">Cancel</BaseButton>
+          </div>
         </div>
 
         <div class="p-6">
@@ -742,8 +1002,77 @@
 
       <div v-if="currentTab === 'surgeries'" class="bg-surface rounded-2xl shadow-sm border border-stroke dark:border-strokedark">
         <div class="p-6 border-b border-stroke dark:border-strokedark">
-          <h2 class="text-xl font-semibold text-emphasis">Surgeries</h2>
-          <p class="text-sm text-bodydark dark:text-bodydark1 mt-1">Surgical procedures scheduled for this admission</p>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-semibold text-emphasis">Surgeries</h2>
+              <p class="text-sm text-bodydark dark:text-bodydark1 mt-1">Surgical procedures scheduled for this admission</p>
+            </div>
+            <BaseButton variant="primary" size="md" @click="showAddSurgeryForm = !showAddSurgeryForm">
+              <PlusIcon class="w-4 h-4 mr-2" />
+              Add Surgery
+            </BaseButton>
+          </div>
+        </div>
+
+        <div v-if="showAddSurgeryForm" class="p-6 bg-elevated/50 border-b border-stroke dark:border-strokedark">
+          <h3 class="text-lg font-semibold text-emphasis mb-4">Schedule New Surgery</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Surgery</label>
+              <select
+                v-model="newSurgery.surgeryId"
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              >
+                <option :value="0" disabled>Select surgery...</option>
+                <option v-for="s in surgeryOptions" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Operation Theatre</label>
+              <select
+                v-model="newSurgery.operationTheatreId"
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              >
+                <option :value="0" disabled>Select theatre...</option>
+                <option v-for="t in theatreOptions" :key="t.id" :value="t.id">{{ t.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Surgery Start Time</label>
+              <input
+                v-model="newSurgery.surgeryTime"
+                type="datetime-local"
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Surgery End Time</label>
+              <input
+                v-model="newSurgery.endTime"
+                type="datetime-local"
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Duration (auto-calculated)</label>
+              <div class="rounded-lg border border-stroke dark:border-strokedark bg-elevated py-3 px-4 text-sm font-medium text-emphasis">
+                {{ calculatedSurgeryDuration > 0 ? `${calculatedSurgeryDuration} minutes` : 'Select start and end time' }}
+              </div>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-bodydark dark:text-bodydark1 mb-2">Notes</label>
+              <textarea
+                v-model="newSurgery.notes"
+                rows="3"
+                placeholder="Enter surgery notes..."
+                class="w-full rounded-lg border border-stroke dark:border-strokedark bg-white dark:bg-form-input px-4 py-3 text-emphasis focus:border-primary focus:outline-none"
+              ></textarea>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-4">
+            <BaseButton variant="primary" size="md" @click="handleAddSurgery">Save Surgery</BaseButton>
+            <BaseButton variant="outline" size="md" @click="showAddSurgeryForm = false">Cancel</BaseButton>
+          </div>
         </div>
 
         <div class="p-6">
