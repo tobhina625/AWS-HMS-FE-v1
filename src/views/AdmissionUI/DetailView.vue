@@ -9,6 +9,7 @@
   import TreatmentServices from '@/services/Treatment/Treatment.services';
   import PatientSurgeryServices from '@/services/PatientSurgery/PatientSurgery.services';
   import WardServices from '@/services/Ward/ward.services';
+  import VitalServices from '@/services/Vitals/Vital.services';
   import SurgeryService from '@/services/Surgery/Surgery.services';
   import OperationTheatreService from '@/services/OperationTheatre/OperationTheatre.services';
   import useAlert from '@/plugins/alert/useAlert';
@@ -34,6 +35,7 @@
   const wardService = new WardServices();
   const surgeryCatalogService = new SurgeryService();
   const operationTheatreService = new OperationTheatreService();
+  const vitalService = new VitalServices();
 
   const loading = ref(true);
   const currentTab = ref('overview');
@@ -249,15 +251,15 @@
       const content = response?.content || response?.Content || response?.data || response?.Data || [];
       treatments.value = (Array.isArray(content) ? content : []).map((treatment: any) => ({
         id: treatment.id,
-        bedNumber: treatment.bedNumber,
-        wardId: treatment.wardId,
-        ward: treatment.ward
+        admissionId: treatment.admissionId,
+        bedNumber: treatment.admission?.wardBed?.bedNumber,
+        wardId: treatment.admission?.ward?.id,
+        ward: treatment.admission?.ward
           ? {
-              id: treatment.ward.id,
-              name: treatment.ward.name,
+              id: treatment.admission.ward.id,
+              name: treatment.admission.ward.name,
             }
           : null,
-        admissionId: treatment.admissionId,
       }));
     } catch (error) {
       console.error('Error loading treatments:', error);
@@ -337,42 +339,44 @@
   };
 
   const handleAddTreatment = async () => {
-    if (!newTreatment.value.wardId || !newTreatment.value.bedNumber) {
-      showAlert('error', 'Please select a ward and provide a bed number', 'Validation Error');
-      return;
-    }
-
     addingTreatment.value = true;
     try {
-      const vitalStatsOnAdmission = {
-        temperature: Number(newTreatment.value.temperature) || 0,
-        temperatureUnit: 'C',
-        respirationRate: Number(newTreatment.value.respirationRate) || 0,
-        pulseRate: Number(newTreatment.value.pulseRate) || 0,
-        bloodPressure: {
-          systolicPressure: Number(newTreatment.value.systolic) || 0,
-          diastolicPressure: Number(newTreatment.value.diastolic) || 0,
-        },
-      };
-
+      // Treatment no longer carries vitals - they are recorded separately
       const response = await treatmentService.addTreatment({
         admissionId: Number(admissionId.value),
-        wardId: Number(newTreatment.value.wardId),
-        bedNumber: Number(newTreatment.value.bedNumber),
-        vitalStatsOnAdmission,
       });
 
       if (response?.isSuccess !== false) {
+        // Record initial vitals separately via VitalRecord API
+        if (newTreatment.value.temperature > 0 || newTreatment.value.pulseRate > 0 || newTreatment.value.respirationRate > 0 || newTreatment.value.systolic > 0) {
+          try {
+            await vitalService.addVitalRecord(Number(admissionId.value), {
+              recordedByEmployeeId: 0,
+              recordedAt: new Date().toISOString(),
+              temperature: Number(newTreatment.value.temperature) || 0,
+              pulseRate: Number(newTreatment.value.pulseRate) || 0,
+              respirationRate: Number(newTreatment.value.respirationRate) || 0,
+              bloodPressureSystolic: Number(newTreatment.value.systolic) || 0,
+              bloodPressureDiastolic: Number(newTreatment.value.diastolic) || 0,
+              oxygenSaturation: Number(newTreatment.value.oxygenSaturation) || 97,
+              notes: 'Initial vitals recorded during treatment creation',
+              isEmergency: false,
+            });
+          } catch (vitalErr) {
+            console.warn('Failed to record initial vitals:', vitalErr);
+          }
+        }
+
         showAlert('success', 'Treatment added successfully', 'Success');
         newTreatment.value = {
           wardId: 0,
           bedNumber: 0,
           temperature: 0,
-          temperatureUnit: 'C',
           pulseRate: 0,
           respirationRate: 0,
           systolic: 0,
           diastolic: 0,
+          oxygenSaturation: 0,
         };
         showAddTreatmentForm.value = false;
         await loadTreatments();

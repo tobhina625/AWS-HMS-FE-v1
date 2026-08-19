@@ -1,10 +1,13 @@
 export interface ITreatmentDetails {
   id: number;
   medicine: string;
+  dosage: string;
+  doctorNotes: string;
   noteTime: string;
   notes: string;
   isEmergencyTreatment: boolean;
   treatmentId: number;
+  admissionId: number;
 }
 
 export interface IPurchaseRecommendation {
@@ -17,25 +20,18 @@ export interface IPurchaseRecommendation {
 
 export interface ITreatment {
   id: number;
-  bedNumber: number;
-  vitalStatsOnAdmission?: any;
-  wardId: number;
   admissionId: number;
-  ward?: {
-    id: number;
-    name: string;
-  };
   admission?: {
     id: number;
+    ward?: { id: number; name: string };
+    wardBedId?: number;
+    wardBed?: { id: number; bedNumber: string };
   };
   treatmentDetails?: ITreatmentDetails[];
   purchaseRecommendations?: IPurchaseRecommendation[];
 }
 
 export interface IAddTreatment {
-  bedNumber: number;
-  vitalStatsOnAdmission?: any;
-  wardId: number;
   admissionId: number;
 }
 

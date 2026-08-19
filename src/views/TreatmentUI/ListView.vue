@@ -27,12 +27,12 @@
   const canDelete = computed(() => canDeleteFromModule('Treatments'));
 
   const getTreatmentFields = (treatment: ITreatment) => [
-    { label: 'Ward', value: treatment.ward?.name || '-' },
-    { label: 'Bed Number', value: treatment.bedNumber.toString() },
+    { label: 'Ward', value: treatment.admission?.ward?.name || '-' },
+    { label: 'Bed Number', value: treatment.admission?.wardBed?.bedNumber?.toString() || '-' },
     { label: 'Admission ID', value: treatment.admissionId.toString() },
   ];
 
-  const treatmentColumns = ['ward.name', 'bedNumber', 'admissionId'];
+  const treatmentColumns = ['admission.ward.name', 'admission.wardBed.bedNumber', 'admissionId'];
 
   const transformTreatmentData = (item: any): ITreatment => ({
     ...item,
@@ -152,7 +152,7 @@
             :key="treatment.id"
             :id="treatment.id"
             :title="`Treatment #${treatment.id}`"
-            :subtitle="treatment.ward?.name"
+            :subtitle="treatment.admission?.ward?.name"
             :fields="getTreatmentFields(treatment)"
             :selected="selectedIds.includes(treatment.id)"
             :show-delete="canDelete"
