@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, computed } from 'vue';
+  import { ref } from 'vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import BaseInput from '@/components/Base/BaseInput.vue';
   import BaseSelect from '@/components/Base/BaseSelect.vue';
@@ -7,7 +7,6 @@
   import PlusIcon from '@/assets/images/SVGs/PlusIcon.svg';
   import TrashDetailedIcon from '@/assets/images/SVGs/TrashDetailedIcon.svg';
   import { useFormValidation } from '@/composables/useFormValidation';
-  import type { ITreatmentDetails } from '@/services/Treatment/Treatment.dto';
 
   const props = defineProps<{
     isOpen: boolean;
@@ -19,7 +18,7 @@
     (e: 'submit', vitals: any, medicines: any[]): void;
   }>();
 
-  const { errors, rules, validateField, validateForm } = useFormValidation();
+  const { errors, rules, validateForm } = useFormValidation();
 
   const ROUTE_OPTIONS = [
     { value: 'Oral', label: 'Oral' },
