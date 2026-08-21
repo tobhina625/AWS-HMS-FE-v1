@@ -1,13 +1,15 @@
 export interface ITreatmentDetails {
   id: number;
   medicine: string;
-  dosage: string;
-  doctorNotes: string;
+  dosageInstructions: string;
+  route: string;
+  frequency: string;
+  doctorInstructions: string;
   noteTime: string;
   notes: string;
   isEmergencyTreatment: boolean;
   treatmentId: number;
-  admissionId: number;
+  admissionId?: number;
 }
 
 export interface IPurchaseRecommendation {

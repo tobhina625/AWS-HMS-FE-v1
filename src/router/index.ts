@@ -567,18 +567,6 @@ const routes = [
     meta: { title: 'Treatments', requiresAuth: true },
   },
   {
-    path: '/treatments/add',
-    name: 'TreatmentAdd',
-    component: () => import('@/views/TreatmentUI/AddView.vue'),
-    meta: { title: 'Add Treatment', requiresAuth: true },
-  },
-  {
-    path: '/treatments/edit/:id',
-    name: 'TreatmentEdit',
-    component: () => import('@/views/TreatmentUI/EditView.vue'),
-    meta: { title: 'Edit Treatment', requiresAuth: true },
-  },
-  {
     path: '/purchase-orders',
     name: 'PurchaseOrdersList',
     component: () => import('@/views/PurchaseOrderUI/ListView.vue'),

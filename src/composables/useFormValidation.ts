@@ -125,6 +125,9 @@ export const useFormValidation = () => {
     minValue: (min: number, message = `Value must be at least ${min}`): ValidationRule => ({
       validate: (v) => v === undefined || v === null || v === '' || Number(v) >= min || message,
     }),
+    maxValue: (max: number, message = `Value must be at most ${max}`): ValidationRule => ({
+      validate: (v) => v === undefined || v === null || v === '' || Number(v) <= max || message,
+    }),
   };
 
   const validateField = (name: string, value: any, fieldRules: ValidationRule[]) => {

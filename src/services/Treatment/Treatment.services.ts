@@ -39,12 +39,32 @@ class TreatmentServices {
     }
   }
 
+  async getTreatmentDetails(treatmentId: number): Promise<any> {
+    try {
+      const response = await this._genericService.get(`api/treatments/${treatmentId}/details`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching treatment details:', error);
+      throw error;
+    }
+  }
+
   async addTreatment(data: IAddTreatment): Promise<any> {
     try {
       const response = await this._genericService.post('api/treatments/add', data);
       return response;
     } catch (error) {
       console.error('Error adding treatment:', error);
+      throw error;
+    }
+  }
+
+  async addTreatmentDetailsBatch(treatmentId: number, data: any[]): Promise<any> {
+    try {
+      const response = await this._genericService.post(`api/treatments/${treatmentId}/details/batch`, data);
+      return response;
+    } catch (error) {
+      console.error('Error adding batch treatment details:', error);
       throw error;
     }
   }

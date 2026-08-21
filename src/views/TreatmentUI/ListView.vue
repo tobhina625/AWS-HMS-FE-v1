@@ -65,7 +65,8 @@
   };
 
   const handleEdit = (treatment: ITreatment) => {
-    router.push(`/treatments/edit/${treatment.id}`);
+    // Treatments are now managed within their Admission context
+    router.push(`/admissions/detail/${treatment.admissionId}`);
   };
 
   const handleDelete = async (treatment: ITreatment) => {
@@ -73,14 +74,10 @@
 
     await confirmDelete({
       entityName: 'Treatment',
-      itemName: `Treatment #${treatment.id}`,
+      itemName: `Session #${treatment.id}`,
       deleteAction: () => treatmentService.deleteTreatment(treatment.id),
       onSuccess: () => fetchData(transformTreatmentData),
     });
-  };
-
-  const handleAddNew = () => {
-    router.push('/treatments/add');
   };
 
   const handleBulkDelete = async () => {
@@ -125,33 +122,18 @@
       </template>
 
       <template #search>
-        <SearchWithViewToggle
-          v-model="viewMode"
-          v-model:date-filter="listFilters.dateFilter"
-          :showDateFilter="true"
-          :showAdd="true"
-          placeholder="Search treatments..."
-          add-button-route="treatments/add"
-          @search="getSearchTerm"
-        />
+        <SearchWithViewToggle v-model="viewMode" v-model:date-filter="listFilters.dateFilter" :showDateFilter="true" :showAdd="false" placeholder="Search treatments..." @search="getSearchTerm" />
       </template>
 
       <template #table>
-        <EmptyState
-          v-if="isEmpty"
-          title="No Treatments Found"
-          description="Get started by adding your first treatment record."
-          icon="default"
-          action-label="Add First Treatment"
-          @action="handleAddNew"
-        />
+        <EmptyState v-if="isEmpty" title="No Treatments Found" description="Treatment sessions are recorded by ward staff from the Admission Detail page." icon="default" />
 
         <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
           <GridViewCard
             v-for="treatment in apiResponse.data"
             :key="treatment.id"
             :id="treatment.id"
-            :title="`Treatment #${treatment.id}`"
+            :title="`Session #${treatment.id}`"
             :subtitle="treatment.admission?.ward?.name"
             :fields="getTreatmentFields(treatment)"
             :selected="selectedIds.includes(treatment.id)"
