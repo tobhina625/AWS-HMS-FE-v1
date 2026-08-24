@@ -13,7 +13,11 @@
   import EmployeesServices from '@/services/Employee/Employee.services';
   import WardServices from '@/services/Ward/ward.services';
   import PatientsServices from '@/services/Patient/patient.services';
+  import PatientBillsService from '@/services/PatientBill/Patientbill.services';
   import { STATUS_OPTIONS } from '@/constants/statusOptions';
+  import DischargeConfirmationModal from '@/components/Admission/DischargeConfirmationModal.vue';
+  import PaymentModal from '@/components/Patient/PaymentModal.vue';
+  import { useAdmissionInvoicePdf } from '@/composables/useAdmissionInvoicePdf';
 
   const router = useRouter();
   const route = useRoute();
@@ -23,6 +27,29 @@
   const employeeService = new EmployeesServices();
   const wardService = new WardServices();
   const patientService = new PatientsServices();
+  const patientBillService = new PatientBillsService();
+  const { downloadAdmissionInvoicePdf } = useAdmissionInvoicePdf();
+
+  // Full admission snapshot used by the discharge modal
+  const fullAdmission = ref<any>(null);
+  const editViewBills = ref<any[]>([]);
+
+  // Discharge modal state
+  const showEditDischargeModal = ref(false);
+  const editDischargePayingNow = ref(false);
+  const editDischargeDownloadingPdf = ref(false);
+  const editDischargingNow = ref(false);
+
+  // Standard Payment modal state
+  const showPayModal = ref(false);
+  const billToPay = ref<any>(null);
+
+  const DISCHARGE_STATUS_IDS = [12, 13] as const;
+
+  const editDischargeStatusName = computed(() => {
+    const id = Number(formData.value.status);
+    return STATUS_OPTIONS.ADMISSION.find((s) => s.id === id)?.name || 'Discharge';
+  });
 
   const isSubmitting = ref(false);
   const isLoading = ref(true);
@@ -227,6 +254,35 @@
         attendingDoctorId: attendingDoctor?.id ?? attendingDoctor?.Id ?? 0,
       };
 
+      // Store admission snapshot for modal
+      fullAdmission.value = {
+        id: idVal,
+        status: typeof statusVal === 'number' ? statusVal : 0,
+        admissionDate: admissionDateRaw,
+        dischargeDate: dischargeDateRaw,
+        reasonForAdmission: typeof reasonRaw === 'string' ? reasonRaw : '',
+        totalChargesPayable: typeof chargesRaw === 'number' ? chargesRaw : 0,
+        patientId: patient?.id ?? patient?.Id ?? 0,
+        patient: patient
+          ? {
+              id: patient?.id ?? patient?.Id,
+              firstName: patient?.firstName ?? patient?.FirstName ?? '',
+              lastName: patient?.lastName ?? patient?.LastName ?? '',
+              gender: patient?.gender ?? patient?.Gender ?? '',
+              age: patient?.age ?? patient?.Age ?? '',
+              phone: patient?.phone ?? patient?.Phone ?? '',
+            }
+          : null,
+        ward: ward ? { id: ward?.id ?? ward?.Id, name: ward?.name ?? ward?.Name ?? '' } : null,
+        wardBed: wardBed ? { id: wardBed?.id ?? wardBed?.Id, bedNumber: wardBed?.bedNumber ?? wardBed?.BedNumber ?? '' } : null,
+        attendingDoctor: attendingDoctor
+          ? {
+              id: attendingDoctor?.id ?? attendingDoctor?.Id,
+              name: `${attendingDoctor?.firstName ?? attendingDoctor?.FirstName ?? ''} ${attendingDoctor?.lastName ?? attendingDoctor?.LastName ?? ''}`.trim(),
+            }
+          : null,
+      };
+
       patientDd.items.value = [];
       wardDd.items.value = [];
       doctorDd.items.value = [];
@@ -251,16 +307,7 @@
     }
   };
 
-  const submitUpdate = async () => {
-    const isValid = validateForm(formData.value, {
-      patientId: [rules.required('Patient is required')],
-      wardId: [rules.required('Ward is required')],
-      admissionDate: [rules.required()],
-      reasonForAdmission: [rules.required()],
-    });
-
-    if (!isValid) return;
-
+  const _performSubmit = async () => {
     const patientId = Number(formData.value.patientId);
     const wardId = Number(formData.value.wardId);
     const wardBedId = Number(formData.value.wardBedId);
@@ -291,6 +338,88 @@
     } finally {
       isSubmitting.value = false;
     }
+  };
+
+  const loadEditViewBills = async () => {
+    try {
+      const res: any = await patientBillService.getPatientBillsByAdmissionId(formData.value.id, 0, 100);
+      const content = res?.content ?? res?.Content ?? res?.data ?? [];
+      editViewBills.value = (Array.isArray(content) ? content : []).map((b: any) => ({
+        id: b.id,
+        billType: b.billType,
+        reason: b.reason,
+        entityId: b.entityId,
+        totalAmount: b.totalAmount,
+        isPaid: b.isPaid,
+        paidAmount: b.paidAmount,
+        remainingBalance: b.remainingBalance,
+      }));
+    } catch {
+      editViewBills.value = [];
+    }
+  };
+
+  const submitUpdate = async () => {
+    const isValid = validateForm(formData.value, {
+      patientId: [rules.required('Patient is required')],
+      wardId: [rules.required('Ward is required')],
+      admissionDate: [rules.required()],
+      reasonForAdmission: [rules.required()],
+    });
+
+    if (!isValid) return;
+
+    const targetStatus = Number(formData.value.status);
+    if ((DISCHARGE_STATUS_IDS as readonly number[]).includes(targetStatus)) {
+      await loadEditViewBills();
+      showEditDischargeModal.value = true;
+      return;
+    }
+
+    await _performSubmit();
+  };
+
+  const handleEditDischargePayNow = (bill?: any) => {
+    const target = bill || editViewBills.value.find((b) => !b.isPaid) || editViewBills.value[0];
+    if (!target) return;
+    billToPay.value = {
+      id: target.id,
+      remainingBalance: target.remainingBalance ?? target.totalAmount - (target.paidAmount || 0),
+      patient: fullAdmission.value?.patient,
+    };
+    showPayModal.value = true;
+  };
+
+  const handleEditPaymentSuccess = async () => {
+    await loadEditViewBills();
+    await loadDetails();
+  };
+
+  const handleEditDischargeDownloadInvoice = async () => {
+    editDischargeDownloadingPdf.value = true;
+    try {
+      await downloadAdmissionInvoicePdf(fullAdmission.value, editViewBills.value);
+    } catch {
+      showAlert('error', 'Failed to generate PDF. Please try again.', 'Error');
+    } finally {
+      editDischargeDownloadingPdf.value = false;
+    }
+  };
+
+  const handleEditDischargeConfirm = async () => {
+    editDischargingNow.value = true;
+    try {
+      await _performSubmit();
+      showEditDischargeModal.value = false;
+    } catch {
+      showAlert('error', 'Failed to update admission.', 'Error');
+    } finally {
+      editDischargingNow.value = false;
+    }
+  };
+
+  const handleEditDischargeCancel = () => {
+    showEditDischargeModal.value = false;
   };
 
   onMounted(async () => {
@@ -400,5 +529,23 @@
 
       <BaseInput label="Discharge Date (Optional)" type="date" v-model="formData.dischargeDate" v-if="showDischargeDateField" />
     </FormViewTemplate>
+
+    <!-- Discharge Confirmation Modal (EditView) -->
+    <DischargeConfirmationModal
+      :show="showEditDischargeModal"
+      :admission="fullAdmission"
+      :bills="editViewBills"
+      :target-status-name="editDischargeStatusName"
+      :downloading-pdf="editDischargeDownloadingPdf"
+      :paying-now="editDischargePayingNow"
+      :discharging-now="editDischargingNow"
+      @cancel="handleEditDischargeCancel"
+      @pay-now="handleEditDischargePayNow"
+      @download-invoice="handleEditDischargeDownloadInvoice"
+      @confirm-discharge="handleEditDischargeConfirm"
+    />
+
+    <!-- Standard HMS Payment Modal -->
+    <PaymentModal :show="showPayModal" :bill="billToPay" @close="showPayModal = false" @success="handleEditPaymentSuccess" />
   </DefaultLayout>
 </template>

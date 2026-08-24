@@ -28,6 +28,10 @@
   import PlusIcon from '@/assets/images/SVGs/PlusIcon.svg';
   import TreatmentSessionModal from '@/components/Admission/TreatmentSessionModal.vue';
   import TreatmentSessionDetailsModal from '@/components/Admission/TreatmentSessionDetailsModal.vue';
+  import DischargeConfirmationModal from '@/components/Admission/DischargeConfirmationModal.vue';
+  import PaymentModal from '@/components/Patient/PaymentModal.vue';
+  import { useAdmissionInvoicePdf } from '@/composables/useAdmissionInvoicePdf';
+  import { useDischargeSummaryPdf } from '@/composables/useDischargeSummaryPdf';
 
   const route = useRoute();
   const router = useRouter();
@@ -120,6 +124,29 @@
   const statusOptions = computed(() => STATUS_OPTIONS.ADMISSION || []);
   const selectedStatus = ref<number | null>(null);
   const updatingStatus = ref(false);
+
+  // ─── Discharge confirmation modal state ────────────────────────────────────
+  const showDischargeModal = ref(false);
+  const dischargeTargetStatus = ref<number | null>(null);
+  const dischargePayingNow = ref(false);
+  const dischargeDownloadingPdf = ref(false);
+  const dischargingNow = ref(false);
+
+  // ─── Payment modal state (standard HMS payment pathway) ──────────────────────
+  const showPayModal = ref(false);
+  const billToPay = ref<any>(null);
+
+  const dischargeTargetStatusName = computed(() => {
+    if (dischargeTargetStatus.value === null) return '';
+    return STATUS_OPTIONS.ADMISSION.find((s) => s.id === dischargeTargetStatus.value)?.name || 'Discharge';
+  });
+
+  /** IDs that trigger the discharge billing confirmation modal (12 = Discharge Approved, 13 = Discharged). */
+  const DISCHARGE_STATUS_IDS = [12, 13] as const;
+
+  const { downloadAdmissionInvoicePdf } = useAdmissionInvoicePdf();
+  const { downloadDischargeSummaryPdf } = useDischargeSummaryPdf();
+  const downloadingSummaryPdf = ref(false);
 
   const admissionId = computed(() => route.params.id as string);
 
@@ -710,27 +737,40 @@
     }
   };
 
+  /** Performs the actual API call to update the admission status. */
+  const _doStatusUpdate = async (targetStatus: number) => {
+    const updateData = {
+      id: Number(admissionId.value),
+      status: targetStatus,
+      admissionDate: admission.value.admissionDate,
+      dischargeDate: admission.value.dischargeDate,
+      totalChargesPayable: admission.value.totalChargesPayable || 0,
+      reasonForAdmission: admission.value.reasonForAdmission || 'Not specified',
+      patientId: admission.value.patientId,
+      wardBedId: admission.value.wardBedId,
+      attendingDoctor: admission.value.attendingDoctor ? { id: admission.value.attendingDoctor.id } : null,
+      ward: admission.value.ward ? { id: admission.value.ward.id } : null,
+    };
+    await admissionService.updateAdmission(updateData);
+  };
+
   const handleStatusChange = async () => {
     if (selectedStatus.value === null || selectedStatus.value === admission.value.status) {
       return;
     }
 
+    // Intercept Discharge / Discharge Approved → show billing confirmation modal
+    if ((DISCHARGE_STATUS_IDS as readonly number[]).includes(selectedStatus.value)) {
+      await loadBills(); // ensure latest bills before opening the modal
+      dischargeTargetStatus.value = selectedStatus.value;
+      showDischargeModal.value = true;
+      return;
+    }
+
+    // Non-discharge status updates proceed directly
     updatingStatus.value = true;
     try {
-      const updateData = {
-        id: Number(admissionId.value),
-        status: selectedStatus.value,
-        admissionDate: admission.value.admissionDate,
-        dischargeDate: admission.value.dischargeDate,
-        totalChargesPayable: admission.value.totalChargesPayable || 0,
-        reasonForAdmission: admission.value.reasonForAdmission || 'Not specified',
-        patientId: admission.value.patientId,
-        wardBedId: admission.value.wardBedId,
-        attendingDoctor: admission.value.attendingDoctor ? { id: admission.value.attendingDoctor.id } : null,
-        ward: admission.value.ward ? { id: admission.value.ward.id } : null,
-      };
-
-      await admissionService.updateAdmission(updateData);
+      await _doStatusUpdate(selectedStatus.value);
       showAlert('success', 'Status updated successfully', 'Success');
       await loadAdmissionDetails();
     } catch {
@@ -739,6 +779,73 @@
     } finally {
       updatingStatus.value = false;
     }
+  };
+
+  /** Pay Now: opens the standard HMS PaymentModal for the unpaid bill */
+  const handleDischargePayNow = (bill?: any) => {
+    const target = bill || bills.value.find((b) => !b.isPaid) || bills.value[0];
+    if (!target) return;
+    billToPay.value = {
+      id: target.id,
+      remainingBalance: target.remainingBalance ?? target.totalAmount - (target.paidAmount || 0),
+      patient: admission.value?.patient,
+    };
+    showPayModal.value = true;
+  };
+
+  const handlePaymentSuccess = async () => {
+    await loadBills();
+    await loadAdmissionDetails();
+  };
+
+  /** Download Invoice PDF (all bills as one ledger). */
+  const handleDischargeDownloadInvoice = async () => {
+    dischargeDownloadingPdf.value = true;
+    try {
+      await downloadAdmissionInvoicePdf(admission.value, bills.value);
+    } catch {
+      showAlert('error', 'Failed to generate PDF. Please try again.', 'Error');
+    } finally {
+      dischargeDownloadingPdf.value = false;
+    }
+  };
+
+  /** Download Patient Discharge Summary PDF (4 parts: reason, labs, surgeries, 5-day followup meds). */
+  const handleDownloadDischargeSummary = async () => {
+    downloadingSummaryPdf.value = true;
+    try {
+      await Promise.all([loadLabTests(), loadSurgeries(), loadTreatments()]);
+      await downloadDischargeSummaryPdf(admission.value, labTests.value, surgeries.value, treatments.value);
+      showAlert('success', 'Discharge Summary PDF downloaded successfully', 'Success');
+    } catch (err) {
+      console.error('Error downloading discharge summary:', err);
+      showAlert('error', 'Failed to generate discharge summary PDF', 'Error');
+    } finally {
+      downloadingSummaryPdf.value = false;
+    }
+  };
+
+  /** Confirm Discharge: proceed with the status update and close the modal. */
+  const handleDischargeConfirm = async () => {
+    if (dischargeTargetStatus.value === null) return;
+    dischargingNow.value = true;
+    try {
+      await _doStatusUpdate(dischargeTargetStatus.value);
+      showAlert('success', 'Status updated successfully', 'Success');
+      showDischargeModal.value = false;
+      dischargeTargetStatus.value = null;
+      await loadAdmissionDetails();
+    } catch {
+      showAlert('error', 'Failed to update status', 'Error');
+    } finally {
+      dischargingNow.value = false;
+    }
+  };
+
+  const handleDischargeCancel = () => {
+    showDischargeModal.value = false;
+    dischargeTargetStatus.value = null;
+    if (admission.value) selectedStatus.value = admission.value.status;
   };
 
   const handleBack = () => {
@@ -1482,7 +1589,39 @@
           </div>
           <div class="p-6">
             <div class="space-y-3">
-              <BaseButton variant="primary" size="md" @click="handleEdit" class="w-full justify-center">
+              <!-- Download Patient Discharge Summary (4 parts) -->
+              <BaseButton
+                variant="primary"
+                size="md"
+                @click="handleDownloadDischargeSummary"
+                :disabled="downloadingSummaryPdf"
+                class="w-full justify-center bg-meta-3 hover:bg-meta-3/90 text-white font-bold"
+              >
+                <svg v-if="downloadingSummaryPdf" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <DocumentLinesIcon v-else class="w-4 h-4 mr-2" />
+                {{ downloadingSummaryPdf ? 'Generating Summary...' : 'Download Discharge Summary (PDF)' }}
+              </BaseButton>
+
+              <!-- Download Billing Invoice PDF -->
+              <BaseButton
+                variant="outline"
+                size="md"
+                @click="handleDischargeDownloadInvoice"
+                :disabled="dischargeDownloadingPdf"
+                class="w-full justify-center border-2 text-primary border-primary hover:bg-primary/5 font-semibold"
+              >
+                <svg v-if="dischargeDownloadingPdf" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <BillingIcon v-else class="w-4 h-4 mr-2" />
+                {{ dischargeDownloadingPdf ? 'Generating Invoice...' : 'Download Billing Invoice (PDF)' }}
+              </BaseButton>
+
+              <BaseButton variant="outline" size="md" @click="handleEdit" class="w-full justify-center border-2">
                 <EditPencilIcon class="w-4 h-4 mr-2" />
                 Edit Admission Details
               </BaseButton>
@@ -1546,5 +1685,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Discharge Confirmation Modal -->
+    <DischargeConfirmationModal
+      :show="showDischargeModal"
+      :admission="admission"
+      :bills="bills"
+      :target-status-name="dischargeTargetStatusName"
+      :downloading-pdf="dischargeDownloadingPdf"
+      :paying-now="dischargePayingNow"
+      :discharging-now="dischargingNow"
+      @cancel="handleDischargeCancel"
+      @pay-now="handleDischargePayNow"
+      @download-invoice="handleDischargeDownloadInvoice"
+      @confirm-discharge="handleDischargeConfirm"
+    />
+
+    <!-- Standard HMS Payment Modal -->
+    <PaymentModal :show="showPayModal" :bill="billToPay" @close="showPayModal = false" @success="handlePaymentSuccess" />
   </DefaultLayout>
 </template>

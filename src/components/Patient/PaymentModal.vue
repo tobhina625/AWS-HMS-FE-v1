@@ -101,7 +101,7 @@
 </script>
 
 <template>
-  <div v-if="show && bill" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="emit('close')">
+  <div v-if="show && bill" class="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/50" @click.self="emit('close')">
     <div class="bg-surface rounded-2xl max-w-md w-full shadow-lg border border-stroke dark:border-strokedark overflow-hidden">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-stroke dark:border-strokedark bg-slate-50 dark:bg-meta-4 flex items-center justify-between">

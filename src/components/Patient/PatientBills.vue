@@ -8,6 +8,8 @@
   import PaymentModal from '@/components/Patient/PaymentModal.vue';
   import PatientBillsService from '@/services/PatientBill/Patientbill.services';
   import PatientPaymentService from '@/services/PatientPayment/Patientpayment.services';
+  import AdmissionServices from '@/services/Admission/Admission.services';
+  import { useAdmissionInvoicePdf } from '@/composables/useAdmissionInvoicePdf';
 
   const props = defineProps<{
     patientId: number;
@@ -19,6 +21,9 @@
 
   const billService = new PatientBillsService();
   const paymentService = new PatientPaymentService();
+  const admissionService = new AdmissionServices();
+  const { downloadAdmissionInvoicePdf } = useAdmissionInvoicePdf();
+  const downloadingPdf = ref(false);
   const loading = ref(true);
   const bills = ref<any[]>([]);
   const selectedBill = ref<any>(null);
@@ -125,6 +130,43 @@
 
   const printInvoice = () => {
     window.print();
+  };
+
+  const handleDownloadAdmissionInvoice = async () => {
+    if (!selectedBill.value) return;
+    downloadingPdf.value = true;
+    try {
+      const admissionId = selectedBill.value.entityId ?? selectedBill.value.EntityId;
+      let admData: any = null;
+      let admBills: any[] = [];
+      if (admissionId) {
+        try {
+          const aResp = await admissionService.getAdmissionById(admissionId);
+          admData = aResp?.data ?? aResp?.Data ?? aResp;
+          const bResp = await billService.getPatientBillsByAdmissionId(admissionId, 0, 100);
+          const bContent = bResp?.content ?? bResp?.Content ?? bResp?.data ?? [];
+          admBills = Array.isArray(bContent) ? bContent : [];
+        } catch (error) {
+          console.warn('Could not fetch admission details or bills for invoice:', error);
+        }
+      }
+
+      if (!admData) {
+        admData = {
+          id: admissionId || selectedBill.value.id,
+          patient: selectedBill.value.patient ?? selectedBill.value.Patient,
+          totalChargesPayable: selectedBill.value.totalAmount ?? selectedBill.value.TotalAmount,
+          admissionDate: selectedBill.value.createdAt,
+        };
+        admBills = [selectedBill.value];
+      }
+
+      await downloadAdmissionInvoicePdf(admData, admBills.length > 0 ? admBills : [selectedBill.value]);
+    } catch (e) {
+      console.error('Failed to download invoice PDF:', e);
+    } finally {
+      downloadingPdf.value = false;
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -385,6 +427,7 @@
         <div class="sticky bottom-0 bg-surface border-t border-stroke dark:border-strokedark p-6 flex justify-between items-center print:hidden">
           <div class="flex gap-2">
             <BaseButton variant="outline" @click="printInvoice">🖨️ Print Invoice</BaseButton>
+            <BaseButton v-if="(selectedBill.billType ?? selectedBill.BillType) === 3" variant="outline" :disabled="downloadingPdf" @click="handleDownloadAdmissionInvoice">📄 Download PDF</BaseButton>
             <BaseButton v-if="(selectedBill.remainingBalance ?? selectedBill.RemainingBalance) > 0" variant="primary" @click="handleOpenPayModal">Record Payment</BaseButton>
           </div>
           <BaseButton variant="outline" @click="closeDetails">Close</BaseButton>

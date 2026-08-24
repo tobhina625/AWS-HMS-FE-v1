@@ -35,7 +35,14 @@
   import { useConfirm } from '@/composables/useConfirm';
   import { usePermissions } from '@/composables/usePermissions';
   import { useCnicConfig } from '@/composables/useCnicConfig';
-
+  import AdmissionServices from '@/services/Admission/Admission.services';
+  import PatientBillsService from '@/services/PatientBill/Patientbill.services';
+  import PatientSurgeryServices from '@/services/PatientSurgery/PatientSurgery.services';
+  import TreatmentServices from '@/services/Treatment/Treatment.services';
+  import PaymentModal from '@/components/Patient/PaymentModal.vue';
+  import { useAdmissionInvoicePdf } from '@/composables/useAdmissionInvoicePdf';
+  import { useDischargeSummaryPdf } from '@/composables/useDischargeSummaryPdf';
+  import { STATUS_OPTIONS } from '@/constants/statusOptions';
   const route = useRoute();
   const router = useRouter();
   const { showAlert } = useAlert();
@@ -48,7 +55,14 @@
   const diagnosisService = new PatientDiagnosisService();
   const prescriptionService = new PrescriptionService();
   const labService = new PatientLabsService();
+  const admissionService = new AdmissionServices();
+  const patientBillService = new PatientBillsService();
+  const surgeryService = new PatientSurgeryServices();
+  const treatmentService = new TreatmentServices();
   const { downloadPdfReport } = useLabReport();
+  const { downloadAdmissionInvoicePdf } = useAdmissionInvoicePdf();
+  const { downloadDischargeSummaryPdf } = useDischargeSummaryPdf();
+
   const canDelete = computed(() => canDeleteFromModule('Patients'));
   const showHistoryModal = ref(false);
   const medicalHistoryKey = ref(0);
@@ -68,6 +82,14 @@
   const prescriptions = ref<any[]>([]);
   const patientLabs = ref<IPatientLabs[]>([]);
   const clinicalLoading = ref(false);
+
+  // Admissions & Consolidated Invoices data
+  const patientAdmissions = ref<any[]>([]);
+  const admissionsLoading = ref(false);
+  const showPayModal = ref(false);
+  const billToPay = ref<any>(null);
+  const downloadingInvoiceId = ref<number | null>(null);
+  const downloadingSummaryId = ref<number | null>(null);
 
   const pageTitle = ref('Patient Profile');
   const currentTab = ref('about');
@@ -259,19 +281,127 @@
     router.push({ path: '/lab-orders', query: { patientId: patientId.value } });
   };
 
+  const loadPatientAdmissions = async (pid: number) => {
+    admissionsLoading.value = true;
+    try {
+      const res = await admissionService.getAdmissionsByPatientId(pid);
+      const list = res?.data || res?.Data || (Array.isArray(res) ? res : []);
+      const admList = Array.isArray(list) ? list : [];
+
+      for (const adm of admList) {
+        try {
+          const bRes: any = await patientBillService.getPatientBillsByAdmissionId(adm.id, 0, 100);
+          const bContent = bRes?.content || bRes?.Content || bRes?.data || [];
+          const bills = Array.isArray(bContent) ? bContent : [];
+          adm.bills = bills;
+          adm.totalCharged = bills.reduce((s: number, b: any) => s + (b.totalAmount || 0), 0);
+          adm.totalPaid = bills.reduce((s: number, b: any) => s + (b.isPaid ? b.totalAmount : b.paidAmount || 0), 0);
+          adm.remainingBalance = Math.max(0, adm.totalCharged - adm.totalPaid);
+          adm.isFullyPaid = adm.remainingBalance <= 0 && bills.length > 0;
+        } catch {
+          adm.bills = [];
+          adm.totalCharged = adm.totalChargesPayable || 0;
+          adm.totalPaid = 0;
+          adm.remainingBalance = adm.totalCharged;
+          adm.isFullyPaid = false;
+        }
+      }
+      patientAdmissions.value = admList.sort((a, b) => b.id - a.id);
+    } catch (err) {
+      console.error('Error loading patient admissions:', err);
+      patientAdmissions.value = [];
+    } finally {
+      admissionsLoading.value = false;
+    }
+  };
+
+  const handleOpenAdmissionPayment = (admission: any) => {
+    const unpaidBill = admission.bills?.find((b: any) => !b.isPaid) || admission.bills?.[0];
+    if (!unpaidBill) return;
+    billToPay.value = {
+      id: unpaidBill.id,
+      remainingBalance: unpaidBill.remainingBalance ?? unpaidBill.totalAmount - (unpaidBill.paidAmount || 0),
+      patient: patientDetails.value,
+    };
+    showPayModal.value = true;
+  };
+
+  const handleAdmissionPaymentSuccess = async () => {
+    if (patientDetails.value.id) {
+      await loadPatientAdmissions(patientDetails.value.id);
+    }
+  };
+
+  const handleDownloadAdmissionInvoice = async (admission: any) => {
+    downloadingInvoiceId.value = admission.id;
+    try {
+      const formattedAdmission = {
+        ...admission,
+        patient: patientDetails.value,
+      };
+      await downloadAdmissionInvoicePdf(formattedAdmission, admission.bills || []);
+      showAlert('success', 'Admission invoice PDF downloaded successfully', 'Success');
+    } catch {
+      showAlert('error', 'Failed to download admission invoice PDF', 'Error');
+    } finally {
+      downloadingInvoiceId.value = null;
+    }
+  };
+
+  const handleDownloadAdmissionSummary = async (admission: any) => {
+    downloadingSummaryId.value = admission.id;
+    try {
+      const [labsResp, surgResp, treatResp] = await Promise.all([
+        labService.getByPatientId(patientDetails.value.id),
+        surgeryService.getPatientSurgeriesByAdmissionId(admission.id, 0, 100),
+        treatmentService.getTreatmentsByAdmissionId(admission.id, 0, 100),
+      ]);
+
+      const labs = Array.isArray(labsResp) ? labsResp : labsResp?.data || labsResp?.content || [];
+      const surgs = Array.isArray(surgResp?.content) ? surgResp.content : Array.isArray(surgResp?.data) ? surgResp.data : [];
+      const treats = Array.isArray(treatResp?.content) ? treatResp.content : [];
+
+      for (const t of treats) {
+        try {
+          const dResp: any = await treatmentService.getTreatmentDetails(t.id);
+          t.treatmentDetails = dResp?.data || [];
+        } catch (error) {
+          console.warn('Could not fetch treatment details for treatment:', t.id, error);
+        }
+      }
+
+      const formattedAdmission = {
+        ...admission,
+        patient: patientDetails.value,
+      };
+
+      await downloadDischargeSummaryPdf(formattedAdmission, labs, surgs, treats);
+      showAlert('success', 'Discharge summary PDF downloaded successfully', 'Success');
+    } catch {
+      showAlert('error', 'Failed to download discharge summary PDF', 'Error');
+    } finally {
+      downloadingSummaryId.value = null;
+    }
+  };
+
+  const getAdmissionStatusName = (statusId: number) => {
+    return STATUS_OPTIONS.ADMISSION.find((s) => s.id === statusId)?.name || 'Admitted';
+  };
+
   onMounted(async () => {
     await loadCnicConfig();
     await loadPatientDetails();
     if (patientDetails.value.id) {
       loadClinicalData(patientDetails.value.id);
+      loadPatientAdmissions(patientDetails.value.id);
     }
   });
 
-  // Re-fetch clinical data when the user opens one of these tabs, so records
-  // added inside an Encounter appear without a full page reload.
   watch(currentTab, (tab) => {
     if (['encounters', 'allergies', 'diagnoses', 'prescriptions', 'labTests'].includes(tab) && patientDetails.value.id) {
       loadClinicalData(patientDetails.value.id);
+    } else if (tab === 'admissions' && patientDetails.value.id) {
+      loadPatientAdmissions(patientDetails.value.id);
     }
   });
 </script>
@@ -460,6 +590,21 @@
                 <div class="flex items-center gap-2">
                   <BillingIcon class="w-5 h-5" />
                   Patient Bills
+                </div>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
+                @click="currentTab = 'admissions'"
+                :class="[
+                  '!rounded-none !px-1 !py-0 pb-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
+                  currentTab === 'admissions' ? 'border-primary text-primary' : 'border-transparent text-bodydark hover:text-emphasis dark:text-bodydark1',
+                ]"
+              >
+                <div class="flex items-center gap-2">
+                  🛏️ Admissions &amp; Invoices
+                  <span v-if="patientAdmissions.length" class="bg-primary text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+                    {{ patientAdmissions.length }}
+                  </span>
                 </div>
               </BaseButton>
               <BaseButton
@@ -805,12 +950,172 @@
           <PatientBills :patientId="patientDetails.id" @add-new="handleAddPatientBill" />
         </div>
 
+        <!-- Inpatient Admissions & Consolidated Invoices Tab -->
+        <div v-if="currentTab === 'admissions'" class="lg:col-span-3 space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="text-xl font-bold text-emphasis">Inpatient Admissions &amp; Consolidated Invoices</h3>
+              <p class="text-xs text-bodydark dark:text-bodydark1 mt-0.5">Track all hospital stays, discharge documentation, and consolidated billing invoices.</p>
+            </div>
+            <router-link
+              :to="{ path: '/admissions/add', query: { patientId: patientDetails.id } }"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
+            >
+              + New Admission
+            </router-link>
+          </div>
+
+          <div v-if="admissionsLoading" class="animate-pulse space-y-4">
+            <div v-for="i in 2" :key="i" class="h-44 bg-surface rounded-2xl border border-stroke dark:border-strokedark"></div>
+          </div>
+
+          <div v-else-if="patientAdmissions.length === 0" class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-12 text-center">
+            <div class="text-4xl mb-3">🛏️</div>
+            <p class="text-lg font-bold text-emphasis">No Inpatient Admissions Found</p>
+            <p class="text-sm text-bodydark mt-1">This patient does not have any admission or discharge records yet.</p>
+          </div>
+
+          <div v-else class="space-y-4">
+            <div v-for="adm in patientAdmissions" :key="adm.id" class="bg-surface rounded-2xl border border-stroke dark:border-strokedark p-6 shadow-sm hover:shadow-md transition-shadow">
+              <!-- Admission Header -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stroke dark:border-strokedark pb-4 mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg">#{{ adm.id }}</div>
+                  <div>
+                    <h4 class="font-bold text-emphasis text-base">Admission #{{ adm.id }}</h4>
+                    <p class="text-xs text-bodydark dark:text-bodydark1">Reason: {{ adm.reasonForAdmission || 'General Admission' }}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <span
+                    :class="[
+                      'px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider',
+                      adm.status === 13 || adm.status === 12
+                        ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30'
+                        : 'bg-primary/15 text-primary border border-primary/30',
+                    ]"
+                  >
+                    {{ getAdmissionStatusName(adm.status) }}
+                  </span>
+
+                  <!-- Financial Ledger Badge -->
+                  <span
+                    :class="[
+                      'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border',
+                      adm.isFullyPaid ? 'bg-success/15 text-success border-success/30' : 'bg-warning/15 text-warning border-warning/30',
+                    ]"
+                  >
+                    {{ adm.isFullyPaid ? '✓ Fully Paid' : '⚠ Payment Due' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Details Grid -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs mb-5">
+                <div>
+                  <span class="text-bodydark block">Admission Date</span>
+                  <span class="font-bold text-emphasis text-sm">
+                    {{ adm.admissionDate ? new Date(adm.admissionDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' }}
+                  </span>
+                </div>
+                <div>
+                  <span class="text-bodydark block">Discharge Date</span>
+                  <span class="font-bold text-emphasis text-sm">
+                    {{ adm.dischargeDate ? new Date(adm.dischargeDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Active / Inpatient' }}
+                  </span>
+                </div>
+                <div>
+                  <span class="text-bodydark block">Ward &amp; Bed</span>
+                  <span class="font-bold text-emphasis text-sm">{{ adm.ward?.name || 'Ward' }} &bull; Bed #{{ adm.wardBed?.bedNumber || 'N/A' }}</span>
+                </div>
+                <div>
+                  <span class="text-bodydark block">Attending Doctor</span>
+                  <span class="font-bold text-emphasis text-sm">
+                    {{ adm.attendingDoctor?.name || 'N/A' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Financial Box & Action Bar -->
+              <div class="bg-slate-50 dark:bg-meta-4 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-6">
+                  <div>
+                    <span class="text-[11px] text-bodydark uppercase block">Total Charges</span>
+                    <span class="font-black text-emphasis text-base">${{ (adm.totalCharged || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                  </div>
+                  <div>
+                    <span class="text-[11px] text-bodydark uppercase block">Total Paid</span>
+                    <span class="font-black text-success text-base">${{ (adm.totalPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                  </div>
+                  <div>
+                    <span class="text-[11px] text-bodydark uppercase block">Balance Due</span>
+                    <span :class="['font-black text-base', adm.remainingBalance > 0 ? 'text-danger' : 'text-bodydark']">
+                      ${{ (adm.remainingBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <!-- Pay Now (if unpaid) -->
+                  <button
+                    v-if="!adm.isFullyPaid"
+                    type="button"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-warning text-white rounded-lg text-xs font-bold hover:bg-warning/90 transition-colors shadow-sm"
+                    @click="handleOpenAdmissionPayment(adm)"
+                  >
+                    💳 Pay Now
+                  </button>
+
+                  <!-- Download Invoice (PDF) -->
+                  <button
+                    type="button"
+                    :disabled="downloadingInvoiceId === adm.id"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 border border-stroke dark:border-strokedark bg-white dark:bg-boxdark rounded-lg text-xs font-bold text-emphasis hover:bg-elevated transition-colors"
+                    @click="handleDownloadAdmissionInvoice(adm)"
+                  >
+                    <svg v-if="downloadingInvoiceId === adm.id" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <BillingIcon v-else class="w-3.5 h-3.5 text-primary" />
+                    {{ downloadingInvoiceId === adm.id ? 'Exporting...' : 'Invoice (PDF)' }}
+                  </button>
+
+                  <!-- Download Discharge Summary (PDF) if discharged -->
+                  <button
+                    v-if="adm.status === 13 || adm.status === 12"
+                    type="button"
+                    :disabled="downloadingSummaryId === adm.id"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 border border-success/40 bg-success/10 text-success rounded-lg text-xs font-bold hover:bg-success hover:text-white transition-colors"
+                    @click="handleDownloadAdmissionSummary(adm)"
+                  >
+                    <svg v-if="downloadingSummaryId === adm.id" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <DocumentLinesIcon v-else class="w-3.5 h-3.5" />
+                    {{ downloadingSummaryId === adm.id ? 'Exporting...' : 'Discharge Summary (PDF)' }}
+                  </button>
+
+                  <!-- View Full Admission Details Link -->
+                  <router-link :to="'/admissions/' + adm.id" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-primary hover:underline">View Details &rarr;</router-link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Patient Services Tab -->
         <div v-if="currentTab === 'patientServices'" class="lg:col-span-3">
           <PatientServicesTab :patientId="patientDetails.id" />
         </div>
       </div>
     </div>
+
+    <!-- Standard HMS Payment Modal in Patient Profile -->
+    <PaymentModal :show="showPayModal" :bill="billToPay" @close="showPayModal = false" @success="handleAdmissionPaymentSuccess" />
 
     <!-- Add New Diagnosis Modal -->
     <Teleport to="body">
