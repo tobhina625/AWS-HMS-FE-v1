@@ -1,4 +1,7 @@
 :root {
+  /* Make native controls (select dropdowns, scrollbars, date inputs) follow the light theme */
+  color-scheme: light;
+
   /* Primary Colors */
   --color-primary: #3C50E0;
   --color-primary-light: #6577F3;
@@ -139,6 +142,9 @@
 }
 
 .dark {
+  /* Make native controls (select dropdowns, scrollbars, date inputs) follow the dark theme */
+  color-scheme: dark;
+
   /* Semantic Theme-Aware Colors - Dark Mode Overrides */
   /* Keep text-light as white for contrast on primary/danger/colored backgrounds */
   --text-light: #FFFFFF;

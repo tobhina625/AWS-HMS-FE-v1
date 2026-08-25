@@ -29,6 +29,19 @@
     .custom-scrollbar::-webkit-scrollbar-thumb {
         @apply bg-stroke dark:bg-strokedark rounded-full hover:bg-gray-2 dark:hover:bg-strokedark/80 transition-colors;
     }
+
+    /* Ensure native select option popups are readable in both themes.
+       The OS-drawn dropdown list of a native <select> uses the white system
+       popup in some browsers, so option text must never be white there. */
+    select option {
+        background-color: #ffffff;
+        color: #1c2434;
+    }
+
+    .dark select option {
+        background-color: #1d2a39;
+        color: #dee4ee;
+    }
 }
 
 @layer components {
