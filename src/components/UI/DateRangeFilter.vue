@@ -373,12 +373,16 @@
         'flex items-center gap-2.5 px-4 h-[50px] min-h-[50px] text-sm font-medium rounded-xl border transition-all duration-150 shadow-sm focus:outline-none select-none',
         hasActiveFilter
           ? 'bg-primary/10 border-primary text-primary dark:bg-primary/20 dark:border-primary/50 dark:text-primary font-semibold'
-          : 'bg-surface border-stroke text-emphasis hover:border-bodydark2/50 dark:bg-boxdark dark:border-strokedark dark:text-bodydark1'
+          : 'bg-surface border-stroke text-emphasis hover:border-bodydark2/50 dark:bg-boxdark dark:border-strokedark dark:text-bodydark1',
       ]"
     >
       <!-- Calendar Icon -->
       <svg class="w-5 h-5 shrink-0 text-current opacity-80" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+        <path
+          fill-rule="evenodd"
+          d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+          clip-rule="evenodd"
+        />
       </svg>
 
       <!-- Label -->
@@ -394,17 +398,16 @@
         class="inline-flex items-center justify-center w-5 h-5 ml-0.5 rounded-full hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors"
       >
         <svg class="w-3.5 h-3.5 text-current" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          <path
+            fill-rule="evenodd"
+            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
       </span>
 
       <!-- Dropdown Chevron -->
-      <svg
-        class="w-4 h-4 ml-0.5 text-current opacity-70 transition-transform duration-200 shrink-0"
-        :class="{ 'rotate-180': isOpen }"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
+      <svg class="w-4 h-4 ml-0.5 text-current opacity-70 transition-transform duration-200 shrink-0" :class="{ 'rotate-180': isOpen }" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
       </svg>
     </button>
@@ -427,7 +430,7 @@
               'px-2.5 py-1.5 rounded-lg text-xs font-medium text-left transition-colors whitespace-nowrap',
               activePreset.toLowerCase() === p.id.toLowerCase() || (!hasActiveFilter && p.id === 'all')
                 ? 'bg-primary text-white dark:text-white font-semibold shadow-sm'
-                : 'text-emphasis hover:bg-bodydark2/10 dark:text-bodydark1 dark:hover:bg-strokedark'
+                : 'text-emphasis hover:bg-bodydark2/10 dark:text-bodydark1 dark:hover:bg-strokedark',
             ]"
           >
             {{ p.label }}
@@ -451,12 +454,7 @@
                     <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                   </svg>
                 </button>
-                <button
-                  type="button"
-                  @click="nextMonth"
-                  class="p-1.5 rounded-lg text-emphasis hover:bg-bodydark2/10 dark:text-bodydark1 dark:hover:bg-strokedark transition-colors"
-                  title="Next month"
-                >
+                <button type="button" @click="nextMonth" class="p-1.5 rounded-lg text-emphasis hover:bg-bodydark2/10 dark:text-bodydark1 dark:hover:bg-strokedark transition-colors" title="Next month">
                   <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                   </svg>
@@ -485,7 +483,7 @@
                   day.isSelectedStart || day.isSelectedEnd ? 'bg-primary text-white font-bold shadow-sm' : '',
                   day.isInRange && !day.isSelectedStart && !day.isSelectedEnd ? 'bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary rounded-none' : '',
                   day.isToday && !day.isSelectedStart && !day.isSelectedEnd ? 'border border-primary font-bold' : '',
-                  day.isCurrentMonth && !day.isSelectedStart && !day.isSelectedEnd && !day.isInRange ? 'hover:bg-bodydark2/10 dark:hover:bg-strokedark' : ''
+                  day.isCurrentMonth && !day.isSelectedStart && !day.isSelectedEnd && !day.isInRange ? 'hover:bg-bodydark2/10 dark:hover:bg-strokedark' : '',
                 ]"
               >
                 {{ day.date.getDate() }}
@@ -497,13 +495,7 @@
 
       <!-- Action Row: Footer -->
       <div class="flex items-center justify-between pt-3 border-t border-stroke dark:border-strokedark">
-        <button
-          type="button"
-          @click="clearFilter"
-          class="text-xs font-medium text-bodydark2 hover:text-danger dark:hover:text-danger transition-colors px-2 py-1"
-        >
-          Reset
-        </button>
+        <button type="button" @click="clearFilter" class="text-xs font-medium text-bodydark2 hover:text-danger dark:hover:text-danger transition-colors px-2 py-1">Reset</button>
 
         <div class="flex items-center gap-2">
           <button
@@ -513,13 +505,7 @@
           >
             Cancel
           </button>
-          <button
-            type="button"
-            @click="applyCustomSelection"
-            class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm"
-          >
-            Apply
-          </button>
+          <button type="button" @click="applyCustomSelection" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm">Apply</button>
         </div>
       </div>
     </div>

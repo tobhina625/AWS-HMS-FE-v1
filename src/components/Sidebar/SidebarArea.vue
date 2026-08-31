@@ -26,7 +26,6 @@
   import SettingsSVG from '@/assets/images/SVGs/SettingIcon.svg';
   import BriefcaseIcon from '@/assets/images/SVGs/BriefcaseIcon.svg';
   import ClipboardListIcon from '@/assets/images/SVGs/ClipboardListIcon.svg';
-  import ClipboardCheckIcon from '@/assets/images/SVGs/ClipboardCheckIcon.svg';
   import CalendarIcon from '@/assets/images/SVGs/CalendarIcon.svg';
   import ShieldIcon from '@/assets/images/SVGs/ShieldIcon.svg';
   import ClipboardIcon from '@/assets/images/SVGs/ClipboardIcon.svg';
@@ -58,9 +57,6 @@
         { icon: LabTestSVG, label: 'Lab Tests', route: '/lab-tests' },
         { icon: LabTestSVG, label: 'Lab Orders', route: '/lab-orders' },
         { icon: ClipboardIcon, label: 'Admissions', route: '/admissions' },
-        { icon: ClipboardListIcon, label: 'Admission queue', route: '/admissions/queue' },
-        { icon: ClipboardCheckIcon, label: 'Patient Surgeries', route: '/patient-surgeries' },
-        { icon: ClipboardCheckIcon, label: 'Treatments', route: '/treatments' },
       ],
     },
     {
