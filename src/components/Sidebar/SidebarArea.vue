@@ -1,7 +1,8 @@
 <script setup lang="ts">
   import { useSidebarStore } from '@/stores/sidebar';
   import { onClickOutside } from '@vueuse/core';
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, onMounted, nextTick, watch } from 'vue';
+  import { useRoute } from 'vue-router';
   import SidebarItem from './SidebarItem.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
   import { usePermissions } from '@/composables/usePermissions';
@@ -182,8 +183,43 @@
       .filter((group) => group.menuItems.length > 0);
   });
 
+  const route = useRoute();
+  const scrollContainerRef = ref<HTMLElement | null>(null);
+
+  const handleScroll = () => {
+    if (scrollContainerRef.value) {
+      sidebarStore.setScrollTop(scrollContainerRef.value.scrollTop);
+      sessionStorage.setItem('hms_sidebar_scroll_top', String(scrollContainerRef.value.scrollTop));
+    }
+  };
+
+  const restoreScrollPosition = () => {
+    if (!scrollContainerRef.value) return;
+    const targetTop = sidebarStore.scrollTop || parseFloat(sessionStorage.getItem('hms_sidebar_scroll_top') || '0');
+    if (targetTop > 0) {
+      scrollContainerRef.value.scrollTop = targetTop;
+    } else {
+      const activeEl = scrollContainerRef.value.querySelector('.bg-light, .dark\\:bg-dark') as HTMLElement;
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  };
+
+  watch(
+    () => route.path,
+    async () => {
+      await nextTick();
+      restoreScrollPosition();
+    }
+  );
+
   onMounted(async () => {
+    // Immediate sync restoration
+    restoreScrollPosition();
     await loadUserPermissions();
+    await nextTick();
+    restoreScrollPosition();
   });
 </script>
 
@@ -204,7 +240,7 @@
         <ChevronLeftArrowIcon class="w-5 h-[18px]" />
       </BaseButton>
     </div>
-    <div class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
+    <div ref="scrollContainerRef" @scroll.passive="handleScroll" class="no-scrollbar flex flex-col overflow-y-auto">
       <nav class="py-4 px-4 lg:px-6">
         <template v-for="menuGroup in menuGroups" :key="menuGroup.name">
           <div>
