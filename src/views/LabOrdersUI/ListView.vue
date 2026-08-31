@@ -8,22 +8,28 @@
   import DynamicPagination from '@/components/UI/DynamicPagination.vue';
   import EmptyState from '@/components/UI/EmptyState.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
+  import BulkDeleteButton from '@/components/UI/BulkDeleteButton.vue';
   import PatientLabsService from '@/services/PatientLabs/PatientLabs.services';
   import type { IPatientLabs, IUpdateLabResult } from '@/services/PatientLabs/PatientLabs.interface';
   import useAlert from '@/plugins/alert/useAlert';
   import { usePermissions } from '@/composables/usePermissions';
+  import { useSelection } from '@/composables/useSelection';
+  import { useConfirmDelete } from '@/composables/useConfirmDelete';
   import { useLabReport } from '@/composables/useLabReport';
   import DetailPageIcon from '@/assets/images/SVGs/View.svg';
   import DownloadIcon from '@/assets/images/SVGs/DownloadIcon.svg';
 
   const { showAlert } = useAlert();
-  const { canViewModule } = usePermissions();
+  const { canViewModule, canDeleteFromModule } = usePermissions();
+  const { confirmBulkDelete } = useConfirmDelete();
+  const { selectedIds, selectionCount, toggle, selectAll, deselectAll, toggleAll } = useSelection<number>();
   const { downloadPdfReport } = useLabReport();
   const labService = new PatientLabsService();
   const route = useRoute();
   const router = useRouter();
 
   const canViewLabOrders = computed(() => canViewModule('Lab Orders'));
+  const canDelete = computed(() => canDeleteFromModule('Lab Orders'));
 
   // ── Patient-filter mode (coming from patient profile) ──────────────────────
   const patientIdFilter = computed(() => {
@@ -40,8 +46,8 @@
   const filterStatus = ref('');
   const searchQuery = ref('');
 
-  // Date preset aligned with SearchWithViewToggle options
-  const dateFilter = ref<'today' | 'yesterday' | ''>('');
+  // Date filter (supports presets, single date, or date ranges)
+  const dateFilter = ref<string>('');
 
   // ── Pagination ───────────────────────────────────────────────────────────────
   const PAGE_SIZE = 10;
@@ -78,15 +84,58 @@
 
   const dateRangeForFilter = computed<{ from: Date | null; to: Date | null }>(() => {
     if (!dateFilter.value) return { from: null, to: null };
+    const val = dateFilter.value.trim().toLowerCase();
     const t = startOfDay(new Date());
-    if (dateFilter.value === 'today') {
+
+    if (val === 'today') {
       const to = new Date(t);
       to.setHours(23, 59, 59, 999);
       return { from: t, to };
     }
-    if (dateFilter.value === 'yesterday') {
+    if (val === 'yesterday') {
       const from = new Date(t);
       from.setDate(from.getDate() - 1);
+      const to = new Date(from);
+      to.setHours(23, 59, 59, 999);
+      return { from, to };
+    }
+    if (val === 'last7days') {
+      const from = new Date(t);
+      from.setDate(from.getDate() - 6);
+      const to = new Date(t);
+      to.setHours(23, 59, 59, 999);
+      return { from, to };
+    }
+    if (val === 'last30days') {
+      const from = new Date(t);
+      from.setDate(from.getDate() - 29);
+      const to = new Date(t);
+      to.setHours(23, 59, 59, 999);
+      return { from, to };
+    }
+    if (val === 'thismonth') {
+      const from = new Date(t.getFullYear(), t.getMonth(), 1);
+      const to = new Date(t);
+      to.setHours(23, 59, 59, 999);
+      return { from, to };
+    }
+    if (val === 'lastmonth') {
+      const from = new Date(t.getFullYear(), t.getMonth() - 1, 1);
+      const to = new Date(t.getFullYear(), t.getMonth(), 0);
+      to.setHours(23, 59, 59, 999);
+      return { from, to };
+    }
+    if (val.includes(',')) {
+      const [s, e] = val.split(',');
+      const from = new Date(s);
+      from.setHours(0, 0, 0, 0);
+      const to = new Date(e);
+      to.setHours(23, 59, 59, 999);
+      return { from, to };
+    }
+    const single = new Date(val);
+    if (!isNaN(single.getTime())) {
+      const from = startOfDay(new Date(single));
       const to = new Date(from);
       to.setHours(23, 59, 59, 999);
       return { from, to };
@@ -130,7 +179,7 @@
     currentPage.value = 0;
   };
 
-  const handleDateFilter = (val: 'today' | 'yesterday' | '') => {
+  const handleDateFilter = (val: string) => {
     dateFilter.value = val;
     currentPage.value = 0;
   };
@@ -206,12 +255,34 @@
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!canDelete.value) return;
+
+    await confirmBulkDelete({
+      entityName: 'Lab Order',
+      count: selectionCount.value,
+      deleteAction: () => labService.bulkDeleteLabOrders(selectedIds.value),
+      onSuccess: async () => {
+        deselectAll();
+        await loadOrders();
+      },
+    });
+  };
+
   onMounted(loadOrders);
 </script>
 
 <template>
   <DefaultLayout>
-    <ListViewTemplate :title="patientIdFilter ? 'Patient Lab Orders' : 'Lab Orders'" :breadcrumb-title="patientIdFilter ? '🧪 Lab Orders – Patient View' : 'Lab Orders'" :loading="loading">
+    <ListViewTemplate
+      :title="patientIdFilter ? 'Patient Lab Orders' : 'Lab Orders'"
+      :breadcrumb-title="patientIdFilter ? '🧪 Lab Orders – Patient View' : 'Lab Orders'"
+      :loading="loading"
+      :selection-count="selectionCount"
+      :show-bulk-actions="selectionCount > 0"
+      @select-all="selectAll(paginatedOrders)"
+      @deselect-all="deselectAll"
+    >
       <!-- Subtitle -->
       <template #subtitle>
         <span v-if="patientIdFilter">
@@ -221,6 +292,10 @@
           <button @click="router.push('/patients/' + patientIdFilter)" class="ml-2 text-primary underline hover:no-underline text-sm font-medium">← Back to Patient Profile</button>
         </span>
         <span v-else>Manage, filter and enter results for all patient lab orders.</span>
+      </template>
+
+      <template #bulk-actions>
+        <BulkDeleteButton :disabled="selectionCount === 0" @click="handleBulkDelete" />
       </template>
 
       <!-- Search / date filter bar -->
@@ -270,7 +345,19 @@
         <EmptyState v-if="isEmpty" title="No Lab Orders Found" description="No lab orders match the current filters. Try adjusting the search, status or date." icon="data" />
 
         <!-- Table -->
-        <DynamicTable v-else :data="paginatedOrders" :columns="labOrderColumns" :status-color-map="statusColorMap" module-name="Lab Orders" item-key="id">
+        <DynamicTable
+          v-else
+          :data="paginatedOrders"
+          :columns="labOrderColumns"
+          :status-color-map="statusColorMap"
+          module-name="Lab Orders"
+          item-key="id"
+          :selectable="true"
+          :selected-ids="selectedIds"
+          :showDelete="canDelete"
+          @select="toggle"
+          @select-all="(checked: boolean) => toggleAll(checked, paginatedOrders)"
+        >
           <template #actions="{ item }">
             <!-- Completed with results: download report -->
             <div

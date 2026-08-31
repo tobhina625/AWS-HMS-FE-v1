@@ -89,7 +89,26 @@ class PatientSurgeryServices {
     }
   }
 
-  // Note: No delete endpoint available for patient surgeries
+  async deletePatientSurgery(id: number | string): Promise<any> {
+    try {
+      const response = await this._genericService.delete(`api/patient-surgeries/delete?id=${id}`);
+      return response;
+    } catch (error) {
+      console.error('Error deleting patient surgery:', error);
+      throw error;
+    }
+  }
+
+  async bulkDeletePatientSurgeries(ids: number[]): Promise<any> {
+    try {
+      const baseUrl = import.meta.env.VITE_BASE_URL;
+      const response = await this._genericService['makeRequest'](`${baseUrl}/api/patient-surgeries/bulk-delete`, 'DELETE', ids);
+      return response;
+    } catch (error) {
+      console.error('Error bulk deleting patient surgeries:', error);
+      throw error;
+    }
+  }
 }
 
 export default PatientSurgeryServices;

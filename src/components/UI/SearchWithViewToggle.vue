@@ -3,7 +3,7 @@
   import SearchMagnifyIcon from '@/assets/images/SVGs/SearchMagnifyIcon.svg';
   import SearchBar from '@/components/UI/SearchBar.vue';
   import BaseButton from '@/components/Base/BaseButton.vue';
-  import BaseSelect from '@/components/Base/BaseSelect.vue';
+  import DateRangeFilter from '@/components/UI/DateRangeFilter.vue';
 
   const props = defineProps<{
     modelValue: 'table' | 'grid';
@@ -11,15 +11,15 @@
     addButtonRoute?: string;
     showAdd?: boolean;
     searchBarClass?: string;
-    dateFilter?: 'today' | 'yesterday' | '';
+    dateFilter?: string;
     showDateFilter?: boolean;
   }>();
 
   const emit = defineEmits<{
     'update:modelValue': [value: 'table' | 'grid'];
-    'update:dateFilter': [value: 'today' | 'yesterday' | ''];
+    'update:dateFilter': [value: string];
     search: [term: string];
-    'date-filter': [value: 'today' | 'yesterday' | ''];
+    'date-filter': [value: string];
   }>();
 
   const setViewMode = (mode: 'table' | 'grid') => {
@@ -30,13 +30,7 @@
     emit('search', term);
   };
 
-  const dateFilterOptions = [
-    { id: '', name: 'All Time' },
-    { id: 'today', name: 'Today' },
-    { id: 'yesterday', name: 'Yesterday' },
-  ];
-
-  const handleDateFilterChange = (value: 'today' | 'yesterday' | '') => {
+  const handleDateFilterChange = (value: string) => {
     emit('update:dateFilter', value);
     emit('date-filter', value);
   };
@@ -71,7 +65,7 @@
       </div>
 
       <div v-if="props.showDateFilter" class="relative">
-        <BaseSelect :model-value="props.dateFilter ?? ''" label="" :options="dateFilterOptions" display-key="name" value-key="id" class="min-w-[130px]" @update:model-value="handleDateFilterChange" />
+        <DateRangeFilter :model-value="props.dateFilter ?? ''" @update:model-value="handleDateFilterChange" />
       </div>
     </div>
   </div>

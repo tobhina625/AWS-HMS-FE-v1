@@ -72,6 +72,17 @@ class PatientLabsService {
       throw error;
     }
   }
+
+  async bulkDeleteLabOrders(ids: number[]): Promise<any> {
+    try {
+      const baseUrl = import.meta.env.VITE_BASE_URL;
+      const response = await this._genericService['makeRequest'](`${baseUrl}/api/patient-labs/bulk-delete`, 'DELETE', ids);
+      return response;
+    } catch (error) {
+      console.error('Error bulk deleting lab orders:', error);
+      throw error;
+    }
+  }
 }
 
 export default PatientLabsService;

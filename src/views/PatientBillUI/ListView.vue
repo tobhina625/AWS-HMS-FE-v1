@@ -32,7 +32,7 @@
     page: number;
     size: number;
     searchTerm: string;
-    dateFilter: 'today' | 'yesterday' | '';
+    dateFilter: string;
   }>({
     page: 0,
     size: 10,

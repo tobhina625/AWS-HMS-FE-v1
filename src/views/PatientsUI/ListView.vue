@@ -158,7 +158,6 @@
         <SearchWithViewToggle
           v-model="viewMode"
           v-model:date-filter="listFilters.dateFilter"
-          :showDateFilter="true"
           placeholder="Search by name, ID or mobile..."
           addButtonRoute="patients/add"
           :showAdd="true"

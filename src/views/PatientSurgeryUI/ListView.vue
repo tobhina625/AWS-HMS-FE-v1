@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, onMounted, watch } from 'vue';
+  import { ref, onMounted, watch, computed } from 'vue';
   import router from '@/router';
   import DefaultLayout from '@/layouts/DefaultLayout.vue';
   import ListViewTemplate from '@/components/Templates/ListViewTemplate.vue';
@@ -8,16 +8,23 @@
   import DynamicPagination from '@/components/UI/DynamicPagination.vue';
   import EmptyState from '@/components/UI/EmptyState.vue';
   import GridViewCard from '@/components/UI/GridViewCard.vue';
+  import BulkDeleteButton from '@/components/UI/BulkDeleteButton.vue';
   import PatientSurgeryServices from '@/services/PatientSurgery/PatientSurgery.services';
   import type { IPatientSurgery } from '@/services/PatientSurgery/PatientSurgery.dto';
   import { useListView } from '@/composables/useListView';
+  import { usePermissions } from '@/composables/usePermissions';
   import { useSelection } from '@/composables/useSelection';
+  import { useConfirmDelete } from '@/composables/useConfirmDelete';
 
   const pageTitle = ref('Patient Surgeries Management');
   const patientSurgeryService = new PatientSurgeryServices();
   const viewMode = ref<'grid' | 'table'>('table');
 
+  const { canDeleteFromModule } = usePermissions();
+  const { confirmDelete, confirmBulkDelete } = useConfirmDelete();
   const { selectedIds, selectionCount, toggle, selectAll, deselectAll, toggleAll } = useSelection<number>();
+
+  const canDelete = computed(() => canDeleteFromModule('Patient Surgeries'));
 
   const getPatientSurgeryFields = (surgery: IPatientSurgery) => [
     { label: 'Surgery', value: surgery.surgery?.name || '-' },
@@ -68,6 +75,33 @@
     router.push(`/patient-surgeries/edit/${surgery.id}`);
   };
 
+  const handleDelete = async (surgery: IPatientSurgery) => {
+    if (!canDelete.value) return;
+
+    await confirmDelete({
+      entityName: 'Patient Surgery',
+      itemName: surgery.surgery?.name || `Surgery #${surgery.id}`,
+      deleteAction: () => patientSurgeryService.deletePatientSurgery(surgery.id),
+      onSuccess: async () => {
+        await fetchData(transformPatientSurgeryData);
+      },
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!canDelete.value) return;
+
+    await confirmBulkDelete({
+      entityName: 'Patient Surgery',
+      count: selectionCount.value,
+      deleteAction: () => patientSurgeryService.bulkDeletePatientSurgeries(selectedIds.value),
+      onSuccess: async () => {
+        deselectAll();
+        await fetchData(transformPatientSurgeryData);
+      },
+    });
+  };
+
   watch(viewMode, async () => {
     listFilters.value.page = 0;
     await fetchData(transformPatientSurgeryData);
@@ -85,11 +119,15 @@
       breadcrumb-title="Patient Surgeries"
       :loading="loading"
       :selection-count="selectionCount"
-      :show-bulk-actions="false"
+      :show-bulk-actions="selectionCount > 0"
       @select-all="selectAll(apiResponse.data)"
       @deselect-all="deselectAll"
     >
       <template #subtitle>Manage patient surgical procedures and operation records.</template>
+
+      <template #bulk-actions>
+        <BulkDeleteButton :disabled="selectionCount === 0" @click="handleBulkDelete" />
+      </template>
 
       <template #search>
         <SearchWithViewToggle
@@ -115,9 +153,10 @@
             :fields="getPatientSurgeryFields(surgery)"
             :selected="selectedIds.includes(surgery.id)"
             :show-details="true"
-            :show-delete="false"
+            :show-delete="canDelete"
             @detail="handleViewDetails(surgery)"
             @edit="handleEdit(surgery)"
+            @delete="handleDelete(surgery)"
             @select="toggle(surgery.id)"
           />
         </div>
@@ -131,9 +170,10 @@
           item-key="id"
           showDetails
           showEdit
-          :showDelete="false"
+          :showDelete="canDelete"
           @detail="handleViewDetails"
           @edit="handleEdit"
+          @delete="handleDelete"
           @select="toggle"
           @select-all="(checked: boolean) => toggleAll(checked, apiResponse.data)"
         />
@@ -154,3 +194,4 @@
     </ListViewTemplate>
   </DefaultLayout>
 </template>
+

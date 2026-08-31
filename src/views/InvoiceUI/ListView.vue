@@ -23,7 +23,7 @@
     page: number;
     size: number;
     searchTerm: string;
-    dateFilter: 'today' | 'yesterday' | '';
+    dateFilter: string;
     statusFilter: number | '';
   }>({
     page: 0,

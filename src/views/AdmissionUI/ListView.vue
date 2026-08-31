@@ -30,7 +30,7 @@
   const canDelete = computed(() => canDeleteFromModule('Admissions'));
 
   // Date filter for statistics
-  const dateFilter = ref<'today' | 'yesterday' | ''>('');
+  const dateFilter = ref<string>('');
   const handleDateFilterChange = async () => {
     listFilters.value.page = 0;
     listFilters.value.dateFilter = dateFilter.value;

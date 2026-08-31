@@ -23,7 +23,7 @@
     page: 0,
     size: 10,
     searchTerm: '',
-    dateFilter: '' as '' | 'today' | 'yesterday',
+    dateFilter: '',
   });
   const apiResponse = ref({
     data: [],
