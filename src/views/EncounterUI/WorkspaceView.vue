@@ -89,6 +89,16 @@
   // const labTests = ref<any[]>([]);
   const labForm = ref({ patientId: 0, patientHistoryId: 0, labTestId: 0, details: '', branchId: 1 });
 
+  // Accept either a plain array or a wrapper object ({ data | content | items }) so a
+  // single rejected / malformed request can never silently blank a tab.
+  const toArray = (raw: any): any[] => {
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.data)) return raw.data;
+    if (Array.isArray(raw?.content)) return raw.content;
+    if (Array.isArray(raw?.items)) return raw.items;
+    return [];
+  };
+
   const loadData = async () => {
     loading.value = true;
     try {
@@ -115,13 +125,13 @@
         patient.value = patRes?.data;
 
         const dxData = await diagnosisService.getByEncounterId(encounterId.value);
-        diagnoses.value = Array.isArray(dxData) ? dxData : dxData?.data || [];
+        diagnoses.value = toArray(dxData);
 
         const rxData = await prescriptionService.getByEncounterId(encounterId.value);
-        prescriptions.value = Array.isArray(rxData) ? rxData : rxData?.data || [];
+        prescriptions.value = toArray(rxData);
 
         const labData = await labService.getByEncounterId(encounterId.value);
-        labOrders.value = Array.isArray(labData) ? labData : labData?.data || [];
+        labOrders.value = toArray(labData);
       }
     } catch (e) {
       console.error(e);
@@ -154,6 +164,9 @@
         patientId: patientId.value,
         ...vitalsForm.value,
       });
+      // Reflect the saved status locally, then auto-complete an In-Progress encounter.
+      encounter.value.encounterStatus = vitalsForm.value.encounterStatus;
+      await completeEncounterStatus();
       showAlert('success', 'Encounter updated.', 'Saved');
     } catch {
       showAlert('error', 'Failed to save encounter.', 'Error');
@@ -162,10 +175,37 @@
     }
   };
 
+  // Transition the encounter from In-Progress (IP) to Completed after a successful
+  // manual save in any tab. It never runs on a failed save and never overrides an
+  // already Completed/Cancelled encounter.
+  const completeEncounterStatus = async () => {
+    const status = (encounter.value.encounterStatus || '').toLowerCase();
+    if (status === 'completed' || status === 'cancelled') return;
+    try {
+      await historyService.completeEncounter(encounterId.value);
+      encounter.value.encounterStatus = 'Completed';
+      vitalsForm.value.encounterStatus = 'Completed';
+    } catch (error) {
+      console.error('Failed to auto-complete encounter:', error);
+    }
+  };
+
   const completeEncounter = async () => {
-    vitalsForm.value.encounterStatus = 'Completed';
-    await saveVitals();
-    showAlert('success', 'Encounter marked as Completed.', 'Completed');
+    saving.value = true;
+    try {
+      vitalsForm.value.encounterStatus = 'Completed';
+      await historyService.updatePatientHistory({
+        id: encounterId.value,
+        patientId: patientId.value,
+        ...vitalsForm.value,
+      });
+      encounter.value.encounterStatus = 'Completed';
+      showAlert('success', 'Encounter marked as Completed.', 'Completed');
+    } catch {
+      showAlert('error', 'Failed to complete encounter.', 'Error');
+    } finally {
+      saving.value = false;
+    }
   };
 
   const addDiagnosis = async () => {
@@ -175,6 +215,8 @@
       showAlert('success', 'Diagnosis added.', 'Success');
       showDxModal.value = false;
       dxForm.value = { patientId: patientId.value, patientHistoryId: encounterId.value, diseaseName: '', diseaseId: undefined, diagnosisType: 'Primary', status: 'Active' };
+      // Auto-complete the encounter (IP → Completed) after a successful manual save.
+      await completeEncounterStatus();
     } catch (error) {
       console.error('Add diagnosis failed:', error);
       showAlert('error', 'Failed to add diagnosis.', 'Error');
@@ -183,7 +225,7 @@
     // Refresh the list separately - a failed reload must not mask a successful add.
     try {
       const dxData = await diagnosisService.getByEncounterId(encounterId.value);
-      diagnoses.value = Array.isArray(dxData) ? dxData : dxData?.data || [];
+      diagnoses.value = toArray(dxData);
     } catch (e) {
       console.error('Failed to refresh diagnoses:', e);
     }
@@ -196,6 +238,8 @@
       showAlert('success', 'Prescription added.', 'Success');
       showRxModal.value = false;
       rxForm.value = { patientId: patientId.value, patientHistoryId: encounterId.value, medicine: '', dose: '', route: 'Oral', frequency: '', duration: '', instructions: '', status: 'Active' };
+      // Auto-complete the encounter (IP → Completed) after a successful manual save.
+      await completeEncounterStatus();
     } catch (error) {
       console.error('Add prescription failed:', error);
       showAlert('error', 'Failed to add prescription.', 'Error');
@@ -204,7 +248,7 @@
     // Refresh the list separately - a failed reload must not mask a successful add.
     try {
       const rxData = await prescriptionService.getByEncounterId(encounterId.value);
-      prescriptions.value = Array.isArray(rxData) ? rxData : rxData?.data || [];
+      prescriptions.value = toArray(rxData);
     } catch (e) {
       console.error('Failed to refresh prescriptions:', e);
     }
@@ -216,6 +260,8 @@
       await labService.createLabOrder({ ...labForm.value, patientId: patientId.value, patientHistoryId: encounterId.value });
       showAlert('success', 'Lab order created.', 'Success');
       showLabModal.value = false;
+      // Auto-complete the encounter (IP → Completed) after a successful manual save.
+      await completeEncounterStatus();
     } catch (error) {
       console.error('Create lab order failed:', error);
       showAlert('error', 'Failed to create lab order.', 'Error');
@@ -224,7 +270,7 @@
     // Refresh the list separately - a failed reload must not mask a successful add.
     try {
       const labData = await labService.getByEncounterId(encounterId.value);
-      labOrders.value = Array.isArray(labData) ? labData : labData?.data || [];
+      labOrders.value = toArray(labData);
     } catch (e) {
       console.error('Failed to refresh lab orders:', e);
     }

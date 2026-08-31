@@ -48,6 +48,16 @@ class PatientHistoryServices {
     }
   }
 
+  async completeEncounter(id: number): Promise<any> {
+    try {
+      const response = await this._genericService.put(`api/patient-histories/complete-encounter/${id}`, {});
+      return response;
+    } catch (error) {
+      console.error('Error completing encounter:', error);
+      throw error;
+    }
+  }
+
   async deletePatientHistory(id: number): Promise<any> {
     try {
       const response = await this._genericService.delete(`api/patient-histories/delete?id=${id}`);

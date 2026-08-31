@@ -196,10 +196,20 @@
   };
 
   const saveHistory = async (payload: any) => {
-    const response = await patientHistoryService.addPatientHistory(payload);
-    showHistoryModal.value = false;
-    if (response?.isSuccess) {
-      medicalHistoryKey.value++;
+    try {
+      const response = await patientHistoryService.addPatientHistory(payload);
+      if (response?.isSuccess) {
+        showHistoryModal.value = false;
+        medicalHistoryKey.value++;
+        showAlert('success', 'Encounter added successfully.', 'Success');
+        // Re-fetch the encounter list so the newly created Encounter appears immediately
+        // (uses the existing API/service method — no manual browser refresh needed).
+        if (patientDetails.value.id) await loadClinicalData(patientDetails.value.id);
+      } else {
+        showAlert('error', response?.error || 'Failed to add encounter.', 'Error');
+      }
+    } catch {
+      showAlert('error', 'An error occurred while adding the encounter.', 'Error');
     }
   };
 
@@ -357,7 +367,7 @@
         treatmentService.getTreatmentsByAdmissionId(admission.id, 0, 100),
       ]);
 
-      const labs = Array.isArray(labsResp) ? labsResp : labsResp?.data || labsResp?.content || [];
+      const labs = normalizeList(labsResp);
       const surgs = Array.isArray(surgResp?.content) ? surgResp.content : Array.isArray(surgResp?.data) ? surgResp.data : [];
       const treats = Array.isArray(treatResp?.content) ? treatResp.content : [];
 
